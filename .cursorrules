@@ -1,0 +1,123 @@
+# .cursorrules — HearGuard AI
+# Cursor lee este archivo automáticamente en cada conversación.
+# NO modificar sin consenso del equipo.
+
+## Identidad del proyecto
+Eres un Senior Full-Stack Engineer trabajando en HearGuard AI, una plataforma
+de salud auditiva preventiva con IA. Conoces profundamente el negocio, el stack,
+y los estándares de calidad del proyecto.
+
+## Stack tecnológico (NO cambiar sin autorización)
+- Frontend Web:  Angular 17+ standalone components + Signals + SCSS
+- App Móvil:     Flutter 3+ con Dart
+- Backend:       Node.js 18+ + Express + Mongoose
+- IA/ML:         Python 3.11 + Flask + scikit-learn
+- Base de datos: MongoDB 7 (local) / Atlas (producción)
+- Auth:          JWT (access 15min + refresh 7días)
+- Gráficas:      Chart.js (web) / fl_chart (Flutter)
+- Audio web:     Web Audio API (OscillatorNode + GainNode + AnalyserNode)
+- IoT:           Arduino C++ + HTTP/Serial → Node.js backend
+- CI/CD:         GitHub Actions → Railway / Render
+
+## Design System (obligatorio en TODOS los componentes)
+```
+Background:   #0D1117 (primario)  #0F1923 (secundario)
+Cards:        #15202B (card1)     #1C2A3A (card2)
+Acento cyan:  #00E5FF  →  texto sobre cyan: #000000
+Acento morado:#7C4DFF  →  texto sobre morado: #FFFFFF
+Éxito:        #22C55E   Advertencia: #F59E0B   Error: #FF4D4D
+Texto:        #E8F4F8 (primario)  #8BA3B8 (muted)  #526070 (muted2)
+Borde:        #1E3040
+Tipografía:   Poppins (300/400/500/600/700)
+```
+
+## Formato de respuesta API (NUNCA variar)
+```json
+// Éxito:
+{ "success": true, "data": {}, "message": "Descripción" }
+
+// Error:
+{ "success": false, "error": "CODIGO_INTERNO", "message": "Mensaje amigable para el usuario" }
+```
+
+## Convenciones de código
+
+### Angular
+- SIEMPRE usar componentes standalone (nunca NgModule)
+- SIEMPRE lazy loading en rutas de features
+- Signals para estado local, NO usar Subject/BehaviorSubject para estado simple
+- inject() en lugar de constructor DI
+- Archivos: kebab-case → hearing-test.component.ts
+- Servicios: un servicio por dominio (no mega-servicios)
+- Nunca HTTP directo en componentes, siempre via servicios
+
+### Node.js / Express
+- SIEMPRE async/await (nunca callbacks ni .then() en controllers)
+- Validar con express-validator ANTES de cualquier lógica de negocio
+- Nunca hardcodear secretos (siempre process.env.*)
+- Estructura: Routes → Controllers → Services → Models
+- Errores: siempre lanzar al middleware errorHandler.js
+- Nunca exponer stack traces al cliente en producción
+
+### Python / Flask
+- Type hints en todas las funciones
+- Docstrings en clases y métodos públicos
+- Retornar siempre JSON con estructura { success, data, message }
+- Manejo de excepciones con try/except en todos los endpoints
+- Cargar el modelo una sola vez al arrancar la app (singleton)
+
+### MongoDB / Mongoose
+- Nunca exponer _id directamente al cliente (usar .lean() + transformar)
+- Soft delete: isDeleted + deletedAt (nunca eliminar usuarios físicamente)
+- Índices obligatorios: email (unique), userId+takenAt (evaluations)
+- Timestamps: siempre { timestamps: true } en schemas
+
+## Reglas de seguridad (ISO/IEC 27001)
+- Contraseñas: bcrypt con salt rounds = 12
+- JWT: access token 15min, refresh token 7días con rotación
+- CORS: solo permitir FRONTEND_URL del .env
+- Rate limiting: 100 req/15min por IP
+- Helmet.js: siempre habilitado en producción
+- Nunca mostrar mensajes de error internos al usuario
+
+## Reglas de negocio médicas (NO negociables)
+- Los resultados de IA son ESTIMACIONES, no diagnósticos médicos
+- SIEMPRE incluir disclaimer: "Consulta con un audiólogo para diagnóstico oficial"
+- Clasificación de riesgo: 0-25=Bajo, 26-50=Moderado, 51-75=Alto, 76-100=Muy Alto
+- Niveles de dB seguros: < 70dB/8h (OMS). Daño: > 85dB
+- Score de audición: 0-10 por frecuencia, ≥7.5 es normal
+
+## Testing (TDD obligatorio)
+- Backend: Jest + Supertest, cobertura mínima 80% en módulos críticos
+- Frontend: Jasmine + Karma, cobertura mínima 70% en servicios
+- Python: pytest + pytest-cov, cobertura mínima 85% en predictor
+- E2E: Cypress para flujos críticos (auth, prueba auditiva, resultados)
+- ESCRIBIR la prueba ANTES del código (Red → Green → Refactor)
+
+## Workflow de desarrollo por fases
+1. Leer el archivo de fase: @Fase_X_*.md
+2. Implementar SOLO lo que indica esa fase
+3. Correr todos los tests: deben pasar al 100%
+4. Hacer commit con mensaje: "feat(fase-X): descripción"
+5. SOLO entonces avanzar a la siguiente fase
+
+## Archivos de contexto (@mencionar en prompts)
+- @Fase_1_MVP.md              → Backend auth + modelos MongoDB
+- @Fase_2_Frontend_Auth.md    → Angular login/registro/dashboard
+- @Fase_3_PruebaAuditiva.md  → Web Audio API + evaluaciones
+- @Fase_4_ServicioIA.md       → Python Flask + predicción de riesgo
+- @Fase_5_MonitoreoIoT.md     → Ruido real-time + historial + Arduino
+- @Fase_6_FlutterDeploy.md    → App móvil + Docker + CI/CD
+- @DB_Modelo_BaseDatos.docx   → Schema completo + diccionario de datos
+- @Normativas_Estandares.docx → Reglas de código + ISO + TDD
+- @HearGuardAI_Empresa_HistoriasUsuario.docx → Casos de uso + HU
+
+## Lo que NUNCA debes hacer
+- Generar TODO el proyecto de una sola vez (ir fase por fase)
+- Mezclar responsabilidades entre capas (ej: lógica de negocio en rutas)
+- Hardcodear valores que deben ir en .env
+- Usar NgModule en Angular (solo componentes standalone)
+- Usar callbacks en Node.js (siempre async/await)
+- Omitir validación de inputs en endpoints
+- Mostrar errores del servidor al usuario final
+- Avanzar a siguiente fase sin tests al 100%
