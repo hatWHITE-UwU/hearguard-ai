@@ -1,0 +1,42 @@
+services:
+  # ── Backend Node.js ──────────────────────────────────────────
+  - type: web
+    name: hearguard-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm ci --omit=dev
+    startCommand: node server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: MONGO_URI
+        sync: false          # pegar en Render dashboard
+      - key: JWT_SECRET
+        generateValue: true  # Render genera el secreto automáticamente
+      - key: JWT_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      - key: FRONTEND_URL
+        sync: false          # pegar URL de Vercel después del deploy
+      - key: AI_SERVICE_URL
+        sync: false          # pegar URL del servicio IA después del deploy
+
+  # ── Microservicio IA Python ───────────────────────────────────
+  - type: web
+    name: hearguard-ai
+    runtime: python
+    rootDir: ai-service
+    buildCommand: pip install -r requirements.txt && python model/trainer.py
+    startCommand: python app.py
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 5001
+      - key: FLASK_ENV
+        value: production
