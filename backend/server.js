@@ -45,7 +45,9 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use('/api', apiLimiter);
+if (env.NODE_ENV !== 'test') {
+  app.use('/api', apiLimiter);
+}
 
 app.get('/health', (req, res) => {
   res.status(200).json({

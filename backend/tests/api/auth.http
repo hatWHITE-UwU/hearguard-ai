@@ -1,0 +1,123 @@
+### ════════════════════════════════════════════════
+### HearGuard AI — Auth API (REST Client / Huachao Mao)
+### Servidor: npm run dev → http://localhost:3000
+###
+### Flujo sugerido:
+### 1) GET health → 200
+### 2) POST register (una vez) → 201 + tokens
+### 3) POST login → 200 + tokens
+### 4) Copia accessToken y refreshToken a las variables de abajo (líneas @accessToken / @refreshToken)
+### 5) GET me con Bearer → 200
+### 6) POST refresh con body refreshToken → 200 (vuelve a pegar el NUEVO refresh en @refreshToken)
+### 7) POST logout con Bearer → 200
+### ════════════════════════════════════════════════
+
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+# Tras login o register: pega aquí los valores de data.accessToken y data.refreshToken
+@accessToken =
+@refreshToken =
+
+### ──────────────────────────────────────────────
+### 1. Health check
+### ──────────────────────────────────────────────
+GET {{baseUrl}}/health
+
+### ──────────────────────────────────────────────
+### 2. Registrar usuario (primer uso; si ya existe → 409 en bloque EXTRA)
+### ──────────────────────────────────────────────
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "name": "Luis Chavez",
+  "email": "luis@hearguard.com",
+  "password": "Luis2026!"
+}
+
+### ──────────────────────────────────────────────
+### 3. Login
+### ──────────────────────────────────────────────
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "luis@hearguard.com",
+  "password": "Luis2026!"
+}
+
+### ──────────────────────────────────────────────
+### 4. Perfil autenticado (usa @accessToken)
+### ──────────────────────────────────────────────
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{accessToken}}
+
+### ──────────────────────────────────────────────
+### 5. Refresh (rota refresh; guarda el nuevo en @refreshToken)
+### ──────────────────────────────────────────────
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### ──────────────────────────────────────────────
+### 6. Logout (invalida refresh en BD; requiere access válido)
+### ──────────────────────────────────────────────
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{accessToken}}
+
+### ════════════════════════════════════════════════
+### ERRORES ESPERADOS (ordenar según tu BD)
+### ════════════════════════════════════════════════
+
+### Error: email duplicado (409) — ejecutar tras tener luis@hearguard.com registrado
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "name": "Luis Otro",
+  "email": "luis@hearguard.com",
+  "password": "Otra2026!"
+}
+
+### Error: password débil (400)
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "name": "Test User",
+  "email": "test@hearguard.com",
+  "password": "123"
+}
+
+### Error: login password incorrecto (401)
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "luis@hearguard.com",
+  "password": "ContraseñaIncorrecta"
+}
+
+### Error: login email inexistente (401 — mismo mensaje genérico que password incorrecto)
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "noexiste@hearguard.com",
+  "password": "CualquierCosas123!"
+}
+
+### Error: GET /me sin token (401)
+GET {{baseUrl}}/api/auth/me
+
+### Error: refresh inválido o expirado (401)
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "invalid.token.here"
+}
