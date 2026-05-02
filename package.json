@@ -1,0 +1,12 @@
+{
+  "name": "hearguard-ai",
+  "private": true,
+  "description": "Monorepo HearGuard — usar scripts para levantar todo el stack",
+  "scripts": {
+    "backend:dev": "npm run dev --prefix backend",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down",
+    "docker:backend": "docker compose up --build mongodb ai-service backend",
+    "mongo:local": "docker compose up -d mongodb"
+  }
+}
