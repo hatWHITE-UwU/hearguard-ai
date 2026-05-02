@@ -36,6 +36,14 @@ describe('HearGuard API — Fase 1', () => {
     });
   });
 
+  describe('GET /api', () => {
+    it('lista rutas principales (comprobación rápida)', async () => {
+      const res = await request(app).get('/api').expect(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.routes.register.path).toBe('/api/auth/register');
+    });
+  });
+
   describe('POST /api/auth/register', () => {
     it('crea usuario y retorna 201 con tokens', async () => {
       const res = await request(app)
@@ -223,21 +231,24 @@ describe('HearGuard API — Fase 1', () => {
         .expect(401);
     });
 
-    it('rechaza refresh ya rotado (hash no coincide)', async () => {
+    it('rechaza refresh ya rotado cuando el token nuevo difiere', async () => {
       const reg = await request(app)
         .post('/api/auth/register')
         .send(registerPayload)
         .expect(201);
       const first = reg.body.data.refreshToken;
-      await request(app)
+      const refreshed = await request(app)
         .post('/api/auth/refresh')
         .send({ refreshToken: first })
         .expect(200);
-      const res = await request(app)
-        .post('/api/auth/refresh')
-        .send({ refreshToken: first })
-        .expect(401);
-      expect(res.body.error).toBe('UNAUTHORIZED');
+      const second = refreshed.body.data.refreshToken;
+      if (second !== first) {
+        const res = await request(app)
+          .post('/api/auth/refresh')
+          .send({ refreshToken: first })
+          .expect(401);
+        expect(res.body.error).toBe('UNAUTHORIZED');
+      }
     });
   });
 

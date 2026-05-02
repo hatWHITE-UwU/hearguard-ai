@@ -24,6 +24,7 @@ const noiseRecordSchema = new mongoose.Schema(
       required: true,
     },
     location: { type: String, trim: true },
+    highRisk: { type: Boolean, default: false },
     recordedAt: { type: Date, required: true, default: Date.now },
   },
   { timestamps: true },

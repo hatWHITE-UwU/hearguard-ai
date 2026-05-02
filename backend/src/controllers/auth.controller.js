@@ -290,10 +290,72 @@ async function me(req, res, next) {
   }
 }
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+async function patchMe(req, res, next) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      success: false,
+      error: 'VALIDATION_ERROR',
+      message: errors.array()[0]?.msg || 'Datos inválidos',
+    });
+  }
+  try {
+    const user = await User.findOne({
+      _id: req.user.id,
+      isDeleted: false,
+    });
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: 'UNAUTHORIZED',
+        message: 'Usuario no encontrado',
+      });
+    }
+    const {
+      name,
+      age,
+      gender,
+      occupation,
+      city,
+      settings,
+    } = req.body;
+    if (name != null) user.name = name;
+    if (age != null) user.age = age;
+    if (gender != null) user.gender = gender;
+    if (occupation != null) user.occupation = occupation;
+    if (city != null) user.city = city;
+    if (settings) {
+      if (settings.reminders != null) {
+        user.settings.reminders = settings.reminders;
+      }
+      if (settings.darkTheme != null) {
+        user.settings.darkTheme = settings.darkTheme;
+      }
+      if (settings.volumeUnit != null) {
+        user.settings.volumeUnit = settings.volumeUnit;
+      }
+    }
+    await user.save();
+    return res.status(200).json({
+      success: true,
+      data: { user: user.toJSON() },
+      message: 'Perfil actualizado',
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
 module.exports = {
   register,
   login,
   refresh,
   logout,
   me,
+  patchMe,
 };

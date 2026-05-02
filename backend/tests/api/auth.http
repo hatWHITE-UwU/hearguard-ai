@@ -1,6 +1,6 @@
 ### ════════════════════════════════════════════════
 ### HearGuard AI — Auth API (REST Client / Huachao Mao)
-### Servidor: npm run dev → http://localhost:3000
+### Servidor: cd backend && npm run dev → http://127.0.0.1:3000 (o localhost:3000)
 ###
 ### Flujo sugerido:
 ### 1) GET health → 200

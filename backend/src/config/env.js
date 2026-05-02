@@ -26,7 +26,15 @@ function getEnv() {
   if (!cachedEnv) {
     cachedEnv = readEnv();
   }
-  return cachedEnv;
+  // MONGO_URI / NODE_ENV pueden cambiar tras validate (p. ej. Jest + Mongo en memoria).
+  return {
+    ...cachedEnv,
+    NODE_ENV: process.env.NODE_ENV || cachedEnv.NODE_ENV,
+    MONGO_URI: process.env.MONGO_URI,
+    AI_SERVICE_URL:
+      process.env.AI_SERVICE_URL || cachedEnv.AI_SERVICE_URL,
+    FRONTEND_URL: process.env.FRONTEND_URL || cachedEnv.FRONTEND_URL,
+  };
 }
 
 function validateEnv() {

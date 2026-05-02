@@ -14,8 +14,14 @@ const habitDataSchema = new mongoose.Schema(
     headphoneHours: { type: Number, min: 0 },
     volumeLevel: { type: Number, min: 0, max: 100 },
     noiseExposure: { type: Number, min: 0 },
-    occupationRisk: { type: Number, min: 0, max: 100 },
-    smoking: { type: Boolean, default: false },
+    occupationRisk: { type: Number, min: 0, max: 3 },
+    smoking: { type: Number, min: 0, max: 2 },
+    /** Etiquetas del formulario (Fase 3) */
+    occupationLabel: { type: String, trim: true },
+    headphoneUseLabel: { type: String, trim: true },
+    volumeLabel: { type: String, trim: true },
+    noiseWorkLabel: { type: String, trim: true },
+    substancesLabel: { type: String, trim: true },
   },
   { _id: false },
 );
@@ -30,6 +36,7 @@ const evaluationSchema = new mongoose.Schema(
     },
     frequencyScores: { type: [frequencyScoreSchema], default: [] },
     habitData: { type: habitDataSchema, default: {} },
+    overallScore: { type: Number, min: 0, max: 10 },
     status: {
       type: String,
       enum: ['complete', 'partial'],

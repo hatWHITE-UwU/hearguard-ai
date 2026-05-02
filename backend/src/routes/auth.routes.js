@@ -6,6 +6,7 @@ const {
   loginValidators,
   refreshValidators,
 } = require('../validators/auth.validators');
+const { updateProfileValidators } = require('../validators/profile.validators');
 
 const router = express.Router();
 
@@ -18,5 +19,12 @@ router.post('/refresh', refreshValidators, authController.refresh);
 router.post('/logout', authenticate, authController.logout);
 
 router.get('/me', authenticate, authController.me);
+
+router.patch(
+  '/me',
+  authenticate,
+  updateProfileValidators,
+  authController.patchMe,
+);
 
 module.exports = router;

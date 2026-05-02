@@ -12,8 +12,11 @@ const cors = require('cors');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 
-const { connectDatabase } = require('./src/config/database');
+const { connectDatabase, mongoose } = require('./src/config/database');
 const authRoutes = require('./src/routes/auth.routes');
+const evaluationRoutes = require('./src/routes/evaluation.routes');
+const noiseRoutes = require('./src/routes/noise.routes');
+const deviceRoutes = require('./src/routes/device.routes');
 const {
   notFoundHandler,
   errorHandler,
@@ -25,13 +28,29 @@ const env = getEnv();
 app.set('trust proxy', 1);
 
 app.use(helmet());
+const corsOrigins = new Set(
+  [
+    env.FRONTEND_URL,
+    'http://localhost:4200',
+    'http://127.0.0.1:4200',
+    'http://localhost:4201',
+    'http://127.0.0.1:4201',
+    'http://localhost:8080',
+    'http://127.0.0.1:8080',
+  ].filter(Boolean),
+);
 app.use(
   cors({
-    origin: env.FRONTEND_URL,
+    origin(origin, cb) {
+      if (!origin || corsOrigins.has(origin)) {
+        return cb(null, true);
+      }
+      return cb(null, false);
+    },
     credentials: true,
   }),
 );
-app.use(express.json({ limit: '10kb' }));
+app.use(express.json({ limit: '256kb' }));
 app.use(
   morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev', {
     skip: () => env.NODE_ENV === 'test',
@@ -45,29 +64,98 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-if (env.NODE_ENV !== 'test') {
-  app.use('/api', apiLimiter);
-}
-
 app.get('/health', (req, res) => {
+  const mongoReady = mongoose.connection.readyState === 1;
   res.status(200).json({
     success: true,
-    data: { status: 'ok' },
-    message: 'Servicio disponible',
+    data: {
+      status: 'ok',
+      mongo: mongoReady ? 'connected' : 'disconnected',
+    },
+    message: mongoReady
+      ? 'Servicio disponible'
+      : 'API arriba; MongoDB aún no conectado (revisa Atlas / MONGO_URI)',
   });
 });
 
-app.use('/api/auth', authRoutes);
+const apiRouter = express.Router();
+if (env.NODE_ENV !== 'test') {
+  apiRouter.use(apiLimiter);
+}
+
+apiRouter.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    data: {
+      service: 'HearGuard API',
+      health: '/health',
+      routes: {
+        register: { method: 'POST', path: '/api/auth/register' },
+        login: { method: 'POST', path: '/api/auth/login' },
+        refresh: { method: 'POST', path: '/api/auth/refresh' },
+      },
+    },
+    message: 'Usa POST JSON para registro e inicio de sesión (no GET en el navegador).',
+  });
+});
+
+apiRouter.use('/auth', authRoutes);
+apiRouter.use('/evaluations', evaluationRoutes);
+apiRouter.use('/noise', noiseRoutes);
+apiRouter.use('/devices', deviceRoutes);
+
+app.use('/api', apiRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
 
 async function startServer() {
-  await connectDatabase();
   if (require.main === module) {
-    app.listen(env.PORT, () => {
-      console.log(`HearGuard API escuchando en puerto ${env.PORT}`);
+    await new Promise((resolve) => {
+      app.listen(env.PORT, '0.0.0.0', () => {
+        console.log(
+          `HTTP listo: http://127.0.0.1:${env.PORT}/health — conectando MongoDB…`,
+        );
+        resolve(undefined);
+      });
     });
+  }
+  try {
+    await connectDatabase();
+    console.log('MongoDB listo — /api/* operativo');
+  } catch (err) {
+    console.error('\n❌ MongoDB no conectó tras reintentos.');
+    console.error(
+      '   Atlas → Network Access → añade tu IP actual o 0.0.0.0/0 (solo dev).',
+    );
+    console.error(
+      '   Local: desde la raíz del repo ejecuta `npm run mongo:local` (Docker) y revisa MONGO_URI en backend/.env',
+    );
+    console.error(`   Detalle: ${err?.message?.split('\n')[0] || err}\n`);
+    if (require.main === module) {
+      if (getEnv().NODE_ENV === 'development') {
+        console.warn(
+          '⚠️  Desarrollo: el servidor sigue en el puerto; /health y GET /api responden.',
+        );
+        console.warn(
+          '   Sin Mongo, el registro/login fallará hasta conectar. Reintento automático cada 15s…\n',
+        );
+        const retryMongo = () => {
+          setTimeout(async () => {
+            try {
+              await connectDatabase();
+              console.log('MongoDB conectado (reintento automático). /api operativo.');
+            } catch {
+              retryMongo();
+            }
+          }, 15_000);
+        };
+        retryMongo();
+        return;
+      }
+      process.exit(1);
+    }
+    throw err;
   }
 }
 
