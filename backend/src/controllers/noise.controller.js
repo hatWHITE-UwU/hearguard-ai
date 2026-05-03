@@ -121,19 +121,28 @@ async function createIot(req, res, next) {
  */
 async function list(req, res, next) {
   try {
-    const limit = req.query.limit ?? 50;
-    const skip = req.query.skip ?? 0;
+    // Vuln-fix: parse to bounded integers — prevents DoS and NoSQL operator injection
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
+    const skip  = Math.max(parseInt(req.query.skip,  10) || 0, 0);
+
     const filter = { userId: req.user.id };
+
     if (req.query.from || req.query.to) {
       filter.recordedAt = {};
-      if (req.query.from) {
-        filter.recordedAt.$gte = new Date(req.query.from);
+      // Vuln-fix: reject non-string values before Date parsing to block object injection
+      if (typeof req.query.from === 'string') {
+        const d = new Date(req.query.from);
+        if (!isNaN(d.getTime())) filter.recordedAt.$gte = d;
       }
-      if (req.query.to) {
-        filter.recordedAt.$lte = new Date(req.query.to);
+      if (typeof req.query.to === 'string') {
+        const d = new Date(req.query.to);
+        if (!isNaN(d.getTime())) filter.recordedAt.$lte = d;
       }
+      if (Object.keys(filter.recordedAt).length === 0) delete filter.recordedAt;
     }
-    if (req.query.source) {
+
+    // Vuln-fix: reject non-string to prevent ?source[$ne]=null NoSQL injection
+    if (typeof req.query.source === 'string' && req.query.source.length > 0) {
       filter.source = req.query.source;
     }
     const rows = await NoiseRecord.find(filter)
