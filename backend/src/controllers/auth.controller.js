@@ -1,6 +1,11 @@
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
+
+// Valid bcrypt hash used only to equalize timing when user is not found.
+// Prevents email enumeration via response-time oracle.
+const BCRYPT_TIMING_DUMMY = '$2b$12$KIX.nAbFUhIGxEimqfFAL.BvG5VGGPiPrE5e/Y/oE9HQ4f9GmcGjS';
 const {
   generateAccessToken,
   generateRefreshToken,
@@ -125,7 +130,13 @@ async function login(req, res, next) {
       isDeleted: false,
     }).select('+password');
 
-    if (!user || !(await user.comparePassword(password))) {
+    // Vuln-fix: always run bcrypt to prevent timing oracle (email enumeration).
+    // When user not found, a dummy compare runs so response time is always ~250ms.
+    const passwordOk = user
+      ? await user.comparePassword(password)
+      : (await bcrypt.compare(password, BCRYPT_TIMING_DUMMY), false);
+
+    if (!user || !passwordOk) {
       return res.status(401).json({
         success: false,
         error: 'UNAUTHORIZED',
@@ -329,14 +340,16 @@ async function patchMe(req, res, next) {
     if (gender != null) user.gender = gender;
     if (occupation != null) user.occupation = occupation;
     if (city != null) user.city = city;
-    if (settings) {
-      if (settings.reminders != null) {
+    // Vuln-fix: require plain object to block prototype pollution and MongoDB operator injection.
+    // Explicit typeof guards ensure each field gets only its expected primitive type.
+    if (settings !== null && typeof settings === 'object' && !Array.isArray(settings)) {
+      if (typeof settings.reminders === 'boolean') {
         user.settings.reminders = settings.reminders;
       }
-      if (settings.darkTheme != null) {
+      if (typeof settings.darkTheme === 'boolean') {
         user.settings.darkTheme = settings.darkTheme;
       }
-      if (settings.volumeUnit != null) {
+      if (typeof settings.volumeUnit === 'string') {
         user.settings.volumeUnit = settings.volumeUnit;
       }
     }
