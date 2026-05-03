@@ -222,9 +222,27 @@ const CHART_FILL = 'rgba(0, 229, 255, 0.14)';
     }
 
     .quick-list {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: 1fr;
       gap: var(--space-sm);
+    }
+
+    @media (min-width: 540px) {
+      .quick-list {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .quick-tile {
+        flex-direction: column;
+        align-items: flex-start;
+        min-height: 110px;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .page { padding: var(--space-lg) var(--space-margin); }
+
+      .chart-wrap { height: 200px; }
     }
 
     .quick-tile {
