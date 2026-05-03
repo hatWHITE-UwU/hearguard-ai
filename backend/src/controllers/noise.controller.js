@@ -115,6 +115,27 @@ async function createIot(req, res, next) {
 }
 
 /**
+ * Builds a MongoDB date range filter from raw query strings.
+ * Returns null when neither bound produces a valid Date.
+ * Vuln-safe: rejects non-string inputs and invalid Date values.
+ * @param {unknown} from
+ * @param {unknown} to
+ * @returns {{ $gte?: Date, $lte?: Date } | null}
+ */
+function buildDateFilter(from, to) {
+  const range = {};
+  if (typeof from === 'string') {
+    const d = new Date(from);
+    if (!isNaN(d.getTime())) range.$gte = d;
+  }
+  if (typeof to === 'string') {
+    const d = new Date(to);
+    if (!isNaN(d.getTime())) range.$lte = d;
+  }
+  return Object.keys(range).length > 0 ? range : null;
+}
+
+/**
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  * @param {import('express').NextFunction} next
@@ -128,17 +149,8 @@ async function list(req, res, next) {
     const filter = { userId: req.user.id };
 
     if (req.query.from || req.query.to) {
-      filter.recordedAt = {};
-      // Vuln-fix: reject non-string values before Date parsing to block object injection
-      if (typeof req.query.from === 'string') {
-        const d = new Date(req.query.from);
-        if (!isNaN(d.getTime())) filter.recordedAt.$gte = d;
-      }
-      if (typeof req.query.to === 'string') {
-        const d = new Date(req.query.to);
-        if (!isNaN(d.getTime())) filter.recordedAt.$lte = d;
-      }
-      if (Object.keys(filter.recordedAt).length === 0) delete filter.recordedAt;
+      const range = buildDateFilter(req.query.from, req.query.to);
+      if (range) filter.recordedAt = range;
     }
 
     // Vuln-fix: reject non-string to prevent ?source[$ne]=null NoSQL injection
