@@ -131,10 +131,14 @@ async function login(req, res, next) {
     }).select('+password');
 
     // Vuln-fix: always run bcrypt to prevent timing oracle (email enumeration).
-    // When user not found, a dummy compare runs so response time is always ~250ms.
-    const passwordOk = user
-      ? await user.comparePassword(password)
-      : (await bcrypt.compare(password, BCRYPT_TIMING_DUMMY), false);
+    // Explicit if/else avoids comma-operator pattern where bcrypt result could be
+    // accidentally used as the auth decision instead of always returning false.
+    let passwordOk = false;
+    if (user) {
+      passwordOk = await user.comparePassword(password);
+    } else {
+      await bcrypt.compare(password, BCRYPT_TIMING_DUMMY); // timing equalization only
+    }
 
     if (!user || !passwordOk) {
       return res.status(401).json({
