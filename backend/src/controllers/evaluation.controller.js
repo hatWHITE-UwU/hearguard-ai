@@ -152,8 +152,9 @@ async function create(req, res, next) {
  */
 async function list(req, res, next) {
   try {
-    const limit = req.query.limit ?? 20;
-    const skip = req.query.skip ?? 0;
+    // Vuln-fix: parse to bounded integers — prevents DoS and NoSQL operator injection
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 100);
+    const skip  = Math.max(parseInt(req.query.skip,  10) || 0, 0);
     const filter = { userId: req.user.id };
     const [items, total] = await Promise.all([
       Evaluation.find(filter)
