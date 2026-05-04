@@ -8,6 +8,7 @@ import 'features/auth/login_screen.dart';
 import 'features/auth/register_screen.dart';
 import 'features/shell/main_shell.dart';
 import 'features/hearing/hearing_screen.dart';
+import 'features/results/results_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,6 +41,7 @@ class HearGuardApp extends StatelessWidget {
           '/register':(_) => const RegisterScreen(),
           '/shell':   (_) => const MainShell(),
           '/hearing': (_) => const HearingScreen(),
+          '/results': (_) => const ResultsScreen(),
         },
       ),
     );

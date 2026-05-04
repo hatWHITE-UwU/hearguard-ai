@@ -111,14 +111,16 @@ class _HearingScreenState extends State<HearingScreen> {
         'habitData': habitData,
       });
 
-      final score = (res['data']?['evaluation']?['overallScore'] as num?)?.toStringAsFixed(1);
+      final data = res['data'] as Map<String, dynamic>? ?? {};
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/shell');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(score != null ? 'Evaluación completada — score: $score' : 'Evaluación completada'),
-            backgroundColor: AppTheme.success,
-          ),
+        Navigator.pushReplacementNamed(
+          context,
+          '/results',
+          arguments: {
+            'evaluation':      data['evaluation']      as Map<String, dynamic>? ?? {},
+            'riskResult':      data['riskResult']      as Map<String, dynamic>?,
+            'recommendations': data['recommendations'] as List<dynamic>? ?? [],
+          },
         );
       }
     } catch (_) {

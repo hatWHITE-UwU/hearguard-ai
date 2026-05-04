@@ -29,11 +29,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       final evRes = await api.get('/api/evaluations', params: {'limit': '1'});
       final first = (evRes['data']?['items'] as List?)?.firstOrNull;
-      if (first != null && first['overallScore'] != null) {
-        setState(() {
-          _riskScore = ((10 - (first['overallScore'] as num)) * 10).clamp(0, 100).toDouble();
-          _riskLabel = 'Estimación';
-        });
+      if (first != null) {
+        final id = first['_id'] as String?;
+        if (id != null) {
+          try {
+            final detail = await api.get('/api/evaluations/$id');
+            final risk = detail['data']?['riskResult'] as Map<String, dynamic>?;
+            if (risk != null && risk['riskScore'] != null) {
+              setState(() {
+                _riskScore = (risk['riskScore'] as num).toDouble().clamp(0, 100);
+                _riskLabel = risk['riskLevel'] as String? ?? 'Estimación';
+              });
+            }
+          } catch (_) {}
+        }
+        if (_riskScore == 0 && first['overallScore'] != null) {
+          setState(() {
+            _riskScore = ((10 - (first['overallScore'] as num)) * 10).clamp(0, 100).toDouble();
+            _riskLabel = 'Estimación';
+          });
+        }
       }
     } catch (_) {}
     try {
@@ -47,6 +62,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Color _riskColor(double score) {
     if (score < 30) return AppTheme.success;
     if (score < 60) return AppTheme.warning;
+    if (score < 80) return const Color(0xFFFF8C00);
     return AppTheme.danger;
   }
 
