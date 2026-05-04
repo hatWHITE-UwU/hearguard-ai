@@ -126,8 +126,23 @@ export class ResultsComponent implements OnInit {
       this.chartData = evaluationBarChartData(d.rows);
       this.loading.set(false);
     } else if (id) {
-      this.loading.set(false);
-      this.error.set('Abre una evaluación demo desde Registros (demo-2, demo-6, demo-9).');
+      this.http
+        .get<ApiEnvelope<any>>(`${environment.apiUrl}/api/evaluations/${id}`)
+        .subscribe({
+          next: (res) => {
+            const ev = res.data.evaluation;
+            this.overall.set(ev.overallScore ?? 0);
+            this.label.set('Evaluación auditiva');
+            if (ev.frequencyScores?.length) {
+              this.buildChart(ev.frequencyScores);
+            }
+            this.loading.set(false);
+          },
+          error: () => {
+            this.loading.set(false);
+            this.error.set('No se pudo cargar la evaluación.');
+          },
+        });
     } else {
       this.loading.set(false);
       this.error.set('Ruta no válida.');
