@@ -126,11 +126,11 @@ function buildDateFilter(from, to) {
   const range = {};
   if (typeof from === 'string') {
     const d = new Date(from);
-    if (!isNaN(d.getTime())) range.$gte = d;
+    if (!Number.isNaN(d.getTime())) range.$gte = d;
   }
   if (typeof to === 'string') {
     const d = new Date(to);
-    if (!isNaN(d.getTime())) range.$lte = d;
+    if (!Number.isNaN(d.getTime())) range.$lte = d;
   }
   return Object.keys(range).length > 0 ? range : null;
 }
@@ -143,8 +143,8 @@ function buildDateFilter(from, to) {
 async function list(req, res, next) {
   try {
     // Vuln-fix: parse to bounded integers — prevents DoS and NoSQL operator injection
-    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
-    const skip  = Math.max(parseInt(req.query.skip,  10) || 0, 0);
+    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 50, 1), 200);
+    const skip  = Math.max(Number.parseInt(req.query.skip,  10) || 0, 0);
 
     const filter = { userId: req.user.id };
 

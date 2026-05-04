@@ -307,6 +307,56 @@ describe('HearGuard API — Fase 1', () => {
     });
   });
 
+  describe('PATCH /api/auth/me', () => {
+    it('actualiza nombre del usuario', async () => {
+      const reg = await request(app)
+        .post('/api/auth/register')
+        .send(registerPayload)
+        .expect(201);
+      const token = reg.body.data.accessToken;
+      const res = await request(app)
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'Nombre Actualizado' })
+        .expect(200);
+      expect(res.body.data.user.name).toBe('Nombre Actualizado');
+    });
+
+    it('actualiza settings del usuario', async () => {
+      const reg = await request(app)
+        .post('/api/auth/register')
+        .send(registerPayload)
+        .expect(201);
+      const token = reg.body.data.accessToken;
+      const res = await request(app)
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ settings: { darkTheme: true, reminders: false } })
+        .expect(200);
+      expect(res.body.data.user.settings.darkTheme).toBe(true);
+      expect(res.body.data.user.settings.reminders).toBe(false);
+    });
+
+    it('ignora campos no permitidos (sin error)', async () => {
+      const reg = await request(app)
+        .post('/api/auth/register')
+        .send(registerPayload)
+        .expect(201);
+      const token = reg.body.data.accessToken;
+      const res = await request(app)
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'Nuevo', rol: 'admin' })
+        .expect(200);
+      expect(res.body.data.user.name).toBe('Nuevo');
+      expect(res.body.data.user.rol).toBeUndefined();
+    });
+
+    it('rechaza sin autenticación con 401', async () => {
+      await request(app).patch('/api/auth/me').send({ name: 'X' }).expect(401);
+    });
+  });
+
   describe('rutas inexistentes', () => {
     it('responde 404 con formato API', async () => {
       const res = await request(app).get('/api/no-existe').expect(404);

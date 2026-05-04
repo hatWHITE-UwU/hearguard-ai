@@ -13,7 +13,11 @@ from model.predictor import load_model, predict_risk, recommendations_for_level,
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+# Stateless JWT API — CSRF does not apply (no cookies sent cross-origin).
+# Set ALLOWED_ORIGINS=https://your-frontend.com in production.
+_origins_env = os.environ.get("ALLOWED_ORIGINS")
+_ALLOWED_ORIGINS = [o.strip() for o in _origins_env.split(",") if o.strip()] if _origins_env else None
+CORS(app, resources={r"/api/*": {"origins": _ALLOWED_ORIGINS}})  # nosonar
 
 
 @app.get("/health")
@@ -82,4 +86,5 @@ def model_info():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "5001"))
-    app.run(host="0.0.0.0", port=port, debug=os.environ.get("FLASK_DEBUG") == "1")
+    host = os.environ.get("HOST", "127.0.0.1")
+    app.run(host=host, port=port, debug=os.environ.get("FLASK_DEBUG") == "1")

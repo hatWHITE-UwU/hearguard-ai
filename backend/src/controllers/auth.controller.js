@@ -3,9 +3,10 @@ const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
 
-// Valid bcrypt hash used only to equalize timing when user is not found.
-// Prevents email enumeration via response-time oracle.
-const BCRYPT_TIMING_DUMMY = '$2b$12$KIX.nAbFUhIGxEimqfFAL.BvG5VGGPiPrE5e/Y/oE9HQ4f9GmcGjS';
+// Not a real credential — a pre-computed bcrypt hash used ONLY to force bcrypt
+// to run its full comparison cost when the user is not found, equalizing response
+// time and preventing email-enumeration via timing oracle. // NOSONAR
+const BCRYPT_TIMING_DUMMY = '$2b$12$KIX.nAbFUhIGxEimqfFAL.BvG5VGGPiPrE5e/Y/oE9HQ4f9GmcGjS'; // NOSONAR
 
 /** Returns true only for plain objects — guards against prototype pollution and MongoDB injection. */
 function isPlainObject(val) {
@@ -61,7 +62,7 @@ async function register(req, res, next) {
   try {
     const { name, email, password, age, gender, occupation, city } = req.body;
 
-    const existing = await User.findOne({ email });
+    const existing = await User.findOne({ email: String(email) });
     if (existing) {
       return res.status(409).json({
         success: false,
@@ -131,7 +132,7 @@ async function login(req, res, next) {
     const { email, password } = req.body;
 
     const user = await User.findOne({
-      email,
+      email: String(email),
       isDeleted: false,
     }).select('+password');
 

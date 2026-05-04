@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { getEnv } = require('./env');
+const logger = require('../utils/logger');
 
 mongoose.set('strictQuery', true);
 
@@ -27,14 +28,14 @@ async function connectDatabase(opts = {}) {
     try {
       await mongoose.connect(MONGO_URI, connectOpts);
       if (attempt > 1) {
-        console.log(`MongoDB conectado (intento ${attempt} de ${maxAttempts})`);
+        logger.info(`MongoDB conectado (intento ${attempt} de ${maxAttempts})`);
       }
       return mongoose;
     } catch (err) {
       lastErr = err;
       const msg = err?.message?.split('\n')[0] || String(err);
       if (attempt < maxAttempts) {
-        console.warn(
+        logger.warn(
           `[MongoDB] ${attempt}/${maxAttempts} falló: ${msg}. Reintento en ${delayMs / 1000}s…`,
         );
         await new Promise((r) => setTimeout(r, delayMs));

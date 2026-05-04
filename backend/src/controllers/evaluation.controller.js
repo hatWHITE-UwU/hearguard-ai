@@ -9,6 +9,7 @@ const {
   postGenerateRecommendations,
   mapRiskLevelToEnum,
 } = require('../services/ai.service');
+const logger = require('../utils/logger');
 
 const HZ_ORDER = [250, 500, 1000, 2000, 4000, 8000];
 
@@ -127,7 +128,7 @@ async function create(req, res, next) {
         await riskResultDoc.save();
       }
     } else if (process.env.NODE_ENV !== 'test') {
-      console.warn('[ai.service] predict degradado:', pred.error?.message);
+      logger.warn('[ai.service] predict degradado: ' + pred.error?.message);
     }
 
     const populated = evaluation.toObject();
@@ -153,8 +154,8 @@ async function create(req, res, next) {
 async function list(req, res, next) {
   try {
     // Vuln-fix: parse to bounded integers — prevents DoS and NoSQL operator injection
-    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 100);
-    const skip  = Math.max(parseInt(req.query.skip,  10) || 0, 0);
+    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 20, 1), 100);
+    const skip  = Math.max(Number.parseInt(req.query.skip,  10) || 0, 0);
     const filter = { userId: req.user.id };
     const [items, total] = await Promise.all([
       Evaluation.find(filter)

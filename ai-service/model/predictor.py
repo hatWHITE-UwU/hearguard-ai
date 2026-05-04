@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-import random
+import secrets
 from typing import Any
 
 import joblib
@@ -45,12 +45,12 @@ def score_to_level(score: float) -> str:
 def score_to_years(score: float) -> int:
     s = int(round(float(score)))
     if s <= 25:
-        return random.randint(20, 30)
+        return secrets.randbelow(11) + 20  # [20, 30]
     if s <= 50:
-        return random.randint(7, 15)
+        return secrets.randbelow(9) + 7    # [7, 15]
     if s <= 75:
-        return random.randint(3, 7)
-    return random.randint(1, 3)
+        return secrets.randbelow(5) + 3    # [3, 7]
+    return secrets.randbelow(3) + 1        # [1, 3]
 
 
 def predict_risk(payload: dict[str, Any]) -> dict[str, Any]:

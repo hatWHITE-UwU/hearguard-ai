@@ -13,6 +13,7 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 
 const { connectDatabase, mongoose } = require('./src/config/database');
+const logger = require('./src/utils/logger');
 const authRoutes = require('./src/routes/auth.routes');
 const evaluationRoutes = require('./src/routes/evaluation.routes');
 const noiseRoutes = require('./src/routes/noise.routes');
@@ -64,7 +65,7 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   const mongoReady = mongoose.connection.readyState === 1;
   res.status(200).json({
     success: true,
@@ -83,7 +84,7 @@ if (env.NODE_ENV !== 'test') {
   apiRouter.use(apiLimiter);
 }
 
-apiRouter.get('/', (req, res) => {
+apiRouter.get('/', (_req, res) => {
   res.status(200).json({
     success: true,
     data: {
@@ -113,38 +114,28 @@ async function startServer() {
   if (require.main === module) {
     await new Promise((resolve) => {
       app.listen(env.PORT, '0.0.0.0', () => {
-        console.log(
-          `HTTP listo: http://127.0.0.1:${env.PORT}/health — conectando MongoDB…`,
-        );
+        logger.info(`HTTP listo: http://127.0.0.1:${env.PORT}/health — conectando MongoDB…`);
         resolve(undefined);
       });
     });
   }
   try {
     await connectDatabase();
-    console.log('MongoDB listo — /api/* operativo');
+    logger.info('MongoDB listo — /api/* operativo');
   } catch (err) {
-    console.error('\n❌ MongoDB no conectó tras reintentos.');
-    console.error(
-      '   Atlas → Network Access → añade tu IP actual o 0.0.0.0/0 (solo dev).',
-    );
-    console.error(
-      '   Local: desde la raíz del repo ejecuta `npm run mongo:local` (Docker) y revisa MONGO_URI en backend/.env',
-    );
-    console.error(`   Detalle: ${err?.message?.split('\n')[0] || err}\n`);
+    logger.error('MongoDB no conectó tras reintentos.');
+    logger.error('Atlas → Network Access → añade tu IP actual o 0.0.0.0/0 (solo dev).');
+    logger.error('Local: desde la raíz ejecuta `npm run mongo:local` y revisa MONGO_URI en backend/.env');
+    logger.error(`Detalle: ${err?.message?.split('\n')[0] || err}`);
     if (require.main === module) {
       if (getEnv().NODE_ENV === 'development') {
-        console.warn(
-          '⚠️  Desarrollo: el servidor sigue en el puerto; /health y GET /api responden.',
-        );
-        console.warn(
-          '   Sin Mongo, el registro/login fallará hasta conectar. Reintento automático cada 15s…\n',
-        );
+        logger.warn('Desarrollo: el servidor sigue en el puerto; /health y GET /api responden.');
+        logger.warn('Sin Mongo, el registro/login fallará hasta conectar. Reintento automático cada 15s…');
         const retryMongo = () => {
           setTimeout(async () => {
             try {
               await connectDatabase();
-              console.log('MongoDB conectado (reintento automático). /api operativo.');
+              logger.info('MongoDB conectado (reintento automático). /api operativo.');
             } catch {
               retryMongo();
             }
@@ -161,7 +152,7 @@ async function startServer() {
 
 if (require.main === module) {
   startServer().catch((err) => {
-    console.error('No se pudo iniciar el servidor:', err);
+    logger.error('No se pudo iniciar el servidor: ' + err?.message);
     process.exit(1);
   });
 }
