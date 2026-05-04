@@ -68,6 +68,14 @@ import { filter } from 'rxjs/operators';
             </svg>
             <span>Monitor</span>
           </a>
+          <a routerLink="/app/devices" routerLinkActive="active" class="sidebar-link" (click)="closeMenu()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+              <rect x="4" y="4" width="16" height="16" rx="2"/>
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 2v2M12 20v2M2 12h2M20 12h2" stroke-linecap="round"/>
+            </svg>
+            <span>Dispositivos</span>
+          </a>
           <a routerLink="/app/profile" routerLinkActive="active" class="sidebar-link" (click)="closeMenu()">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
               <circle cx="12" cy="8" r="4"/>

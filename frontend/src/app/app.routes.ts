@@ -105,6 +105,14 @@ export const routes: Routes = [
             (m) => m.AllRecordsComponent,
           ),
       },
+      {
+        path: 'devices',
+        data: { shellTitle: 'Dispositivos IoT' },
+        loadComponent: () =>
+          import('./features/devices/devices.component').then(
+            (m) => m.DevicesComponent,
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

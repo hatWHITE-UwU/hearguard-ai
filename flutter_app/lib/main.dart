@@ -1,50 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
+import 'core/services/auth_service.dart';
+import 'core/services/api_client.dart';
+import 'features/splash/splash_screen.dart';
+import 'features/auth/login_screen.dart';
+import 'features/auth/register_screen.dart';
+import 'features/shell/main_shell.dart';
+import 'features/hearing/hearing_screen.dart';
 
-void main() {
-  runApp(const HearGuardApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final auth = AuthService();
+  await auth.loadFromStorage();
+  runApp(HearGuardApp(auth: auth));
 }
 
-/// Esqueleto Fase 6: pantallas mínimas; amplía con Dio + flujos del backend.
 class HearGuardApp extends StatelessWidget {
-  const HearGuardApp({super.key});
+  const HearGuardApp({super.key, required this.auth});
+  final AuthService auth;
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'HearGuard AI',
-      theme: AppTheme.dark,
-      initialRoute: '/',
-      routes: {
-        '/': (_) => const _Placeholder('Splash'),
-        '/login': (_) => const _Placeholder('Login'),
-        '/register': (_) => const _Placeholder('Registro'),
-        '/dashboard': (_) => const _Placeholder('Dashboard'),
-        '/monitor': (_) => const _Placeholder('Monitoreo'),
-        '/hearing': (_) => const _Placeholder('Prueba auditiva'),
-        '/results': (_) => const _Placeholder('Resultados'),
-        '/recommendations': (_) => const _Placeholder('Recomendaciones'),
-        '/history': (_) => const _Placeholder('Historial'),
-        '/profile': (_) => const _Placeholder('Perfil'),
-      },
-    );
-  }
-}
-
-class _Placeholder extends StatelessWidget {
-  const _Placeholder(this.title);
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Text(
-          'HearGuard — $title\n(Configura API con Dio y navegación completa)',
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: AppTheme.textMuted),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AuthService>.value(value: auth),
+        ProxyProvider<AuthService, ApiClient>(
+          update: (_, authSvc, prev) => prev?..updateAuth(authSvc) ?? ApiClient(auth: authSvc),
         ),
+      ],
+      child: MaterialApp(
+        title: 'HearGuard AI',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.dark,
+        initialRoute: '/',
+        routes: {
+          '/':        (_) => const SplashScreen(),
+          '/login':   (_) => const LoginScreen(),
+          '/register':(_) => const RegisterScreen(),
+          '/shell':   (_) => const MainShell(),
+          '/hearing': (_) => const HearingScreen(),
+        },
       ),
     );
   }
