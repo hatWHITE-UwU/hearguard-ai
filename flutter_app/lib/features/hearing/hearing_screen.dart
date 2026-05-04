@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/services/api_client.dart';
+import '../../core/services/hearing_mapper.dart';
 import '../../core/theme/app_theme.dart';
 
 // ─── Question model ────────────────────────────────────────────────────────────
@@ -75,41 +76,8 @@ class _HearingScreenState extends State<HearingScreen> {
     setState(() => _submitting = true);
     try {
       final api = context.read<ApiClient>();
-
-      // Map questionnaire answers to habitData fields
-      final habitData = {
-        'headphoneHours': [0.0, 0.5, 2.0, 4.0][_answers[1]],
-        'noiseExposure':  [0.0, 0.5, 1.5, 2.0][_answers[2]],
-        'volumeLevel':    [40.0, 55.0, 70.0, 85.0][_answers[4]],
-        'occupationRisk': [0.0, 1.0, 2.0, 3.0][_answers[5]],
-        'smoking':        [0.0, 0.5, 1.5, 2.0][_answers[7]],
-      };
-
-      // Derive audiometric frequency scores from auditory difficulty indicators
-      final difficulty = [0.0, 0.5, 1.5, 3.0][_answers[0]];
-      final tinnitus   = [0.0, 0.0, 0.5, 1.0][_answers[3]];
-      final volRisk    = [0.0, 0.2, 0.5, 1.0][_answers[4]];
-      final yearsRisk  = [0.0, 0.3, 0.7, 1.5][_answers[6]];
-
-      final freqDefs = [
-        (250,  difficulty + yearsRisk * 0.5),
-        (500,  difficulty + yearsRisk * 0.7),
-        (1000, difficulty * 0.8 + volRisk + yearsRisk),
-        (2000, difficulty * 0.7 + volRisk + yearsRisk + tinnitus * 0.5),
-        (4000, difficulty * 0.5 + volRisk * 1.5 + yearsRisk * 1.2 + tinnitus),
-        (8000, difficulty * 0.3 + volRisk * 1.5 + yearsRisk * 1.5 + tinnitus * 1.5),
-      ];
-
-      final frequencyScores = freqDefs.map((fd) => {
-        'hz': fd.$1,
-        'score': double.parse(((9.0 - fd.$2).clamp(0.0, 10.0)).toStringAsFixed(1)),
-        'ear': 'both',
-      }).toList();
-
-      final res = await api.post('/api/evaluations', data: {
-        'frequencyScores': frequencyScores,
-        'habitData': habitData,
-      });
+      final payload = HearingMapper.buildPayload(_answers);
+      final res = await api.post('/api/evaluations', data: payload);
 
       final data = res['data'] as Map<String, dynamic>? ?? {};
       if (mounted) {
