@@ -130,3 +130,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  deploy:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    needs: [sonar]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Deploy backend to Render
+        run: curl -s "${{ secrets.RENDER_BACKEND_HOOK }}"
+      - name: Deploy AI service to Render
+        run: curl -s "${{ secrets.RENDER_AI_HOOK }}"
+      - name: Deploy frontend to Vercel
+        run: curl -s "${{ secrets.VERCEL_FRONTEND_HOOK }}"
