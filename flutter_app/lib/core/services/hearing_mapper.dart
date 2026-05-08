@@ -1,15 +1,15 @@
-/// Maps 8 questionnaire answer indices (0=best, 3=worst) to the
-/// frequencyScores + habitData payload expected by POST /api/evaluations.
-///
-/// Indices per question:
-///   0 — difficulty understanding speech in noisy places
-///   1 — headphone usage frequency
-///   2 — noisy environment exposure
-///   3 — tinnitus frequency
-///   4 — volume level (TV / phone)
-///   5 — hearing protection usage  (0=always → lowest risk)
-///   6 — years of occupational noise exposure
-///   7 — family history of hearing loss
+// Maps 8 questionnaire answer indices (0=best, 3=worst) to the
+// frequencyScores + habitData payload expected by POST /api/evaluations.
+//
+// Indices per question:
+//   0 — difficulty understanding speech in noisy places
+//   1 — headphone usage frequency
+//   2 — noisy environment exposure
+//   3 — tinnitus frequency
+//   4 — volume level (TV / phone)
+//   5 — hearing protection usage  (0=always → lowest risk)
+//   6 — years of occupational noise exposure
+//   7 — family history of hearing loss
 
 const _kFrequencies = [250, 500, 1000, 2000, 4000, 8000];
 
