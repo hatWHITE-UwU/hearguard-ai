@@ -5,6 +5,8 @@ import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { DEMO_UNIFIED_RECORDS } from '../../core/data/demo-mocks';
 import { RiskBadgeComponent } from '../../shared/components/risk-badge/risk-badge.component';
+import type { ApiEnvelope } from '../../shared/models/auth.model';
+import type { NoiseRecord, EvaluationItem, PaginatedList } from '../../shared/models/api.model';
 
 @Component({
   selector: 'hg-history',
@@ -235,12 +237,12 @@ export class HistoryComponent implements OnInit {
   private readonly http = inject(HttpClient);
 
   readonly tab = signal<'noise' | 'eval' | 'tips'>('noise');
-  readonly noise = signal<any[]>([]);
-  readonly evals = signal<any[]>([]);
+  readonly noise = signal<NoiseRecord[]>([]);
+  readonly evals = signal<EvaluationItem[]>([]);
 
   ngOnInit(): void {
     this.http
-      .get<any>(`${environment.apiUrl}/api/noise?limit=50`)
+      .get<ApiEnvelope<PaginatedList<NoiseRecord>>>(`${environment.apiUrl}/api/noise?limit=50`)
       .subscribe({
         next: (r) => {
           const api = r.data?.items || [];
@@ -272,7 +274,7 @@ export class HistoryComponent implements OnInit {
         },
       });
     this.http
-      .get<any>(`${environment.apiUrl}/api/evaluations?limit=50`)
+      .get<ApiEnvelope<PaginatedList<EvaluationItem>>>(`${environment.apiUrl}/api/evaluations?limit=50`)
       .subscribe({
         next: (r) => {
           const api = r.data?.items || [];
@@ -286,6 +288,7 @@ export class HistoryComponent implements OnInit {
             _id: d.id,
             overallScore: d.score ?? 7,
             takenAt: d.at,
+            status: 'demo',
           }));
           this.evals.set([...api, ...demoEval]);
         },
@@ -297,6 +300,7 @@ export class HistoryComponent implements OnInit {
                   _id: d.id,
                   overallScore: d.score ?? 7,
                   takenAt: d.at,
+                  status: 'demo',
                 }),
               ),
             );

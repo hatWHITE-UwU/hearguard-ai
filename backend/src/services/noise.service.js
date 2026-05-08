@@ -1,13 +1,20 @@
 'use strict';
 
+const {
+  DB_LOW_THRESHOLD,
+  DB_MODERATE_THRESHOLD,
+  DB_HIGH_THRESHOLD,
+  DB_EXPOSURE_THRESHOLD,
+} = require('../config/constants');
+
 /**
  * @param {number} dbLevel
  * @returns {'bajo'|'moderado'|'alto'|'muy_alto'}
  */
 function classifyRiskTag(dbLevel) {
-  if (dbLevel < 55) return 'bajo';
-  if (dbLevel < 75) return 'moderado';
-  if (dbLevel < 95) return 'alto';
+  if (dbLevel < DB_LOW_THRESHOLD) return 'bajo';
+  if (dbLevel < DB_MODERATE_THRESHOLD) return 'moderado';
+  if (dbLevel < DB_HIGH_THRESHOLD) return 'alto';
   return 'muy_alto';
 }
 
@@ -41,7 +48,7 @@ async function statsForToday(Model, userId, startOfDay = null) {
   const sum = rows.reduce((a, r) => a + r.dbLevel, 0);
   const maxDb = Math.max(...rows.map((r) => r.dbLevel));
   /** Aproximación: 1 registro ≈ 1 minuto por encima de 70 dB */
-  const exposureMinutes = rows.filter((r) => r.dbLevel > 70).length;
+  const exposureMinutes = rows.filter((r) => r.dbLevel > DB_EXPOSURE_THRESHOLD).length;
 
   return {
     count: rows.length,
@@ -73,7 +80,7 @@ async function statsForWeek(Model, userId) {
 
   const sum = rows.reduce((a, r) => a + r.dbLevel, 0);
   const maxDb = Math.max(...rows.map((r) => r.dbLevel));
-  const exposureMinutes = rows.filter((r) => r.dbLevel > 70).length;
+  const exposureMinutes = rows.filter((r) => r.dbLevel > DB_EXPOSURE_THRESHOLD).length;
 
   return {
     count: rows.length,

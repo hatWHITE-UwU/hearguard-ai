@@ -8,6 +8,11 @@ const {
   statsForToday,
   statsForWeek,
 } = require('../services/noise.service');
+const {
+  HIGH_RISK_DB_THRESHOLD,
+  DEFAULT_NOISE_LIMIT,
+  MAX_NOISE_LIMIT,
+} = require('../config/constants');
 
 /**
  * @param {import('express').Request} req
@@ -39,7 +44,7 @@ async function create(req, res, next) {
       }
     }
     const riskTag = classifyRiskTag(dbLevel);
-    const highRisk = dbLevel > 85;
+    const highRisk = dbLevel > HIGH_RISK_DB_THRESHOLD;
     const doc = await NoiseRecord.create({
       userId: req.user.id,
       deviceId: deviceId || undefined,
@@ -92,7 +97,7 @@ async function createIot(req, res, next) {
     }
     const { dbLevel } = req.body;
     const riskTag = classifyRiskTag(dbLevel);
-    const highRisk = dbLevel > 85;
+    const highRisk = dbLevel > HIGH_RISK_DB_THRESHOLD;
     device.lastSeenAt = new Date();
     await device.save();
 
@@ -143,7 +148,7 @@ function buildDateFilter(from, to) {
 async function list(req, res, next) {
   try {
     // Vuln-fix: parse to bounded integers — prevents DoS and NoSQL operator injection
-    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 50, 1), 200);
+    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || DEFAULT_NOISE_LIMIT, 1), MAX_NOISE_LIMIT);
     const skip  = Math.max(Number.parseInt(req.query.skip,  10) || 0, 0);
 
     const filter = { userId: req.user.id };

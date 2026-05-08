@@ -2,6 +2,7 @@ import { Component, inject, OnDestroy, OnInit, computed, effect, signal } from '
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Chart, registerables } from 'chart.js';
+import type { ChartData, ChartOptions } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { NoiseMonitorService } from './noise-monitor.service';
 import { environment } from '../../../environments/environment';
@@ -158,8 +159,8 @@ export class MonitorComponent implements OnInit, OnDestroy {
   readonly risk = computed(() => this.noise.classifyRisk(this.noise.dbLevel()));
   readonly saving = signal(false);
 
-  chartData: any = { labels: [], datasets: [{ data: [], borderColor: LINE_COLOR, backgroundColor: FILL_COLOR, tension: 0.35, fill: true, pointRadius: 0 }] };
-  readonly chartOptions: any = {
+  chartData: ChartData<'line'> = { labels: [], datasets: [{ data: [], borderColor: LINE_COLOR, backgroundColor: FILL_COLOR, tension: 0.35, fill: true, pointRadius: 0 }] };
+  readonly chartOptions: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
     animation: false,
@@ -189,7 +190,7 @@ export class MonitorComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.noise.startMic().catch(() => { /* permiso denegado */ });
+    void this.noise.startMic().catch((_err: unknown) => undefined);
   }
 
   ngOnDestroy(): void {

@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Chart, registerables } from 'chart.js';
+import type { ChartData, ChartOptions } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { environment } from '../../../environments/environment';
 import {
@@ -10,7 +11,9 @@ import {
   averageScoreFromRows,
 } from '../../core/data/demo-mocks';
 import type { ApiEnvelope } from '../../shared/models/auth.model';
+import type { EvaluationCreate, EvaluationDetail } from '../../shared/models/api.model';
 import { HearingTestService } from '../hearing-test/hearing-test.service';
+import type { FrequencyScoreRow } from '../hearing-test/hearing-test.service';
 import { GaugeComponent } from '../../shared/components/gauge/gauge.component';
 
 Chart.register(...registerables);
@@ -105,8 +108,8 @@ export class ResultsComponent implements OnInit {
   readonly label = signal('Resumen');
   readonly riskScore = signal<number | null>(null);
 
-  chartData: any = { labels: [], datasets: [] };
-  chartOptions: any = {
+  chartData: ChartData<'bar'> = { labels: [], datasets: [] };
+  chartOptions: ChartOptions<'bar'> = {
     responsive: true,
     plugins: { legend: { display: false } },
     scales: {
@@ -127,7 +130,7 @@ export class ResultsComponent implements OnInit {
       this.loading.set(false);
     } else if (id) {
       this.http
-        .get<ApiEnvelope<any>>(`${environment.apiUrl}/api/evaluations/${id}`)
+        .get<ApiEnvelope<EvaluationDetail>>(`${environment.apiUrl}/api/evaluations/${id}`)
         .subscribe({
           next: (res) => {
             const ev = res.data.evaluation;
@@ -166,7 +169,7 @@ export class ResultsComponent implements OnInit {
       habitData: habit,
     };
     this.http
-      .post<ApiEnvelope<any>>(`${environment.apiUrl}/api/evaluations`, body)
+      .post<ApiEnvelope<EvaluationCreate>>(`${environment.apiUrl}/api/evaluations`, body)
       .subscribe({
         next: (res) => {
           const ev = res.data.evaluation;
@@ -199,7 +202,7 @@ export class ResultsComponent implements OnInit {
       });
   }
 
-  private buildChart(rows: { hz: number; score: number; ear: string }[]): void {
-    this.chartData = evaluationBarChartData(rows as any);
+  private buildChart(rows: FrequencyScoreRow[]): void {
+    this.chartData = evaluationBarChartData(rows);
   }
 }

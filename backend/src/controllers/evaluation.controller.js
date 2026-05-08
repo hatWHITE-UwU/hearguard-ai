@@ -10,6 +10,11 @@ const {
   mapRiskLevelToEnum,
 } = require('../services/ai.service');
 const logger = require('../utils/logger');
+const {
+  DEFAULT_VOLUME_LEVEL,
+  DEFAULT_EVAL_LIMIT,
+  MAX_EVAL_LIMIT,
+} = require('../config/constants');
 
 const HZ_ORDER = [250, 500, 1000, 2000, 4000, 8000];
 
@@ -48,7 +53,7 @@ function buildAiPayload(user, evaluation) {
   return {
     age: user.age != null ? Number(user.age) : 28,
     headphoneHours: habit.headphoneHours != null ? Number(habit.headphoneHours) : 0,
-    volumeLevel: habit.volumeLevel != null ? Number(habit.volumeLevel) : 40,
+    volumeLevel: habit.volumeLevel != null ? Number(habit.volumeLevel) : DEFAULT_VOLUME_LEVEL,
     noiseExposure: habit.noiseExposure != null ? Number(habit.noiseExposure) : 0,
     occupationRisk:
       habit.occupationRisk != null ? Number(habit.occupationRisk) : 0,
@@ -154,7 +159,7 @@ async function create(req, res, next) {
 async function list(req, res, next) {
   try {
     // Vuln-fix: parse to bounded integers — prevents DoS and NoSQL operator injection
-    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 20, 1), 100);
+    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || DEFAULT_EVAL_LIMIT, 1), MAX_EVAL_LIMIT);
     const skip  = Math.max(Number.parseInt(req.query.skip,  10) || 0, 0);
     const filter = { userId: req.user.id };
     const [items, total] = await Promise.all([

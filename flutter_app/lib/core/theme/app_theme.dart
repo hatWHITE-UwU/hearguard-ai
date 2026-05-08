@@ -44,7 +44,7 @@ class AppTheme {
           type: BottomNavigationBarType.fixed,
           elevation: 0,
         ),
-        cardTheme: const CardThemeData(
+        cardTheme: const CardTheme(
           color: bgCard,
           elevation: 0,
           shape: RoundedRectangleBorder(

@@ -1,15 +1,11 @@
 'use strict';
 
 const crypto = require('crypto');
-const { validationResult, body } = require('express-validator');
+const { validationResult } = require('express-validator');
 const Device = require('../models/Device');
+const { createDeviceValidators } = require('../validators/device.validators');
 
-const createValidators = [
-  body('name').trim().notEmpty().isLength({ max: 120 }),
-  body('type').optional().isIn(['arduino', 'esp32', 'other']),
-  body('hardwareId').optional().trim().isLength({ max: 120 }),
-  body('firmwareVersion').optional().trim().isLength({ max: 80 }),
-];
+const createValidators = createDeviceValidators;
 
 /**
  * @param {import('express').Request} req

@@ -7,7 +7,8 @@ module.exports = {
   verbose: true,
   setupFiles: ['<rootDir>/tests/jest.setup.env.js'],
   setupFilesAfterEnv: ['<rootDir>/tests/jest.mongodb.js'],
-  // Fase 1: auth + User; modelos IoT/evaluación se cubrirán en fases siguientes.
+  // Cubre todos los controllers: auth, noise, evaluation, device.
+  coverageReporters: ['lcov', 'text-summary'],
   collectCoverageFrom: [
     'src/**/*.js',
     '!src/**/*.test.js',

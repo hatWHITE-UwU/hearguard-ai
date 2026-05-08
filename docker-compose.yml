@@ -22,6 +22,12 @@ services:
       - "5001:5001"
     environment:
       PORT: "5001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   backend:
     build:
@@ -37,11 +43,17 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change_me_in_prod_minimum_32_chars_hex_string_here}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change_me_refresh_secret_also_long_enough}
       FRONTEND_URL: http://localhost:8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     depends_on:
       mongodb:
         condition: service_healthy
       ai-service:
-        condition: service_started
+        condition: service_healthy
 
   frontend:
     build:

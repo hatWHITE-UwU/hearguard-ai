@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import random
+
+_LOG = logging.getLogger(__name__)
 
 import joblib
 import numpy as np
@@ -94,9 +97,10 @@ def train_and_save() -> str:
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, "risk_model.pkl")
     joblib.dump({"model": model, "r2_holdout": float(score)}, out_path)
-    print(f"Modelo guardado en {out_path} (R2 holdout ~ {score:.3f})")
+    _LOG.info("Modelo guardado en %s (R2 holdout ~ %.3f)", out_path, score)
     return out_path
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     train_and_save()

@@ -9,6 +9,8 @@ import {
   DEMO_UNIFIED_RECORDS,
   type DemoUnifiedRecord,
 } from '../../core/data/demo-mocks';
+import type { ApiEnvelope } from '../../shared/models/auth.model';
+import type { NoiseRecord, EvaluationItem, PaginatedList } from '../../shared/models/api.model';
 import { RiskBadgeComponent } from '../../shared/components/risk-badge/risk-badge.component';
 
 type SourceTag = 'demo' | 'servidor';
@@ -272,20 +274,20 @@ export class AllRecordsComponent implements OnInit {
 
     forkJoin({
       noise: this.http
-        .get<{ data?: { items?: any[] } }>(
+        .get<ApiEnvelope<PaginatedList<NoiseRecord>>>(
           `${environment.apiUrl}/api/noise?limit=50`,
         )
         .pipe(
           map((r) => r.data?.items ?? []),
-          catchError(() => of([] as any[])),
+          catchError(() => of([] as NoiseRecord[])),
         ),
       evals: this.http
-        .get<{ data?: { items?: any[] } }>(
+        .get<ApiEnvelope<PaginatedList<EvaluationItem>>>(
           `${environment.apiUrl}/api/evaluations?limit=50`,
         )
         .pipe(
           map((r) => r.data?.items ?? []),
-          catchError(() => of([] as any[])),
+          catchError(() => of([] as EvaluationItem[])),
         ),
     }).subscribe(({ noise, evals }) => {
       const fromApi: Row[] = [];

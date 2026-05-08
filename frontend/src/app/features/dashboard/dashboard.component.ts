@@ -11,6 +11,8 @@ import {
 } from '../../core/data/demo-mocks';
 import { AuthService } from '../../core/services/auth.service';
 import type { ApiEnvelope } from '../../shared/models/auth.model';
+import type { EvaluationItem, NoiseStats, PaginatedList } from '../../shared/models/api.model';
+import type { ChartData, ChartOptions } from 'chart.js';
 import { GaugeComponent } from '../../shared/components/gauge/gauge.component';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, registerables } from 'chart.js';
@@ -340,8 +342,8 @@ export class DashboardComponent implements OnInit {
   readonly riskLabel = signal('Bajo');
   readonly avgNoise = signal(0);
 
-  noiseChart: any = { labels: ['1', '2', '3'], datasets: [] };
-  noiseOpts: any = {
+  noiseChart: ChartData<'line'> = { labels: ['1', '2', '3'], datasets: [] };
+  noiseOpts: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
     interaction: { intersect: false, mode: 'index' },
@@ -365,11 +367,11 @@ export class DashboardComponent implements OnInit {
   ngOnInit(): void {
     this.auth.loadUserFromStorage();
     this.http
-      .get<ApiEnvelope<{ items: any[]; data?: any }>>(
+      .get<ApiEnvelope<PaginatedList<EvaluationItem>>>(
         `${environment.apiUrl}/api/evaluations?limit=1`,
       )
       .subscribe({
-        next: (r: any) => {
+        next: (r) => {
           const first = r.data?.items?.[0];
           if (first?.overallScore != null) {
             this.riskScore.set(Math.min(100, (10 - first.overallScore) * 10));
@@ -386,8 +388,8 @@ export class DashboardComponent implements OnInit {
           }
         },
       });
-    this.http.get(`${environment.apiUrl}/api/noise/stats/today`).subscribe({
-      next: (r: any) => {
+    this.http.get<ApiEnvelope<NoiseStats>>(`${environment.apiUrl}/api/noise/stats/today`).subscribe({
+      next: (r) => {
         const d = r.data;
         const avg = d?.avgDb;
         if (avg) this.avgNoise.set(avg);

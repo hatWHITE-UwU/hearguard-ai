@@ -27,7 +27,13 @@ class HearGuardApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider<AuthService>.value(value: auth),
         ProxyProvider<AuthService, ApiClient>(
-          update: (_, authSvc, prev) => prev?..updateAuth(authSvc) ?? ApiClient(auth: authSvc),
+          update: (_, authSvc, prev) {
+            if (prev != null) {
+              prev.updateAuth(authSvc);
+              return prev;
+            }
+            return ApiClient(auth: authSvc);
+          },
         ),
       ],
       child: MaterialApp(
