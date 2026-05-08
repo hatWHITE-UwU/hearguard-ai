@@ -42,7 +42,7 @@ class _MonitorScreenState extends State<MonitorScreen> {
       if (mounted) setState(() => _permissionDenied = true);
       return;
     }
-    _subscription = _noiseMeter.noise.listen(
+    _subscription = _noiseMeter.noiseStream.listen(
       _onNoise,
       onError: (_) => _stopListening(),
     );
