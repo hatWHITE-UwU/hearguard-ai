@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../lib/core/services/auth_service.dart';
-import '../../../lib/core/models/user.dart';
+import 'package:hearguard_app/core/services/auth_service.dart';
+import 'package:hearguard_app/core/models/user.dart';
 
 User _fakeUser({String name = 'Luis'}) => User(
       id: 'u1',
