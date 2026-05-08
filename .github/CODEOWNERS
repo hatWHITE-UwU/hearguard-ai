@@ -1,0 +1,17 @@
+# Global owner — review required on every PR
+* @LUIS
+
+# Backend
+/backend/ @LUIS
+
+# AI service
+/ai-service/ @LUIS
+
+# Frontend Angular
+/frontend/ @LUIS
+
+# Flutter mobile
+/flutter_app/ @LUIS
+
+# CI/CD pipelines
+/.github/ @LUIS
