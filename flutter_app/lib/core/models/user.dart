@@ -29,13 +29,14 @@ class User {
 
   String get initials {
     final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.isEmpty) return 'U';
+    if (parts.isEmpty || parts[0].isEmpty) return 'U';
     if (parts.length == 1) return parts[0][0].toUpperCase();
     return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
   }
 
   String get firstName {
     final parts = name.trim().split(RegExp(r'\s+'));
-    return parts.isNotEmpty ? parts[0] : 'usuario';
+    final first = parts.isNotEmpty ? parts[0] : '';
+    return first.isNotEmpty ? first : 'usuario';
   }
 }
