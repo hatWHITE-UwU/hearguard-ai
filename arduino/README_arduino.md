@@ -6,6 +6,8 @@ Dos variantes según el hardware disponible.
 
 **Sketch:** `hearguard_esp32/hearguard_esp32.ino`
 
+**Simulación (Wokwi):** carpeta `wokwi/` (`diagram.json`, `sketch.ino` y `README.md`).
+
 ### Hardware
 | Componente | Descripción |
 |---|---|

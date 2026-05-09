@@ -1,11 +1,15 @@
 /**
  * HearGuard AI — Firmware ESP32 con WiFi + HTTP
+ * (Copia para Wokwi; la fuente canónica es ../hearguard_esp32/hearguard_esp32.ino)
  *
  * Hardware:
  *   - ESP32 (DevKit v1 o similar)
  *   - Módulo micrófono KY-037 (analógico) o MAX9814 (más preciso)
  *     AO → GPIO34  |  VCC → 3.3V  |  GND → GND
  *   - LED indicador (opcional): GPIO2 (LED_BUILTIN en la mayoría de DevKits)
+ *
+ * Wokwi: el potenciómetro deslizante del diagrama sustituye la salida AO del KY-037.
+ * El DevKit simulado ya lleva LED en GPIO2; no hace falta LED externo en el diagrama.
  *
  * Librerías requeridas (Gestor de librerías de Arduino IDE):
  *   - WiFi          (incluida en el core ESP32)
@@ -18,8 +22,9 @@
 #include <ArduinoJson.h>
 
 // ── Configuración — EDITAR ────────────────────────────────────────────────────
-const char* WIFI_SSID     = "TU_RED_WIFI";
-const char* WIFI_PASSWORD = "TU_CONTRASEÑA_WIFI";
+// Wokwi: red simulada "Wokwi-GUEST" (sin contraseña). En placa real, tu SSID/clave.
+const char* WIFI_SSID     = "Wokwi-GUEST";
+const char* WIFI_PASSWORD = "";
 
 // URL de tu backend (producción o 192.168.x.x para desarrollo local)
 const char* BACKEND_URL   = "https://hearguard-ai.onrender.com/api/noise/iot";
@@ -27,8 +32,9 @@ const char* BACKEND_URL   = "https://hearguard-ai.onrender.com/api/noise/iot";
 // API key obtenida al registrar el dispositivo en /app/devices
 const char* DEVICE_KEY    = "hg_xxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
 
-// Intervalo entre lecturas (ms). 30000 = 30 segundos
-const unsigned long INTERVAL_MS = 30000;
+// Intervalo entre lecturas (ms). En Wokwi conviene poco para ver cambios al mover el pot;
+// en placa real / producción usa 30000 como en ../hearguard_esp32/hearguard_esp32.ino
+const unsigned long INTERVAL_MS = 5000;
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Pin analógico del micrófono (GPIO34 es input-only, ideal para ADC)
@@ -84,7 +90,12 @@ bool postReading(float db) {
 void ensureWifi() {
   if (WiFi.status() == WL_CONNECTED) return;
   Serial.printf("[WiFi] conectando a %s", WIFI_SSID);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  // Wokwi: canal 6 evita el escaneo y ahorra ~4 s (ver guía ESP32 WiFi de Wokwi)
+  if (strcmp(WIFI_SSID, "Wokwi-GUEST") == 0 && strlen(WIFI_PASSWORD) == 0) {
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD, 6);
+  } else {
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  }
   int attempts = 0;
   while (WiFi.status() != WL_CONNECTED && attempts < 20) {
     delay(500);

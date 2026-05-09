@@ -1,0 +1,2 @@
+# HearGuard en Wokwi — misma dependencia que el sketch ESP32 del repo.
+ArduinoJson@6.21.5
