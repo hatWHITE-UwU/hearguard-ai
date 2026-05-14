@@ -86,7 +86,9 @@ export class HearingTestService {
     this.pan.connect(this.analyser);
     this.analyser.connect(ctx.destination);
 
-    this.osc.start();
+    void ctx.resume().then(() => {
+      if (this.osc) this.osc.start();
+    });
   }
 
   setGainLive(value: number): void {
