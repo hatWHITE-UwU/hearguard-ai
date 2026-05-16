@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 import os
+import time
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
@@ -12,12 +14,37 @@ from model.predictor import load_model, predict_risk, recommendations_for_level,
 
 load_dotenv()
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='{"time":"%(asctime)s","level":"%(levelname)s","logger":"%(name)s","msg":"%(message)s"}',
+    datefmt="%Y-%m-%dT%H:%M:%S",
+)
+logger = logging.getLogger("hearguard.ai")
+
 app = Flask(__name__)
 # Stateless JWT API — CSRF does not apply (no cookies sent cross-origin).
 # Set ALLOWED_ORIGINS=https://your-frontend.com in production.
 _origins_env = os.environ.get("ALLOWED_ORIGINS")
 _ALLOWED_ORIGINS = [o.strip() for o in _origins_env.split(",") if o.strip()] if _origins_env else "*"
 CORS(app, resources={r"/api/*": {"origins": _ALLOWED_ORIGINS}})  # nosonar
+
+
+@app.before_request
+def _log_request():
+    request._start = time.monotonic()  # type: ignore[attr-defined]
+
+
+@app.after_request
+def _log_response(response):
+    elapsed_ms = round((time.monotonic() - getattr(request, "_start", time.monotonic())) * 1000)
+    logger.info(
+        "%s %s → %d (%dms)",
+        request.method,
+        request.path,
+        response.status_code,
+        elapsed_ms,
+    )
+    return response
 
 
 @app.get("/health")
@@ -35,8 +62,10 @@ def predict():
     body = request.get_json(silent=True) or {}
     try:
         data = predict_risk(body)
+        logger.info("predict-risk score=%s level=%s", data.get("riskScore"), data.get("riskLevel"))
         return jsonify({"success": True, "data": data, "message": "Predicción lista"})
     except Exception as exc:  # noqa: BLE001
+        logger.error("predict-risk failed: %s", exc)
         return (
             jsonify(
                 {

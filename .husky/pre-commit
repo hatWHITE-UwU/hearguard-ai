@@ -1,0 +1,4 @@
+#!/bin/sh
+# HearGuard AI — pre-commit hook
+# Runs lint-staged to lint only changed files before each commit.
+npx lint-staged

@@ -7,6 +7,23 @@
     "docker:up": "docker compose up --build",
     "docker:down": "docker compose down",
     "docker:backend": "docker compose up --build mongodb ai-service backend",
-    "mongo:local": "docker compose up -d mongodb"
+    "mongo:local": "docker compose up -d mongodb",
+    "prepare": "husky",
+    "lint:backend": "cd backend && eslint src tests --ext .js --max-warnings 0",
+    "lint:frontend": "cd frontend && npm run lint",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd frontend && npm run test:ci -- --browsers=chromium",
+    "test:ai": "cd ai-service && pytest tests/ -q",
+    "test:all": "npm run test:backend && npm run test:frontend && npm run test:ai"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.0"
+  },
+  "lint-staged": {
+    "backend/src/**/*.js": ["eslint --max-warnings 0"],
+    "backend/tests/**/*.js": ["eslint --max-warnings 0"],
+    "frontend/src/**/*.ts": ["bash -c 'cd frontend && npx eslint --max-warnings 0 \"$@\"' --"],
+    "ai-service/**/*.py": ["python -m py_compile"]
   }
 }
