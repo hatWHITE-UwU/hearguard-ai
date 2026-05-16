@@ -41,6 +41,7 @@ Plataforma de salud auditiva preventiva con IA. Monitorea la exposición al ruid
 | IoT | ESP32 + KY-037, puente serial Node.js |
 | CI | GitHub Actions (backend tests, AI tests, Angular build, Flutter analyze) |
 | Deploy | GitHub Container Registry → Render (backend + AI) + Vercel (frontend) |
+| Metodología | Desarrollo **iterativo por fases** (roadmap en `Document/`), pruebas automatizadas y **CI/CD** |
 
 ---
 
@@ -58,7 +59,7 @@ Plataforma de salud auditiva preventiva con IA. Monitorea la exposición al ruid
 
 ```bash
 # 1. Clonar
-git clone https://github.com/tu-usuario/hearguard-ai.git
+git clone https://github.com/hatWHITE-UwU/hearguard-ai.git
 cd hearguard-ai
 
 # 2. Variables de entorno
@@ -172,9 +173,12 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 
 ## Integración IoT
 
-1. Registrar dispositivo en `/app/devices` → copiar `apiKey`.
-2. **ESP32 con WiFi**: editar `arduino/hearguard_esp32/hearguard_esp32.ino` con tu SSID, contraseña y `apiKey`, subir con Arduino IDE.
-3. **Arduino Uno** (sin WiFi): subir `arduino/hearguard_sensor/hearguard_sensor.ino` y ejecutar el puente:
+Detalle de cableado y librerías: [`arduino/README_arduino.md`](arduino/README_arduino.md).
+
+1. Registrar dispositivo en la app (`/app/devices`) → copiar `apiKey`.
+2. **ESP32 con WiFi**: editar `arduino/hearguard_esp32/hearguard_esp32.ino` (`WIFI_*`, `BACKEND_URL`, `DEVICE_KEY`) y subir con Arduino IDE.
+3. **Simulación Wokwi** (sin hardware): carpeta [`arduino/wokwi/`](arduino/wokwi/) (`sketch.ino`, `diagram.json`, `libraries.txt`). Ver [`arduino/wokwi/README.md`](arduino/wokwi/README.md).
+4. **Arduino Uno** (sin WiFi): subir `arduino/hearguard_sensor/hearguard_sensor.ino` y ejecutar el puente:
    ```bash
    cd arduino && npm install
    DEVICE_KEY=hg_xxx PORT=COM3 node serial_bridge.js
@@ -182,17 +186,44 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 
 ---
 
-## Tests
+## Claude Code — conversaciones anteriores
 
-```bash
-# Backend — 63 tests (Jest + Supertest + mongodb-memory-server)
-cd backend && npm test
+Claude Code guarda el historial por **carpeta del proyecto**. Si ejecutas solo `claude`, suele abrirse una **sesión nueva** (pantalla de bienvenida). Para **ver** sesiones guardadas de este repo y **abrir** una:
 
-# AI Service — 7 tests (pytest)
-cd ai-service && pytest tests/ -v
+```powershell
+cd C:\Proyectos\hearguard-ai
+.\scripts\list-claude-sessions.ps1    # fechas de cada sesión (.jsonl)
+.\scripts\claude-resume.ps1            # menú para elegir y continuar
+.\scripts\claude-continue.ps1          # sigue la última sesión de esta carpeta (sin menú)
 ```
 
-Cobertura backend: statements 81% · branches 60% · functions 88% · lines 82%.
+Equivalente manual: `claude --resume` o `claude --continue` desde la raíz del repo. Los archivos en bruto están en `%USERPROFILE%\.claude\projects\c--Proyectos-hearguard-ai\`.
+
+---
+
+## Tests
+
+Plan detallado de casos (IDs, precondiciones, resultados esperados): [`docs/plan-de-pruebas.md`](docs/plan-de-pruebas.md).
+
+| Capa | Comando | Pruebas (aprox.) |
+|------|---------|------------------|
+| Backend | `cd backend && npm test` | **72** (Jest + Supertest) |
+| AI Service | `cd ai-service && pytest tests/ -v` | **7** (pytest) |
+| Frontend | `cd frontend && npm run test:ci` | **18** (`.spec.ts`) |
+| Flutter | `cd flutter_app && flutter test` | **42** (`test/`) |
+
+**Total automatizado:** ~**139** casos (sin contar pruebas manuales IoT / E2E en navegador).
+
+### Caja negra y caja blanca
+
+| Enfoque | Dónde se aplica en HearGuard |
+|---------|------------------------------|
+| **Caja negra** | Tests de API (`backend/tests/*.test.js`): solo HTTP, JSON y códigos de respuesta. Uso de la web/móvil e IoT (`POST /api/noise/iot`). Casos del plan por endpoint. |
+| **Caja blanca** | `ai-service/tests/test_predictor.py` (lógica del modelo). `frontend/**/*.spec.ts` y `flutter_app/test/` (servicios, guards, mappers). Cobertura Jest/pytest y SonarCloud. |
+
+Detalle por módulo y tipo IEEE/ISO: ver sección 3 de [`docs/plan-de-pruebas.md`](docs/plan-de-pruebas.md).
+
+Cobertura backend (última ejecución local): statements ~83% · branches ~60% · functions ~90% · lines ~84%.
 
 ---
 
@@ -200,11 +231,18 @@ Cobertura backend: statements 81% · branches 60% · functions 88% · lines 82%.
 
 ### CI automático (GitHub Actions)
 
-Al hacer push a `main` se ejecutan 4 jobs en paralelo:
-- `backend` — tests Jest con MongoDB en servicio
-- `ai-service` — entrenamiento del modelo + pytest
-- `frontend` — `ng build`
-- `flutter` — `flutter analyze`
+Workflow [`ci.yml`](.github/workflows/ci.yml) en cada push a `main`/`develop` y en pull requests:
+
+| Job | Qué hace |
+|-----|----------|
+| `backend` | Tests Jest (MongoDB en servicio) + cobertura |
+| `ai-service` | Entrena modelo + pytest |
+| `frontend` | `npm run test:ci` + `ng build` |
+| `flutter` | `flutter analyze` + `flutter test` |
+| `sonar` | SonarCloud (tras los jobs anteriores) |
+| `deploy` | Solo en push a `main`: hooks Render (backend + IA) y Vercel (frontend) |
+
+Workflow adicional [`deploy.yml`](.github/workflows/deploy.yml): build de imágenes Docker (GHCR) y despliegue manual o por push.
 
 ### Deploy (manual o automático tras CI)
 
@@ -218,8 +256,9 @@ Configura los siguientes secrets en GitHub → Settings → Secrets:
 | `VERCEL_TOKEN` | Token de Vercel |
 | `VERCEL_ORG_ID` | ID de organización Vercel |
 | `VERCEL_PROJECT_ID` | ID de proyecto Vercel |
+| `VERCEL_FRONTEND_HOOK` | Deploy hook de Vercel (usado en `ci.yml`) |
 
-Ejecutar deploy manualmente: GitHub → Actions → Deploy → Run workflow.
+Ejecutar deploy manualmente: GitHub → Actions → **Deploy** → Run workflow.
 
 ---
 
@@ -228,13 +267,8 @@ Ejecutar deploy manualmente: GitHub → Actions → Deploy → Run workflow.
 ```
 hearguard-ai/
 ├── backend/              Node.js / Express API
-│   ├── src/
-│   │   ├── controllers/  auth, noise, evaluation, device
-│   │   ├── models/       User, NoiseRecord, Evaluation, RiskResult, Device
-│   │   ├── routes/       Rutas Express
-│   │   ├── services/     ai.service, noise.service
-│   │   └── validators/   express-validator
-│   └── tests/            63 tests Jest + Supertest
+│   ├── src/              controllers, models, routes, services, validators
+│   └── tests/            72 tests Jest + Supertest
 ├── ai-service/           Flask + scikit-learn
 │   ├── model/            trainer, predictor, features
 │   └── tests/            7 tests pytest
@@ -242,16 +276,16 @@ hearguard-ai/
 │   └── src/app/features/ auth, dashboard, monitor, hearing-test,
 │                          results, history, profile, devices, recommendations
 ├── flutter_app/          App móvil Flutter
-│   └── lib/
-│       ├── core/         config, models, services, theme
-│       └── features/     splash, auth, dashboard, monitor,
-│                          history, profile, hearing, results, shell
 ├── arduino/              Firmware IoT
 │   ├── hearguard_esp32/  ESP32 con WiFi + HTTP
 │   ├── hearguard_sensor/ Arduino Uno (modo serie)
+│   ├── wokwi/            Simulación ESP32 (diagram.json, sketch.ino)
 │   └── serial_bridge.js  Puente serie → backend
+├── docs/                 plan-de-pruebas.md
+├── Document/             Roadmap técnico por fases
+├── scripts/              utilidades (Claude Code: resume / continue)
 ├── docker/               Dockerfiles + nginx config
-├── .github/workflows/    CI (ci.yml) + Deploy (deploy.yml)
+├── .github/workflows/    ci.yml + deploy.yml
 └── docker-compose.yml    Stack completo local
 ```
 
@@ -260,3 +294,4 @@ hearguard-ai/
 ## Licencia
 
 MIT — Universidad Continental · Ingeniería de Sistemas
+
