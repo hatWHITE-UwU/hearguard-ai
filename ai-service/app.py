@@ -16,7 +16,7 @@ app = Flask(__name__)
 # Stateless JWT API — CSRF does not apply (no cookies sent cross-origin).
 # Set ALLOWED_ORIGINS=https://your-frontend.com in production.
 _origins_env = os.environ.get("ALLOWED_ORIGINS")
-_ALLOWED_ORIGINS = [o.strip() for o in _origins_env.split(",") if o.strip()] if _origins_env else None
+_ALLOWED_ORIGINS = [o.strip() for o in _origins_env.split(",") if o.strip()] if _origins_env else "*"
 CORS(app, resources={r"/api/*": {"origins": _ALLOWED_ORIGINS}})  # nosonar
 
 
