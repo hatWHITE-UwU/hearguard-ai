@@ -34,7 +34,7 @@ Plataforma de salud auditiva preventiva con IA. Monitorea la exposición al ruid
 |---|---|
 | Frontend web | Angular 21 + Signals API + SCSS |
 | App móvil | Flutter 3 + Dart + Provider + Dio |
-| Backend API | Node.js 18 + Express 5 + Mongoose 9 |
+| Backend API | Node.js 20 + Express 5 + Mongoose 9 |
 | IA/ML | Python 3.11 + Flask + scikit-learn (RandomForest) |
 | Base de datos | MongoDB Atlas M0 |
 | Auth | JWT (access 15min + refresh 7d, rotación SHA-256) |
@@ -47,7 +47,7 @@ Plataforma de salud auditiva preventiva con IA. Monitorea la exposición al ruid
 
 ## Requisitos previos
 
-- Node.js ≥ 18
+- Node.js ≥ 20
 - Python 3.11
 - Flutter ≥ 3.22 (para la app móvil)
 - Docker + Docker Compose (para levantar todo en un comando)
@@ -207,12 +207,24 @@ Plan detallado de casos (IDs, precondiciones, resultados esperados): [`docs/plan
 
 | Capa | Comando | Pruebas (aprox.) |
 |------|---------|------------------|
-| Backend | `cd backend && npm test` | **72** (Jest + Supertest) |
-| AI Service | `cd ai-service && pytest tests/ -v` | **7** (pytest) |
-| Frontend | `cd frontend && npm run test:ci` | **18** (`.spec.ts`) |
+| Backend API | `cd backend && npm test` | **~80** (Jest + Supertest — auth, noise, evaluation, device) |
+| Backend Seguridad | incluido en `npm test` | **22** (NoSQL injection, JWT tampering, IDOR, oversized payload) |
+| AI Service | `cd ai-service && pytest tests/ -v` | **~35** (predictor unitario + API integración) |
+| Frontend Angular | `cd frontend && npm run test:ci` | **~60** (hearing-test service, noise-monitor service, auth service, guards, interceptors) |
 | Flutter | `cd flutter_app && flutter test` | **42** (`test/`) |
+| E2E Playwright | `cd e2e && npx playwright test` | **35** (auth + prueba auditiva, multi-browser) |
+| Rendimiento k6 | `k6 run tests/k6/load-test.js` | 3 escenarios (smoke / load / spike) |
 
-**Total automatizado:** ~**139** casos (sin contar pruebas manuales IoT / E2E en navegador).
+**Total automatizado:** ~**274** casos de prueba.
+
+Umbrales de cobertura mínima aplicados en CI:
+
+| Capa | Umbral | Verificación |
+|------|--------|--------------|
+| Backend | ≥ 60 % líneas | `ci.yml` — parser LCOV inline |
+| AI Service | ≥ 70 % líneas | `pytest --cov-fail-under=70` |
+
+Cobertura backend (última ejecución local): statements ~83 % · branches ~60 % · functions ~90 % · lines ~84 %.
 
 ### Caja negra y caja blanca
 
@@ -223,7 +235,18 @@ Plan detallado de casos (IDs, precondiciones, resultados esperados): [`docs/plan
 
 Detalle por módulo y tipo IEEE/ISO: ver sección 3 de [`docs/plan-de-pruebas.md`](docs/plan-de-pruebas.md).
 
-Cobertura backend (última ejecución local): statements ~83% · branches ~60% · functions ~90% · lines ~84%.
+### BDD — Gherkin / Cucumber
+
+Escenarios conductuales en lenguaje natural (Given / When / Then) en [`docs/features/`](docs/features/):
+
+| Feature | Escenarios |
+|---------|-----------|
+| [`autenticacion.feature`](docs/features/autenticacion.feature) | 15 — registro, login, refresh, seguridad JWT |
+| [`monitoreo-ruido.feature`](docs/features/monitoreo-ruido.feature) | 17 — clasificación dB, IDOR, IoT |
+| [`prueba-auditiva.feature`](docs/features/prueba-auditiva.feature) | 17 — 12 pasos tonales, gain → score, API evaluaciones |
+| [`prediccion-riesgo-ia.feature`](docs/features/prediccion-riesgo-ia.feature) | 14 — perfiles bajo/alto riesgo, score_to_level |
+| [`resultados-y-recomendaciones.feature`](docs/features/resultados-y-recomendaciones.feature) | 13 — historial, gráfica, recomendaciones por nivel |
+| [`dispositivos-iot.feature`](docs/features/dispositivos-iot.feature) | 9 — registro ESP32, apiKey, LED GPIO |
 
 ---
 
@@ -235,11 +258,12 @@ Workflow [`ci.yml`](.github/workflows/ci.yml) en cada push a `main`/`develop` y 
 
 | Job | Qué hace |
 |-----|----------|
-| `backend` | Tests Jest (MongoDB en servicio) + cobertura |
-| `ai-service` | Entrena modelo + pytest |
-| `frontend` | `npm run test:ci` + `ng build` |
+| `backend` | **ESLint** (`npm run lint`) + Tests Jest (MongoDB en servicio) + umbral cobertura ≥ 60 % |
+| `ai-service` | Entrena modelo + pytest con `--cov-fail-under=70` |
+| `frontend` | `npm run lint` + `npm run test:ci` + `ng build` |
+| `e2e` | Playwright contra URL de Vercel preview (chromium, `continue-on-error`) |
 | `flutter` | `flutter analyze` + `flutter test` |
-| `sonar` | SonarCloud (tras los jobs anteriores) |
+| `sonar` | SonarCloud (tras todos los jobs anteriores) |
 | `deploy` | Solo en push a `main`: hooks Render (backend + IA) y Vercel (frontend) |
 
 Workflow adicional [`deploy.yml`](.github/workflows/deploy.yml): build de imágenes Docker (GHCR) y despliegue manual o por push.
@@ -262,16 +286,66 @@ Ejecutar deploy manualmente: GitHub → Actions → **Deploy** → Run workflow.
 
 ---
 
+## Calidad del código
+
+### Análisis estático
+
+| Herramienta | Scope | Reglas clave |
+|-------------|-------|-------------|
+| **ESLint** (`backend/eslint.config.js`) | Node.js backend | `eslint-plugin-n` (Node builtins), `eslint-plugin-security` (OWASP), `eqeqeq`, `no-shadow`, `no-return-await` |
+| **SonarCloud** | Backend + Frontend + AI | Quality Gate: 0 bugs bloqueadores, cobertura ≥ umbral |
+| **flutter analyze** | App móvil | Análisis estático Dart |
+
+Ejecutar lint backend:
+
+```bash
+cd backend && npm run lint      # 0 errores, 0 warnings
+```
+
+### Pre-commit hooks (Husky + lint-staged)
+
+Al hacer `git commit`, se ejecutan automáticamente:
+
+- **Backend JS** — `npm run lint --prefix backend` (ESLint, 0 warnings max)
+- **Frontend TS** — `npm run lint --prefix frontend`
+- **Python** — `python -m py_compile` (verifica sintaxis)
+- **commit-msg** — valida formato [Conventional Commits](https://www.conventionalcommits.org/): `feat|fix|docs|style|refactor|test|chore(scope): descripción`
+
+### Complejidad ciclomática
+
+Análisis McCabe (1976) de las 17 funciones críticas: [`docs/complejidad-ciclomatica.md`](docs/complejidad-ciclomatica.md).
+
+| Función más compleja | CC | Riesgo | Tests |
+|---------------------|----|--------|-------|
+| `predict_risk` | 7 | Moderado | 5+ |
+| `register` / `login` | 5 | Moderado | 5 c/u |
+| Resto de funciones | 1–4 | Bajo | ≥ 2 c/u |
+
+**59 caminos independientes** identificados; ≥ 52 cubiertos (88 % de cobertura de rutas).
+
+### Documentación QA
+
+| Documento | Descripción |
+|-----------|-------------|
+| [`docs/plan-de-pruebas.md`](docs/plan-de-pruebas.md) | Plan de pruebas IEEE 829-2008 con casos, precondiciones y resultados esperados |
+| [`docs/complejidad-ciclomatica.md`](docs/complejidad-ciclomatica.md) | Análisis CC McCabe — 17 funciones, escala de riesgo |
+| [`docs/matriz-trazabilidad.md`](docs/matriz-trazabilidad.md) | Matriz IEEE 829 — 60 RF + 10 RNF → BDD → tests → estado |
+| [`docs/api-spec.yml`](docs/api-spec.yml) | Especificación OpenAPI 3.1 — 18 endpoints con esquemas completos |
+| [`docs/features/`](docs/features/) | 6 Feature files Gherkin — 85 escenarios BDD |
+
+---
+
 ## Estructura del proyecto
 
 ```
 hearguard-ai/
 ├── backend/              Node.js / Express API
 │   ├── src/              controllers, models, routes, services, validators
-│   └── tests/            72 tests Jest + Supertest
+│   ├── eslint.config.js  ESLint flat config (plugin-n + plugin-security)
+│   └── tests/            ~102 tests Jest + Supertest (incl. 22 de seguridad)
 ├── ai-service/           Flask + scikit-learn
 │   ├── model/            trainer, predictor, features
-│   └── tests/            7 tests pytest
+│   └── tests/            ~35 tests pytest (predictor unitario + API integración)
 ├── frontend/             Angular 21 SPA
 │   └── src/app/features/ auth, dashboard, monitor, hearing-test,
 │                          results, history, profile, devices, recommendations
@@ -281,7 +355,9 @@ hearguard-ai/
 │   ├── hearguard_sensor/ Arduino Uno (modo serie)
 │   ├── wokwi/            Simulación ESP32 (diagram.json, sketch.ino)
 │   └── serial_bridge.js  Puente serie → backend
-├── docs/                 plan-de-pruebas.md
+├── docs/                 plan-de-pruebas.md · complejidad-ciclomatica.md
+│   │                     matriz-trazabilidad.md · api-spec.yml
+│   └── features/         6 .feature Gherkin (85 escenarios BDD)
 ├── Document/             Roadmap técnico por fases
 ├── scripts/              utilidades (Claude Code: resume / continue)
 ├── docker/               Dockerfiles + nginx config
