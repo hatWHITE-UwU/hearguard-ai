@@ -1,5 +1,11 @@
 # HearGuard AI
 
+[![CI](https://github.com/hatWHITE-UwU/hearguard-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/hatWHITE-UwU/hearguard-ai/actions/workflows/ci.yml)
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=hatWHITE-UwU_hearguard-ai&metric=alert_status)](https://sonarcloud.io/project/overview?id=hatWHITE-UwU_hearguard-ai)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=hatWHITE-UwU_hearguard-ai&metric=coverage)](https://sonarcloud.io/project/overview?id=hatWHITE-UwU_hearguard-ai)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=hatWHITE-UwU_hearguard-ai&metric=bugs)](https://sonarcloud.io/project/overview?id=hatWHITE-UwU_hearguard-ai)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=hatWHITE-UwU_hearguard-ai&metric=security_rating)](https://sonarcloud.io/project/overview?id=hatWHITE-UwU_hearguard-ai)
+
 Plataforma de salud auditiva preventiva con IA. Monitorea la exposición al ruido en tiempo real, realiza pruebas auditivas por cuestionario y genera predicciones de riesgo personalizadas mediante un modelo de Machine Learning.
 
 ---
@@ -205,17 +211,16 @@ Equivalente manual: `claude --resume` o `claude --continue` desde la raíz del r
 
 Plan detallado de casos (IDs, precondiciones, resultados esperados): [`docs/plan-de-pruebas.md`](docs/plan-de-pruebas.md).
 
-| Capa | Comando | Pruebas (aprox.) |
-|------|---------|------------------|
-| Backend API | `cd backend && npm test` | **~80** (Jest + Supertest — auth, noise, evaluation, device) |
-| Backend Seguridad | incluido en `npm test` | **22** (NoSQL injection, JWT tampering, IDOR, oversized payload) |
-| AI Service | `cd ai-service && pytest tests/ -v` | **~35** (predictor unitario + API integración) |
-| Frontend Angular | `cd frontend && npm run test:ci` | **~60** (hearing-test service, noise-monitor service, auth service, guards, interceptors) |
+| Capa | Comando | Pruebas |
+|------|---------|---------|
+| Backend (API + Seguridad) | `cd backend && npm test` | **86** (Jest + Supertest — auth, noise, evaluation, device, 22 de seguridad) |
+| AI Service | `cd ai-service && pytest tests/ -v` | **30** (test_predictor.py × 7 + test_api.py × 23) |
+| Frontend Angular | `cd frontend && npm run test:ci` | **67** (hearing-test, noise-monitor, auth service, guards, interceptors) |
 | Flutter | `cd flutter_app && flutter test` | **42** (`test/`) |
 | E2E Playwright | `cd e2e && npx playwright test` | **35** (auth + prueba auditiva, multi-browser) |
 | Rendimiento k6 | `k6 run tests/k6/load-test.js` | 3 escenarios (smoke / load / spike) |
 
-**Total automatizado:** ~**274** casos de prueba.
+**Total automatizado:** **260** casos de prueba + 3 escenarios de rendimiento.
 
 Umbrales de cobertura mínima aplicados en CI:
 
@@ -342,10 +347,10 @@ hearguard-ai/
 ├── backend/              Node.js / Express API
 │   ├── src/              controllers, models, routes, services, validators
 │   ├── eslint.config.js  ESLint flat config (plugin-n + plugin-security)
-│   └── tests/            ~102 tests Jest + Supertest (incl. 22 de seguridad)
+│   └── tests/            86 tests Jest + Supertest (incl. 22 de seguridad)
 ├── ai-service/           Flask + scikit-learn
 │   ├── model/            trainer, predictor, features
-│   └── tests/            ~35 tests pytest (predictor unitario + API integración)
+│   └── tests/            30 tests pytest (test_predictor × 7 + test_api × 23)
 ├── frontend/             Angular 21 SPA
 │   └── src/app/features/ auth, dashboard, monitor, hearing-test,
 │                          results, history, profile, devices, recommendations
