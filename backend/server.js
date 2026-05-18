@@ -136,7 +136,7 @@ async function startServer() {
             try {
               await connectDatabase();
               logger.info('MongoDB conectado (reintento automático). /api operativo.');
-            } catch {
+            } catch (_err) {
               retryMongo();
             }
           }, 15_000);

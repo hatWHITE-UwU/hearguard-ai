@@ -33,7 +33,7 @@ function generateRefreshToken(payload) {
  */
 function verifyAccessToken(token) {
   const { JWT_SECRET } = getEnv();
-  return jwt.verify(token, JWT_SECRET);
+  return jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
 }
 
 /**
@@ -42,7 +42,7 @@ function verifyAccessToken(token) {
  */
 function verifyRefreshToken(token) {
   const { JWT_REFRESH_SECRET } = getEnv();
-  const decoded = jwt.verify(token, JWT_REFRESH_SECRET);
+  const decoded = jwt.verify(token, JWT_REFRESH_SECRET, { algorithms: ['HS256'] });
   if (decoded.type && decoded.type !== 'refresh') {
     const err = new Error('Token de refresco inválido');
     err.name = 'JsonWebTokenError';

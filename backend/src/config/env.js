@@ -43,7 +43,7 @@ function validateEnv() {
   }
   const env = readEnv();
   const missing = requiredKeys.filter((key) => {
-    const value = process.env[key];
+    const value = process.env[key]; // eslint-disable-line security/detect-object-injection
     return value === undefined || value === '';
   });
   if (missing.length > 0) {

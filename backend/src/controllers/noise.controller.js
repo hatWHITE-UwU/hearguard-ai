@@ -87,7 +87,7 @@ async function createIot(req, res, next) {
         message: 'X-Device-Key requerido',
       });
     }
-    const device = await Device.findOne({ apiKey: key }).select('+apiKey');
+    const device = await Device.findOne({ apiKey: String(key) }).select('+apiKey');
     if (!device || !device.isActive) {
       return res.status(401).json({
         success: false,
@@ -160,7 +160,7 @@ async function list(req, res, next) {
 
     // Vuln-fix: reject non-string to prevent ?source[$ne]=null NoSQL injection
     if (typeof req.query.source === 'string' && req.query.source.length > 0) {
-      filter.source = req.query.source;
+      filter.source = String(req.query.source);
     }
     const rows = await NoiseRecord.find(filter)
       .sort({ recordedAt: -1 })

@@ -15,7 +15,7 @@ function notFoundHandler(req, res) {
  * @param {import('express').Response} res
  * @param {import('express').NextFunction} next
  */
-function errorHandler(err, req, res, next) {
+function errorHandler(err, req, res, _next) {
   const env = getEnv();
   const isProd = env.NODE_ENV === 'production';
 

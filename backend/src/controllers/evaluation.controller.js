@@ -25,14 +25,14 @@ const HZ_ORDER = [250, 500, 1000, 2000, 4000, 8000];
 function aggregateTestScoresByFrequency(frequencyScores) {
   const byHz = new Map();
   for (const row of frequencyScores) {
-    const list = byHz.get(row.hz) || [];
-    list.push(row.score);
-    byHz.set(row.hz, list);
+    const vals = byHz.get(row.hz) || [];
+    vals.push(row.score);
+    byHz.set(row.hz, vals);
   }
   return HZ_ORDER.map((hz) => {
-    const list = byHz.get(hz);
-    if (!list || list.length === 0) return 0;
-    return list.reduce((a, b) => a + b, 0) / list.length;
+    const vals = byHz.get(hz);
+    if (!vals || vals.length === 0) return 0;
+    return vals.reduce((a, b) => a + b, 0) / vals.length;
   });
 }
 
@@ -51,13 +51,12 @@ function buildAiPayload(user, evaluation) {
   const freqAvgs = aggregateTestScoresByFrequency(evaluation.frequencyScores);
   const habit = evaluation.habitData || {};
   return {
-    age: user.age != null ? Number(user.age) : 28,
-    headphoneHours: habit.headphoneHours != null ? Number(habit.headphoneHours) : 0,
-    volumeLevel: habit.volumeLevel != null ? Number(habit.volumeLevel) : DEFAULT_VOLUME_LEVEL,
-    noiseExposure: habit.noiseExposure != null ? Number(habit.noiseExposure) : 0,
-    occupationRisk:
-      habit.occupationRisk != null ? Number(habit.occupationRisk) : 0,
-    smoking: habit.smoking != null ? Number(habit.smoking) : 0,
+    age: Number(user.age ?? 28),
+    headphoneHours: Number(habit.headphoneHours ?? 0),
+    volumeLevel: Number(habit.volumeLevel ?? DEFAULT_VOLUME_LEVEL),
+    noiseExposure: Number(habit.noiseExposure ?? 0),
+    occupationRisk: Number(habit.occupationRisk ?? 0),
+    smoking: Number(habit.smoking ?? 0),
     testScores: freqAvgs,
     habitData: habit,
     avgTestScore:
@@ -98,6 +97,13 @@ async function create(req, res, next) {
     });
 
     const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: 'UNAUTHORIZED',
+        message: 'Usuario no encontrado',
+      });
+    }
     let riskResultDoc = null;
     let recommendationsList = [];
 
@@ -114,7 +120,7 @@ async function create(req, res, next) {
           riskLevel: riskLevelEnum,
           yearsEstimated: Number(d.yearsEstimated) || 0,
           confidence:
-            d.confidence != null ? Number(d.confidence) : undefined,
+            d.confidence !== null && d.confidence !== undefined ? Number(d.confidence) : undefined,
           topFactors: Array.isArray(d.topFactors) ? d.topFactors : [],
           recommendations: [],
           aiModel: String(d.aiModel || 'v1.0'),
@@ -236,7 +242,7 @@ async function patch(req, res, next) {
     const update = {};
     for (const key of Object.keys(req.body || {})) {
       if (allowed.has(key)) {
-        update[key] = req.body[key];
+        update[key] = req.body[key]; // eslint-disable-line security/detect-object-injection
       }
     }
     if (Object.keys(update).length === 0) {

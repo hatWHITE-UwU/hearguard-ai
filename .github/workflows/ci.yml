@@ -24,6 +24,7 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
+      - run: npm run lint
       - run: npm test
         env:
           MONGO_URI: mongodb://127.0.0.1:27017/hearguard_test_ci

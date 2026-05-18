@@ -20,10 +20,4 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.1.0"
   },
-  "lint-staged": {
-    "backend/src/**/*.js": ["eslint --max-warnings 0"],
-    "backend/tests/**/*.js": ["eslint --max-warnings 0"],
-    "frontend/src/**/*.ts": ["bash -c 'cd frontend && npx eslint --max-warnings 0 \"$@\"' --"],
-    "ai-service/**/*.py": ["python -m py_compile"]
-  }
 }
