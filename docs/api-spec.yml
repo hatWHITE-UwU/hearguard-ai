@@ -1,0 +1,1175 @@
+openapi: "3.1.0"
+
+info:
+  title: HearGuard AI — REST API
+  version: "1.0.0"
+  description: |
+    API principal del sistema HearGuard AI.
+    Gestiona autenticación, monitoreo de ruido, evaluaciones auditivas
+    y dispositivos IoT (ESP32).
+    El Servicio IA (Flask) tiene su propia sección al final del documento.
+  contact:
+    name: Luis — Universidad Continental
+    email: 76926326@continental.edu.pe
+  license:
+    name: MIT
+
+servers:
+  - url: https://backend-hearguard.onrender.com
+    description: Producción (Render)
+  - url: http://localhost:3000
+    description: Desarrollo local
+
+tags:
+  - name: auth
+    description: Registro, login, tokens y perfil de usuario
+  - name: noise
+    description: Registros de ruido y estadísticas
+  - name: evaluations
+    description: Pruebas auditivas y resultados
+  - name: devices
+    description: Dispositivos IoT (ESP32)
+  - name: health
+    description: Estado del servicio
+
+# ── Security schemes ─────────────────────────────────────────────────────────
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Access token obtenido en /api/auth/login o /api/auth/register"
+    deviceKey:
+      type: apiKey
+      in: header
+      name: X-Device-Key
+      description: "API Key del dispositivo IoT registrado"
+
+  # ── Shared schemas ──────────────────────────────────────────────────────────
+  schemas:
+
+    # Generic envelope
+    SuccessEnvelope:
+      type: object
+      required: [success, data, message]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          nullable: true
+        message:
+          type: string
+
+    ErrorEnvelope:
+      type: object
+      required: [success, error, message]
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          example: VALIDATION_ERROR
+          enum:
+            - VALIDATION_ERROR
+            - UNAUTHORIZED
+            - CONFLICT
+            - NOT_FOUND
+            - INTERNAL_ERROR
+        message:
+          type: string
+
+    # User
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: objectid
+          example: "66a1b2c3d4e5f6789abc0001"
+        name:
+          type: string
+          example: "Ana García"
+        email:
+          type: string
+          format: email
+          example: "ana@example.com"
+        age:
+          type: integer
+          minimum: 0
+          maximum: 120
+          example: 28
+        gender:
+          type: string
+          enum: [male, female, other, prefer_not_say]
+        occupation:
+          type: string
+          example: "Ingeniero de sonido"
+        city:
+          type: string
+          example: "Lima"
+        settings:
+          type: object
+          properties:
+            reminders:
+              type: boolean
+              default: true
+            darkTheme:
+              type: boolean
+              default: true
+            volumeUnit:
+              type: string
+              enum: [dba, dbc]
+              default: dba
+        createdAt:
+          type: string
+          format: date-time
+
+    # Auth responses
+    AuthResponse:
+      type: object
+      required: [user, accessToken, refreshToken]
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        accessToken:
+          type: string
+          description: JWT de acceso (corta duración)
+        refreshToken:
+          type: string
+          description: JWT de refresco (larga duración)
+
+    # Noise
+    NoiseRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          format: objectid
+        userId:
+          type: string
+        deviceId:
+          type: string
+          nullable: true
+        dbLevel:
+          type: number
+          format: float
+          example: 72.5
+        riskTag:
+          type: string
+          enum: [bajo, moderado, alto, muy_alto]
+        source:
+          type: string
+          enum: [microphone, iot, manual]
+        highRisk:
+          type: boolean
+          description: "true cuando dbLevel > 85 dB"
+        location:
+          type: string
+          nullable: true
+        recordedAt:
+          type: string
+          format: date-time
+
+    # Evaluation
+    FrequencyScore:
+      type: object
+      required: [hz, score, ear]
+      properties:
+        hz:
+          type: integer
+          enum: [250, 500, 1000, 2000, 4000, 8000]
+        score:
+          type: number
+          minimum: 0
+          maximum: 10
+        ear:
+          type: string
+          enum: [left, right]
+
+    Evaluation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: objectid
+        userId:
+          type: string
+        frequencyScores:
+          type: array
+          items:
+            $ref: '#/components/schemas/FrequencyScore'
+        habitData:
+          type: object
+          properties:
+            headphoneHours:
+              type: number
+              example: 4
+            volumeLevel:
+              type: number
+              example: 70
+            noiseExposure:
+              type: number
+              example: 3
+            occupationRisk:
+              type: number
+              example: 1
+            smoking:
+              type: number
+              example: 0
+        overallScore:
+          type: number
+          example: 7.5
+        status:
+          type: string
+          enum: [complete, partial]
+        takenAt:
+          type: string
+          format: date-time
+
+    RiskResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: objectid
+        evaluationId:
+          type: string
+        riskScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 42
+        riskLevel:
+          type: string
+          enum: [bajo, moderado, alto, muy_alto]
+        yearsEstimated:
+          type: integer
+          example: 8
+        confidence:
+          type: number
+          format: float
+          example: 0.78
+        topFactors:
+          type: array
+          items:
+            type: string
+          example: ["Uso prolongado de audífonos", "Alto volumen habitual"]
+        recommendations:
+          type: array
+          items:
+            type: string
+        aiModel:
+          type: string
+          example: "risk_rf_v1"
+
+    # Device
+    Device:
+      type: object
+      properties:
+        id:
+          type: string
+          format: objectid
+        userId:
+          type: string
+        name:
+          type: string
+          example: "Sensor Sala Principal"
+        type:
+          type: string
+          enum: [arduino, esp32, raspberry, other]
+        hardwareId:
+          type: string
+        firmwareVersion:
+          type: string
+        isActive:
+          type: boolean
+          default: true
+        lastSeenAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+  # ── Reusable responses ──────────────────────────────────────────────────────
+  responses:
+    Unauthorized:
+      description: Token ausente, inválido o expirado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            error: UNAUTHORIZED
+            message: "Token de acceso requerido"
+
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            error: NOT_FOUND
+            message: "Recurso no encontrado"
+
+    ValidationError:
+      description: Error de validación en los datos enviados
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            error: VALIDATION_ERROR
+            message: "El correo electrónico no es válido"
+
+# ── Paths ─────────────────────────────────────────────────────────────────────
+paths:
+
+  # ── Health ─────────────────────────────────────────────────────────────────
+  /health:
+    get:
+      tags: [health]
+      summary: Estado del backend
+      operationId: getHealth
+      responses:
+        "200":
+          description: Servicio disponible
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  status: ok
+                  mongo: connected
+                message: "Servicio disponible"
+
+  # ── Auth ───────────────────────────────────────────────────────────────────
+  /api/auth/register:
+    post:
+      tags: [auth]
+      summary: Registro de nuevo usuario
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 80
+                  example: "Ana García"
+                email:
+                  type: string
+                  format: email
+                  example: "ana@example.com"
+                password:
+                  type: string
+                  minLength: 8
+                  example: "Segura123!"
+                age:
+                  type: integer
+                  minimum: 0
+                  maximum: 120
+                gender:
+                  type: string
+                  enum: [male, female, other, prefer_not_say]
+                occupation:
+                  type: string
+                city:
+                  type: string
+      responses:
+        "201":
+          description: Usuario registrado
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AuthResponse'
+        "400":
+          $ref: '#/components/responses/ValidationError'
+        "409":
+          description: Email ya registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /api/auth/login:
+    post:
+      tags: [auth]
+      summary: Inicio de sesión
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "ana@example.com"
+                password:
+                  type: string
+                  example: "Segura123!"
+      responses:
+        "200":
+          description: Sesión iniciada
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AuthResponse'
+        "400":
+          $ref: '#/components/responses/ValidationError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/refresh:
+    post:
+      tags: [auth]
+      summary: Renovar access token usando refresh token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        "200":
+          description: Token renovado
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  accessToken: "eyJ..."
+                  refreshToken: "eyJ..."
+                message: "Token renovado correctamente"
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/logout:
+    post:
+      tags: [auth]
+      summary: Cerrar sesión (invalida refresh token)
+      operationId: logout
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Sesión cerrada
+          content:
+            application/json:
+              example:
+                success: true
+                data: null
+                message: "Sesión cerrada correctamente"
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/me:
+    get:
+      tags: [auth]
+      summary: Obtener perfil del usuario autenticado
+      operationId: getMe
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Perfil del usuario
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: '#/components/schemas/User'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+    patch:
+      tags: [auth]
+      summary: Actualizar perfil del usuario
+      operationId: patchMe
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                age:
+                  type: integer
+                gender:
+                  type: string
+                  enum: [male, female, other, prefer_not_say]
+                occupation:
+                  type: string
+                city:
+                  type: string
+                settings:
+                  type: object
+                  properties:
+                    reminders:
+                      type: boolean
+                    darkTheme:
+                      type: boolean
+                    volumeUnit:
+                      type: string
+                      enum: [dba, dbc]
+      responses:
+        "200":
+          description: Perfil actualizado
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: '#/components/schemas/User'
+        "400":
+          $ref: '#/components/responses/ValidationError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ── Noise ──────────────────────────────────────────────────────────────────
+  /api/noise:
+    post:
+      tags: [noise]
+      summary: Crear registro de ruido (app)
+      operationId: createNoise
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [dbLevel, source]
+              properties:
+                dbLevel:
+                  type: number
+                  minimum: 0
+                  maximum: 194
+                  example: 72.5
+                source:
+                  type: string
+                  enum: [microphone, manual]
+                deviceId:
+                  type: string
+                  format: objectid
+                  nullable: true
+                location:
+                  type: string
+                  nullable: true
+      responses:
+        "201":
+          description: Registro creado
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          record:
+                            $ref: '#/components/schemas/NoiseRecord'
+        "400":
+          $ref: '#/components/responses/ValidationError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+    get:
+      tags: [noise]
+      summary: Listar historial de ruido del usuario
+      operationId: listNoise
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - name: skip
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: source
+          in: query
+          schema:
+            type: string
+            enum: [microphone, iot, manual]
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Fecha de inicio (ISO 8601)
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Fecha de fin (ISO 8601)
+      responses:
+        "200":
+          description: Historial de ruido
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  items: []
+                  total: 0
+                  page:
+                    limit: 50
+                    skip: 0
+                  avgDb: 0
+                  maxDb: 0
+                message: "Historial de ruido"
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/noise/iot:
+    post:
+      tags: [noise]
+      summary: Crear registro de ruido desde dispositivo IoT
+      operationId: createNoiseIot
+      security:
+        - deviceKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [dbLevel]
+              properties:
+                dbLevel:
+                  type: number
+                  minimum: 0
+                  maximum: 194
+                  example: 85.2
+      responses:
+        "201":
+          description: Registro IoT guardado
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          record:
+                            $ref: '#/components/schemas/NoiseRecord'
+        "400":
+          $ref: '#/components/responses/ValidationError'
+        "401":
+          description: X-Device-Key ausente o inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /api/noise/latest:
+    get:
+      tags: [noise]
+      summary: Último registro de ruido del usuario
+      operationId: getLatestNoise
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Último registro (null si no hay)
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  record: null
+                message: "Último registro"
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/noise/stats/today:
+    get:
+      tags: [noise]
+      summary: Estadísticas de ruido del día actual
+      operationId: getNoiseTodayStats
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Estadísticas diarias
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  count: 12
+                  avgDb: 68.3
+                  maxDb: 92.1
+                  highRiskCount: 2
+                message: "Estadísticas de hoy"
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/noise/stats/week:
+    get:
+      tags: [noise]
+      summary: Estadísticas de ruido de la última semana
+      operationId: getNoiseWeekStats
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Estadísticas semanales
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  count: 84
+                  avgDb: 65.0
+                  maxDb: 92.1
+                  highRiskCount: 8
+                message: "Estadísticas de la semana"
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ── Evaluations ────────────────────────────────────────────────────────────
+  /api/evaluations:
+    post:
+      tags: [evaluations]
+      summary: Crear evaluación auditiva (guarda, calcula riesgo y recomendaciones)
+      operationId: createEvaluation
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [frequencyScores]
+              properties:
+                frequencyScores:
+                  type: array
+                  minItems: 1
+                  maxItems: 12
+                  items:
+                    $ref: '#/components/schemas/FrequencyScore'
+                habitData:
+                  type: object
+                  properties:
+                    headphoneHours:
+                      type: number
+                      minimum: 0
+                      maximum: 24
+                    volumeLevel:
+                      type: number
+                      minimum: 0
+                      maximum: 100
+                    noiseExposure:
+                      type: number
+                      minimum: 0
+                    occupationRisk:
+                      type: number
+                      minimum: 0
+                      maximum: 3
+                    smoking:
+                      type: number
+                      minimum: 0
+                      maximum: 1
+            example:
+              frequencyScores:
+                - hz: 250
+                  score: 8
+                  ear: left
+                - hz: 500
+                  score: 7
+                  ear: left
+              habitData:
+                headphoneHours: 3
+                volumeLevel: 65
+      responses:
+        "201":
+          description: Evaluación guardada con análisis de riesgo
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          evaluation:
+                            $ref: '#/components/schemas/Evaluation'
+                          riskResult:
+                            $ref: '#/components/schemas/RiskResult'
+                            nullable: true
+                          recommendations:
+                            type: array
+                            items:
+                              type: string
+        "400":
+          $ref: '#/components/responses/ValidationError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+    get:
+      tags: [evaluations]
+      summary: Listar historial de evaluaciones del usuario
+      operationId: listEvaluations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: skip
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Historial de evaluaciones
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  items: []
+                  total: 0
+                  limit: 20
+                  skip: 0
+                message: "Historial de evaluaciones"
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/evaluations/{id}:
+    get:
+      tags: [evaluations]
+      summary: Obtener evaluación por ID
+      operationId: getEvaluation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectid
+      responses:
+        "200":
+          description: Detalle de la evaluación
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          evaluation:
+                            $ref: '#/components/schemas/Evaluation'
+                          riskResult:
+                            $ref: '#/components/schemas/RiskResult'
+                            nullable: true
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [evaluations]
+      summary: Actualizar evaluación (habitData, status o frequencyScores)
+      operationId: patchEvaluation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                habitData:
+                  type: object
+                status:
+                  type: string
+                  enum: [complete, partial]
+                frequencyScores:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/FrequencyScore'
+      responses:
+        "200":
+          description: Evaluación actualizada
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          evaluation:
+                            $ref: '#/components/schemas/Evaluation'
+        "400":
+          $ref: '#/components/responses/ValidationError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  # ── Devices ────────────────────────────────────────────────────────────────
+  /api/devices:
+    post:
+      tags: [devices]
+      summary: Registrar nuevo dispositivo IoT
+      operationId: createDevice
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  example: "Sensor Sala de Reuniones"
+                type:
+                  type: string
+                  enum: [arduino, esp32, raspberry, other]
+                  default: arduino
+                hardwareId:
+                  type: string
+                  example: "ESP32-ABCD1234"
+                firmwareVersion:
+                  type: string
+                  example: "1.0.3"
+      responses:
+        "201":
+          description: Dispositivo registrado — la apiKey solo se muestra una vez
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [device, apiKey]
+                        properties:
+                          device:
+                            $ref: '#/components/schemas/Device'
+                          apiKey:
+                            type: string
+                            description: "Copia este valor al firmware. No se volverá a mostrar."
+        "400":
+          $ref: '#/components/responses/ValidationError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+    get:
+      tags: [devices]
+      summary: Listar dispositivos del usuario
+      operationId: listDevices
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Lista de dispositivos
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Device'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# AI Service (Flask — puerto 5001 en local, Render en producción)
+# ─────────────────────────────────────────────────────────────────────────────
+x-ai-service:
+  description: |
+    El Servicio IA corre como microservicio independiente (Flask + Gunicorn).
+    En producción: https://ai-service-hearguard.onrender.com
+    En desarrollo: http://localhost:5001
+
+  paths:
+    /health:
+      get:
+        summary: Estado del servicio IA y modelo ML
+        responses:
+          "200":
+            description: ok
+            example:
+              success: true
+              data:
+                status: ok
+                model: loaded
+
+    /api/predict-risk:
+      post:
+        summary: Predice nivel de riesgo auditivo a partir del perfil del usuario
+        requestBody:
+          schema:
+            type: object
+            properties:
+              age:
+                type: integer
+                example: 35
+              headphoneHours:
+                type: number
+                example: 4
+              volumeLevel:
+                type: number
+                example: 70
+              noiseExposure:
+                type: number
+                example: 3
+              occupationRisk:
+                type: number
+                example: 1
+              smoking:
+                type: number
+                example: 0
+              testScores:
+                type: array
+                items:
+                  type: number
+                example: [8, 7, 7, 6, 5, 4]
+        responses:
+          "200":
+            description: Predicción exitosa
+            example:
+              success: true
+              data:
+                riskScore: 42
+                riskLevel: "Moderado"
+                yearsEstimated: 8
+                confidence: 0.78
+                topFactors: ["Uso prolongado de audífonos"]
+                aiModel: "risk_rf_v1"
+              message: "Predicción lista"
+
+    /api/generate-recommendations:
+      post:
+        summary: Genera recomendaciones para un nivel de riesgo dado
+        requestBody:
+          schema:
+            type: object
+            properties:
+              riskLevel:
+                type: string
+                enum: [Bajo, Moderado, Alto, Muy Alto]
+              riskScore:
+                type: number
+        responses:
+          "200":
+            description: Lista de recomendaciones
+            example:
+              success: true
+              data:
+                recommendations:
+                  - "Mantén volumen de audífonos por debajo del 60%."
+                  - "Continúa pruebas auditivas periódicas."
+              message: "Recomendaciones generadas"
+
+    /api/model-info:
+      get:
+        summary: Metadatos del modelo ML cargado
+        responses:
+          "200":
+            description: Información del modelo
+            example:
+              success: true
+              data:
+                type: "RandomForestRegressor"
+                features: 8
+                r2_holdout: 0.83
