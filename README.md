@@ -47,7 +47,7 @@ Plataforma de salud auditiva preventiva con IA. Monitorea la exposición al ruid
 | IoT | ESP32 + KY-037, puente serial Node.js |
 | CI | GitHub Actions (backend tests, AI tests, Angular build, Flutter analyze) |
 | Deploy | GitHub Container Registry → Render (backend + AI) + Vercel (frontend) |
-| Metodología | Desarrollo **iterativo por fases** (roadmap en `Document/`), pruebas automatizadas y **CI/CD** |
+| Metodología | **TDD + BDD** para el software y **CRISP-DM** para el modelo de IA — ver [`docs/metodologia.md`](docs/metodologia.md) |
 
 ---
 
