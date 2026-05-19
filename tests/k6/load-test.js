@@ -25,6 +25,7 @@ const noiseDuration = new Trend('noise_post_duration_ms', true);
 // ── Configuration ─────────────────────────────────────────────────────────────
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
+const TEST_PASSWORD = __ENV.TEST_PASSWORD || 'HGload#test1'; // NOSONAR — load test credential, not a real secret
 
 export const options = {
   scenarios: {
@@ -107,7 +108,7 @@ export default function () {
   group('Register', () => {
     const res = http.post(
       `${BASE_URL}/api/auth/register`,
-      JSON.stringify({ name: 'Load Tester', email, password: 'LoadTest1' }),
+      JSON.stringify({ name: 'Load Tester', email, password: TEST_PASSWORD }),
       { headers: headers() },
     );
     const ok = check(res, {
@@ -125,7 +126,7 @@ export default function () {
     const start = Date.now();
     const res = http.post(
       `${BASE_URL}/api/auth/login`,
-      JSON.stringify({ email, password: 'LoadTest1' }),
+      JSON.stringify({ email, password: TEST_PASSWORD }),
       { headers: headers() },
     );
     loginDuration.add(Date.now() - start);

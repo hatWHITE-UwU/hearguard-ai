@@ -31,6 +31,7 @@ jobs:
           JWT_SECRET: test_jwt_secret_min_32_chars_long_abc123
           JWT_REFRESH_SECRET: test_refresh_secret_min_32_chars_long
           FRONTEND_URL: http://localhost:4200
+          AI_SERVICE_URL: http://localhost:5001
           NODE_ENV: test
       - name: Check backend coverage threshold (≥ 60%)
         run: |

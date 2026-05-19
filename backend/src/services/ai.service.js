@@ -8,6 +8,7 @@ const { getEnv } = require('../config/env');
  */
 async function postPredictRisk(payload) {
   const { AI_SERVICE_URL } = getEnv();
+  if (!AI_SERVICE_URL) return { ok: false, error: new Error('AI_SERVICE_URL no configurada') };
   const url = `${AI_SERVICE_URL.replace(/\/$/, '')}/api/predict-risk`;
   try {
     const res = await fetch(url, {
@@ -35,6 +36,7 @@ async function postPredictRisk(payload) {
  */
 async function postGenerateRecommendations(payload) {
   const { AI_SERVICE_URL } = getEnv();
+  if (!AI_SERVICE_URL) return { ok: false, error: new Error('AI_SERVICE_URL no configurada') };
   const url = `${AI_SERVICE_URL.replace(/\/$/, '')}/api/generate-recommendations`;
   try {
     const res = await fetch(url, {
