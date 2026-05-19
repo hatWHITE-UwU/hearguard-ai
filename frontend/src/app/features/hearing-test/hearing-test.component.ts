@@ -362,12 +362,12 @@ export class HearingTestComponent implements OnDestroy {
 
   private afterStep(): void {
     if (this.hearing.isComplete()) {
-      void this.router.navigateByUrl('/app/results/new');
+      this.router.navigateByUrl('/app/results/new').catch(() => {});
     }
   }
 
   goHabits(): void {
-    void this.router.navigateByUrl('/app/hearing/habits');
+    this.router.navigateByUrl('/app/hearing/habits').catch(() => {});
   }
 
   private resetBars(): void {

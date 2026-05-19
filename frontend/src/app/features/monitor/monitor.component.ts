@@ -190,11 +190,11 @@ export class MonitorComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    void this.noise.startMic().catch((_err: unknown) => undefined);
+    this.noise.startMic().catch((_err: unknown) => undefined);
   }
 
   ngOnDestroy(): void {
-    void this.noise.stop();
+    this.noise.stop().catch(() => {});
   }
 
   saveReading(): void {

@@ -473,7 +473,7 @@ export class LoginComponent implements OnInit {
   ngOnInit(): void {
     this.auth.loadUserFromStorage();
     if (this.auth.getAccessToken()) {
-      void this.router.navigateByUrl('/app/dashboard');
+      this.router.navigateByUrl('/app/dashboard').catch(() => {});
     }
     const saved = localStorage.getItem(LoginComponent.REMEMBER_EMAIL_KEY);
     if (saved) {
@@ -544,7 +544,7 @@ export class LoginComponent implements OnInit {
         } else {
           localStorage.removeItem(LoginComponent.REMEMBER_EMAIL_KEY);
         }
-        void this.router.navigateByUrl('/app/dashboard');
+        this.router.navigateByUrl('/app/dashboard').catch(() => {});
       },
       error: (err: unknown) => {
         this.loading.set(false);

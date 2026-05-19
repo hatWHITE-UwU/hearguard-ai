@@ -335,7 +335,7 @@ export class DashboardComponent implements OnInit {
   readonly greetName = computed(() => {
     const n = this.auth.currentUser()?.name?.trim();
     if (!n) return 'usuario';
-    return n.split(/\s+/)[0] ?? 'usuario';
+    return n.split(/\s+/)[0] || 'usuario';
   });
 
   readonly riskScore = signal(20);

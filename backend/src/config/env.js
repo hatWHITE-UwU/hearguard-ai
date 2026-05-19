@@ -16,7 +16,7 @@ function readEnv() {
     JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET,
     JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
     FRONTEND_URL: process.env.FRONTEND_URL,
-    AI_SERVICE_URL: process.env.AI_SERVICE_URL || 'http://localhost:5001',
+    AI_SERVICE_URL: process.env.AI_SERVICE_URL,
   };
 }
 

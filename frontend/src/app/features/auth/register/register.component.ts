@@ -440,7 +440,7 @@ export class RegisterComponent implements OnInit {
   ngOnInit(): void {
     this.auth.loadUserFromStorage();
     if (this.auth.getAccessToken()) {
-      void this.router.navigateByUrl('/app/dashboard');
+      this.router.navigateByUrl('/app/dashboard').catch(() => {});
     }
   }
 

@@ -119,7 +119,7 @@ if (env.NODE_ENV !== 'test') {
       '/api/docs',
       // Helmet bloquea los assets inline de Swagger; relajamos solo en esta ruta
       (_req, res, next) => {
-        res.setHeader('Content-Security-Policy', "default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; img-src * data:");
+        res.setHeader('Content-Security-Policy', "default-src 'self' https:; script-src 'self' https:; style-src 'self' 'unsafe-inline' https:; img-src * data: https:; font-src 'self' data: https:; connect-src 'self' https:");
         next();
       },
       swaggerUi.serve,

@@ -144,13 +144,13 @@ export class HabitFormComponent implements OnInit {
     this.fillExample();
     this.persistHabitsToService();
     this.hearing.seedDemoSession(7.2);
-    void this.router.navigateByUrl('/app/results/new');
+    this.router.navigateByUrl('/app/results/new').catch(() => {});
   }
 
   next(): void {
     this.persistHabitsToService();
     this.hearing.resetFlow();
-    void this.router.navigateByUrl('/app/hearing/test');
+    this.router.navigateByUrl('/app/hearing/test').catch(() => {});
   }
 
   private persistHabitsToService(): void {
