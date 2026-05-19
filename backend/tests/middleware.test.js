@@ -91,7 +91,7 @@ describe('Middleware — notFoundHandler & errorHandler', () => {
     });
 
     it('err.message vacío usa mensaje genérico', () => {
-      const err = Object.assign(new Error(''), { statusCode: 500 });
+      const err = Object.assign(new Error('mensaje vacío'), { statusCode: 500, message: '' });
       errorHandler(err, req, res, jest.fn());
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
         message: 'Error interno del servidor',

@@ -1,10 +1,12 @@
 import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Router, UrlTree, provideRouter, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { authGuard } from './auth.guard';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../../environments/environment';
+
+class StubLoginComponent {}
 
 function runGuard(): ReturnType<typeof authGuard> {
   return TestBed.runInInjectionContext(() =>
@@ -24,7 +26,7 @@ describe('authGuard', () => {
     TestBed.configureTestingModule({
       providers: [
         AuthService,
-        provideRouter([{ path: 'login', component: class {} }]),
+        provideRouter([{ path: 'login', component: StubLoginComponent }]),
         provideHttpClient(),
         provideHttpClientTesting(),
       ],
@@ -46,8 +48,7 @@ describe('authGuard', () => {
     const result = runGuard();
     expect(result).not.toBe(true);
     expect(result).toBeTruthy();
-    const tree = result as ReturnType<Router['createUrlTree']>;
-    expect(router.serializeUrl(tree)).toContain('login');
+    expect(router.serializeUrl(result as UrlTree)).toContain('login');
   });
 
   it('returns true without token in publicDemo mode', () => {

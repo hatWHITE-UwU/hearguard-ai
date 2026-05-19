@@ -66,6 +66,47 @@ function buildAiPayload(user, evaluation) {
 }
 
 /**
+ * @param {import('mongoose').Document} user
+ * @param {import('mongoose').Document} evaluation
+ * @returns {Promise<{ riskResultDoc: import('mongoose').Document|null, recommendationsList: unknown[] }>}
+ */
+async function applyAiPrediction(user, evaluation) {
+  const pred = await postPredictRisk(buildAiPayload(user, evaluation));
+  if (!pred.ok) {
+    if (process.env.NODE_ENV !== 'test') {
+      logger.warn('[ai.service] predict degradado: ' + pred.error?.message);
+    }
+    return { riskResultDoc: null, recommendationsList: [] };
+  }
+
+  const d = pred.data;
+  const riskResultDoc = await RiskResult.findOneAndUpdate(
+    { evaluationId: evaluation._id },
+    {
+      evaluationId: evaluation._id,
+      riskScore: Math.min(100, Math.max(0, Number(d.riskScore) || 0)),
+      riskLevel: mapRiskLevelToEnum(d.riskLevel),
+      yearsEstimated: Number(d.yearsEstimated) || 0,
+      confidence: d.confidence != null ? Number(d.confidence) : undefined,
+      topFactors: Array.isArray(d.topFactors) ? d.topFactors : [],
+      recommendations: [],
+      aiModel: String(d.aiModel || 'v1.0'),
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  );
+
+  const rec = await postGenerateRecommendations({ riskLevel: d.riskLevel, riskScore: d.riskScore });
+  let recommendationsList = [];
+  if (rec.ok) {
+    const items = rec.data.recommendations || rec.data.items || [];
+    recommendationsList = Array.isArray(items) ? items : [];
+    riskResultDoc.recommendations = recommendationsList;
+    await riskResultDoc.save();
+  }
+  return { riskResultDoc, recommendationsList };
+}
+
+/**
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  * @param {import('express').NextFunction} next
@@ -104,43 +145,7 @@ async function create(req, res, next) {
         message: 'Usuario no encontrado',
       });
     }
-    let riskResultDoc = null;
-    let recommendationsList = [];
-
-    const aiPayload = buildAiPayload(user, evaluation);
-    const pred = await postPredictRisk(aiPayload);
-    if (pred.ok) {
-      const d = pred.data;
-      const riskLevelEnum = mapRiskLevelToEnum(d.riskLevel);
-      riskResultDoc = await RiskResult.findOneAndUpdate(
-        { evaluationId: evaluation._id },
-        {
-          evaluationId: evaluation._id,
-          riskScore: Math.min(100, Math.max(0, Number(d.riskScore) || 0)),
-          riskLevel: riskLevelEnum,
-          yearsEstimated: Number(d.yearsEstimated) || 0,
-          confidence:
-            d.confidence !== null && d.confidence !== undefined ? Number(d.confidence) : undefined,
-          topFactors: Array.isArray(d.topFactors) ? d.topFactors : [],
-          recommendations: [],
-          aiModel: String(d.aiModel || 'v1.0'),
-        },
-        { upsert: true, new: true, setDefaultsOnInsert: true },
-      );
-
-      const rec = await postGenerateRecommendations({
-        riskLevel: d.riskLevel,
-        riskScore: d.riskScore,
-      });
-      if (rec.ok) {
-        const items = rec.data.recommendations || rec.data.items || [];
-        recommendationsList = Array.isArray(items) ? items : [];
-        riskResultDoc.recommendations = recommendationsList;
-        await riskResultDoc.save();
-      }
-    } else if (process.env.NODE_ENV !== 'test') {
-      logger.warn('[ai.service] predict degradado: ' + pred.error?.message);
-    }
+    const { riskResultDoc, recommendationsList } = await applyAiPrediction(user, evaluation);
 
     const populated = evaluation.toObject();
     return res.status(201).json({

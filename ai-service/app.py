@@ -65,7 +65,7 @@ def predict():
         logger.info("predict-risk score=%s level=%s", data.get("riskScore"), data.get("riskLevel"))
         return jsonify({"success": True, "data": data, "message": "Predicción lista"})
     except Exception as exc:  # noqa: BLE001
-        logger.error("predict-risk failed: %s", exc)
+        logger.exception("predict-risk failed")
         return (
             jsonify(
                 {
