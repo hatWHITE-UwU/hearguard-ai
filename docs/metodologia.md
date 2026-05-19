@@ -1,75 +1,113 @@
 # Metodología del proyecto HearGuard AI
 
 **Autor:** Equipo HearGuard AI — Universidad Continental
-**Versión:** 1.0
+**Versión:** 2.0
 **Última actualización:** mayo 2026
 
 ---
 
 ## Resumen
 
-El desarrollo de HearGuard AI combinó **dos metodologías complementarias** aplicadas a dos componentes diferenciados del sistema:
+El desarrollo de HearGuard AI se sustenta en **dos metodologías complementarias** aplicadas a dos componentes diferenciados del sistema:
 
-1. **TDD + BDD** (*Test-Driven Development* y *Behavior-Driven Development*) para el desarrollo del software: backend REST, frontend Angular, aplicación móvil Flutter y firmware IoT.
-2. **CRISP-DM** (*Cross-Industry Standard Process for Data Mining*) para la construcción del modelo de inteligencia artificial que predice el riesgo auditivo del usuario.
+- **Metodología principal:** **TDD + BDD** (*Test-Driven Development* y *Behavior-Driven Development*) para el ciclo de vida del software, incluyendo backend REST, frontend Angular, aplicación móvil Flutter y firmware IoT.
+- **Metodología complementaria:** **CRISP-DM** (*Cross-Industry Standard Process for Data Mining*) para la construcción del modelo de inteligencia artificial que predice el riesgo auditivo del usuario.
 
-Esta combinación se eligió porque cada metodología tiene un dominio en el que es ampliamente aceptada en la literatura científica: TDD/BDD en ingeniería de software y CRISP-DM en proyectos de ciencia de datos y aprendizaje automático.
+Esta combinación se eligió porque cada metodología tiene un dominio en el que es ampliamente aceptada en la literatura científica y porque permite trazabilidad explícita entre requisitos, código, pruebas y modelo predictivo.
 
 ---
 
-## 1. TDD + BDD — Desarrollo del software
+## 1. Metodología principal — TDD + BDD
 
 ### 1.1 Justificación
 
-**Test-Driven Development (TDD)**, formalizado por Beck (2003), establece un ciclo iterativo de tres pasos —*red, green, refactor*— en el que primero se escribe una prueba que falla, luego el código mínimo que la satisface y, finalmente, se refactoriza. Diversos estudios empíricos reportan mejoras en la calidad interna y externa del software, así como una reducción significativa de defectos en producción (Janzen & Saiedian, 2005; Bissi, Neto & Emer, 2016).
+**Test-Driven Development (TDD)**, formalizado por Beck (2003), establece un ciclo iterativo de tres pasos —*red, green, refactor*— en el que primero se escribe una prueba que falla, luego el código mínimo que la satisface y, finalmente, se refactoriza preservando el comportamiento. Diversos estudios empíricos reportan mejoras consistentes en la calidad interna y externa del software, así como reducción significativa de defectos en producción (Janzen & Saiedian, 2005; Bissi, Neto & Emer, 2016).
 
-**Behavior-Driven Development (BDD)**, propuesto por North (2006) y formalizado posteriormente por Smart (2014), extiende TDD desplazando el foco hacia el **comportamiento esperado del sistema** desde la perspectiva del usuario. Los escenarios se redactan en lenguaje natural estructurado (Gherkin) con la forma `Dado/Cuando/Entonces`, lo que permite que stakeholders no técnicos participen en la definición de los criterios de aceptación (Solis & Wang, 2011).
+**Behavior-Driven Development (BDD)**, propuesto por North (2006) y formalizado por Smart (2014), extiende TDD desplazando el foco hacia el **comportamiento esperado del sistema** desde la perspectiva del usuario. Los escenarios se redactan en lenguaje natural estructurado (Gherkin) con la forma `Dado/Cuando/Entonces`, lo que permite que stakeholders no técnicos participen en la definición de los criterios de aceptación (Solis & Wang, 2011).
 
-Para HearGuard AI se eligió la combinación TDD + BDD porque:
+Para HearGuard AI se eligió la combinación TDD + BDD como metodología **principal** porque:
 
-- El sistema involucra **múltiples capas** (web, móvil, API REST, IoT) y necesita una red de pruebas automatizadas que valide la integración entre ellas.
-- Los **requisitos funcionales** —registro de usuario, monitoreo de ruido, prueba auditiva, predicción de riesgo, alertas IoT— pueden expresarse claramente como escenarios de comportamiento.
-- Existe restricción académica de **trazabilidad**: cada historia de usuario debe poder vincularse a una prueba ejecutable.
+- El sistema involucra **múltiples capas heterogéneas** (web, móvil, API REST, IoT) y requiere una red de pruebas automatizadas que valide tanto unidades aisladas como la integración entre ellas.
+- Los **requisitos funcionales** —registro de usuario, monitoreo de ruido, prueba auditiva, predicción de riesgo, alertas IoT— se expresan naturalmente como escenarios de comportamiento.
+- Existe una restricción académica de **trazabilidad**: cada historia de usuario debe poder vincularse a un escenario BDD y a una prueba ejecutable.
+- La cobertura objetiva de pruebas es la **principal evidencia de calidad** del proyecto, medible mediante herramientas estándar (Jest, pytest, Vitest, SonarCloud).
 
-### 1.2 Aplicación en el proyecto
+### 1.2 Ciclo de desarrollo aplicado
 
-El ciclo TDD se siguió en las cuatro capas de software:
+El ciclo TDD + BDD se ejecutó en cada historia de usuario siguiendo cinco pasos:
 
-| Capa | Framework de pruebas | N.° de casos automatizados |
-|------|----------------------|----------------------------|
-| Backend Node.js / Express | Jest + Supertest | 72 |
-| Servicio de IA Flask | pytest | 7 |
-| Frontend Angular | Vitest | 18 |
-| Aplicación móvil Flutter | flutter_test | 42 |
-| **Total** | | **~139** |
+1. Redacción del **escenario Gherkin** en `docs/features/*.feature` con el patrón `Dado/Cuando/Entonces`.
+2. Traducción del escenario en una **prueba unitaria o de integración** que falla inicialmente (*red*).
+3. Implementación del **código mínimo necesario** para que la prueba pase (*green*).
+4. **Refactorización** preservando el comportamiento.
+5. **Verificación automática** en el pipeline de CI (GitHub Actions) y análisis estático en SonarCloud.
 
-La cobertura de líneas del backend alcanzó **~84 %** según los reportes de Jest, validados con SonarCloud.
+### 1.3 Cobertura de pruebas en el repositorio
 
-Los escenarios BDD se redactaron como archivos `.feature` ubicados en `docs/features/`, uno por cada módulo funcional:
+| Capa | Framework de pruebas | Carpeta | N.° de casos automatizados |
+|------|----------------------|---------|----------------------------|
+| Backend Node.js / Express | Jest + Supertest | `backend/tests/` | 72 |
+| Servicio de IA Flask | pytest | `ai-service/tests/` | 7 |
+| Frontend Angular | Vitest | `frontend/src/app/**/*.spec.ts` | 18 |
+| Aplicación móvil Flutter | flutter_test | `flutter_app/test/` | 42 |
+| **Total** | | | **~139** |
 
-- `autenticacion.feature` — registro, login, refresh, logout, perfil.
-- `monitoreo-ruido.feature` — lecturas en tiempo real y estadísticas.
-- `prueba-auditiva.feature` — cuestionario auditivo de 12 frecuencias.
-- `prediccion-riesgo-ia.feature` — invocación al servicio Flask y respuestas.
-- `dispositivos-iot.feature` — registro de dispositivos y autenticación por `X-Device-Key`.
-- `resultados-y-recomendaciones.feature` — generación de recomendaciones personalizadas.
+La cobertura del backend reportada por Jest alcanza aproximadamente **84 %** de líneas (validada con SonarCloud). El plan de pruebas detallado, con identificadores únicos por caso (`CP-B-01`, `CP-AI-02`, etc.), precondiciones, pasos y resultados esperados, se encuentra en `docs/plan-de-pruebas.md`.
 
-El plan de pruebas detallado, con identificadores únicos (`CP-B-01`, `CP-AI-02`, etc.), precondiciones, pasos y resultados esperados, se encuentra en `docs/plan-de-pruebas.md`.
+### 1.4 Escenarios BDD en Gherkin
 
-### 1.3 Integración continua
+Se redactaron seis archivos `.feature` en `docs/features/`, uno por cada módulo funcional del sistema:
 
-Las pruebas se ejecutan automáticamente en cada *push* a las ramas `main` y `develop`, así como en cada *pull request*, mediante GitHub Actions (`.github/workflows/ci.yml`). El pipeline incluye seis jobs en paralelo o encadenados:
+| Archivo | Módulo cubierto |
+|---------|-----------------|
+| `autenticacion.feature` | Registro, login, refresh, logout, perfil |
+| `monitoreo-ruido.feature` | Lecturas en tiempo real y estadísticas (hoy/semana) |
+| `prueba-auditiva.feature` | Cuestionario auditivo de 6 frecuencias |
+| `prediccion-riesgo-ia.feature` | Invocación al servicio Flask y respuestas |
+| `dispositivos-iot.feature` | Registro de dispositivos y autenticación por `X-Device-Key` |
+| `resultados-y-recomendaciones.feature` | Generación de recomendaciones personalizadas |
 
-1. **backend** — Jest + MongoDB en servicio.
+Cada escenario sigue la misma estructura, lo que permite trazabilidad directa con los casos de prueba del plan:
+
+```gherkin
+Característica: Autenticación de usuarios
+
+  Escenario: Registro exitoso con datos válidos
+    Dado que el usuario no está registrado
+    Cuando envía un POST a /api/auth/register con nombre, email y contraseña válidos
+    Entonces recibe un código 201
+    Y la respuesta contiene un accessToken y un refreshToken
+```
+
+### 1.5 Pruebas de caja negra y caja blanca
+
+| Enfoque | Aplicación en HearGuard | Evidencia |
+|---------|--------------------------|-----------|
+| **Caja negra** | API REST verificada por entrada/salida HTTP sin conocer la implementación. Pruebas BDD de aceptación. | `backend/tests/*.test.js` (Jest + Supertest), `docs/features/*.feature` |
+| **Caja blanca** | Lógica interna de servicios, guards, interceptores, predictor de IA y *mappers* móviles. | `ai-service/tests/test_predictor.py`, `frontend/**/*.spec.ts`, `flutter_app/test/` |
+
+### 1.6 Integración continua
+
+Las pruebas se ejecutan automáticamente en cada *push* a las ramas `main` y `develop`, y en cada *pull request*, mediante GitHub Actions (`.github/workflows/ci.yml`). El pipeline incluye seis jobs:
+
+1. **backend** — Jest con MongoDB en servicio.
 2. **ai-service** — entrenamiento del modelo + pytest.
 3. **frontend** — Vitest + build Angular.
 4. **flutter** — `flutter analyze` + `flutter test`.
-5. **sonar** — análisis estático SonarCloud.
+5. **sonar** — análisis estático con SonarCloud.
 6. **deploy** — solo en `main`: despliegue automático a Render y Vercel.
 
-Esta automatización implementa el principio de *continuous testing* recomendado por Humble y Farley (2010).
+Esta automatización implementa los principios de *continuous testing* y *continuous delivery* descritos por Humble y Farley (2010).
 
-### 1.4 Referencias citadas
+### 1.7 Resultados obtenidos
+
+- ~139 casos de prueba automatizados, todos en estado pasante.
+- Cobertura de líneas del backend ≈ 84 %.
+- Pipeline de CI con seis jobs en GitHub Actions.
+- Seis archivos de escenarios BDD documentados.
+- Plan de pruebas formal documentado en `docs/plan-de-pruebas.md`.
+
+### 1.8 Referencias citadas
 
 - Beck, K. (2003). *Test-driven development: By example*. Boston: Addison-Wesley.
 - Bissi, W., Neto, A. G. S. S., & Emer, M. C. F. P. (2016). The effects of test driven development on internal quality, external quality and productivity: A systematic review. *Information and Software Technology*, 74, 45–54. https://doi.org/10.1016/j.infsof.2016.02.004
@@ -81,48 +119,34 @@ Esta automatización implementa el principio de *continuous testing* recomendado
 
 ---
 
-## 2. CRISP-DM — Modelo de IA
+## 2. Metodología complementaria — CRISP-DM
 
 ### 2.1 Justificación
 
-CRISP-DM (*Cross-Industry Standard Process for Data Mining*) fue formalizado por Shearer (2000) y Wirth & Hipp (2000) como un proceso estándar e independiente de la industria para proyectos de minería de datos. Una revisión sistemática reciente reportó que CRISP-DM continúa siendo, dos décadas después, el proceso más utilizado en proyectos de ciencia de datos en producción (Schröer, Kruse & Gómez, 2021; Martínez-Plumed et al., 2021).
+CRISP-DM (*Cross-Industry Standard Process for Data Mining*) fue formalizado por Shearer (2000) y Wirth & Hipp (2000) como un proceso estándar para proyectos de minería de datos. Una revisión sistemática reciente confirmó que CRISP-DM continúa siendo, dos décadas después, el proceso más utilizado en proyectos de ciencia de datos en producción (Schröer, Kruse & Gómez, 2021; Martínez-Plumed et al., 2021).
 
-CRISP-DM organiza el trabajo en **seis fases iterativas**: comprensión del negocio, comprensión de los datos, preparación de los datos, modelado, evaluación y despliegue. Esta iteración entre fases —especialmente entre preparación, modelado y evaluación— es coherente con el enfoque experimental requerido para entrenar y validar un modelo predictivo.
-
-Para HearGuard AI se eligió CRISP-DM porque:
-
-- El componente de IA es **independiente** del software web/móvil y se despliega como un microservicio; un proceso específico de minería de datos resulta más adecuado que un proceso general de ingeniería de software.
-- El modelo debe **iterar** entre selección de variables, hiperparámetros y métricas; CRISP-DM contempla explícitamente este ciclo.
-- El despliegue como microservicio Flask exige una **fase final estructurada**, también prevista en CRISP-DM.
+Se aplicó como metodología **complementaria** —y no principal— porque el componente de inteligencia artificial es solo una parte del sistema y se despliega como microservicio independiente. Sin embargo, el rigor metodológico que aporta resulta indispensable para garantizar reproducibilidad y trazabilidad del modelo predictivo.
 
 ### 2.2 Aplicación en el proyecto
 
-Cada fase de CRISP-DM se mapea a archivos y artefactos reales del repositorio:
+Cada fase de CRISP-DM se mapea a archivos del repositorio:
 
-| Fase CRISP-DM | Actividades realizadas | Trazabilidad en el repositorio |
-|---------------|------------------------|--------------------------------|
-| 1. Comprensión del negocio | Definición del problema: predicción temprana del riesgo auditivo en jóvenes y adultos jóvenes expuestos a ruido y uso prolongado de auriculares. | `README.md` (sección Arquitectura), `Document/RoadmapTecnico/Fase_4_ServicioIA.md` |
-| 2. Comprensión de los datos | Variables identificadas: edad, horas de auriculares, volumen, exposición a ruido ocupacional, hábitos (tabaco), puntajes del cuestionario auditivo en 6 frecuencias. | `Document/RoadmapTecnico/Fase_4_ServicioIA.md`, esquema de `Evaluation` en `backend/src/models/` |
-| 3. Preparación de los datos | Construcción del vector de características (8 features). Normalización de tipos, manejo de valores faltantes con valores por defecto seguros, cálculo de puntaje promedio y bajas frecuencias. | `ai-service/model/features.py`, `ai-service/model/constants.py` |
-| 4. Modelado | Entrenamiento de un clasificador *RandomForest* (Breiman, 2001) implementado en scikit-learn. Generación de un *bundle* serializado con el modelo y métricas de holdout. | `ai-service/model/trainer.py` |
-| 5. Evaluación | Validación del modelo con conjunto holdout (R² ≥ 0.8). Pruebas automatizadas con perfiles representativos de riesgo bajo y alto. Verificación de robustez ante datos faltantes. | `ai-service/tests/test_predictor.py` (7 tests, incluyendo `test_high_risk_profile`, `test_low_risk_profile`, `test_missing_data_safe`) |
-| 6. Despliegue | Exposición del modelo como microservicio REST Flask con endpoints `/api/predict-risk` y `/api/generate-recommendations`. Integración con el backend Node.js. Despliegue en Render. | `ai-service/app.py`, `ai-service/model/predictor.py`, `render.yaml` |
+| Fase CRISP-DM | Actividad realizada | Trazabilidad |
+|---------------|---------------------|--------------|
+| 1. Comprensión del negocio | Definición del problema: predicción temprana del riesgo auditivo. | `README.md`, `Document/RoadmapTecnico/Fase_4_ServicioIA.md` |
+| 2. Comprensión de los datos | Identificación de variables: edad, horas de auriculares, volumen, exposición a ruido, hábitos, puntajes del cuestionario auditivo. | `Document/RoadmapTecnico/Fase_4_ServicioIA.md`, esquema `Evaluation` en `backend/src/models/` |
+| 3. Preparación de los datos | Construcción del vector de 8 *features*, normalización, manejo de valores faltantes. | `ai-service/model/features.py`, `ai-service/model/constants.py` |
+| 4. Modelado | Entrenamiento de *Random Forest* (Breiman, 2001) con scikit-learn. | `ai-service/model/trainer.py` |
+| 5. Evaluación | Validación holdout (R² ≥ 0.8), pruebas con perfiles de riesgo bajo/alto, robustez frente a datos faltantes. | `ai-service/tests/test_predictor.py` |
+| 6. Despliegue | Exposición como microservicio REST en Flask, integración con el backend Node.js, despliegue en Render. | `ai-service/app.py`, `ai-service/model/predictor.py`, `render.yaml` |
 
-### 2.3 Iteración y refinamiento
+### 2.3 Métricas reportadas
 
-CRISP-DM no es un proceso lineal: la fase de evaluación retroalimenta a la de preparación de datos y modelado. En HearGuard AI esta iteración se evidencia en:
+- R² holdout del modelo entrenado: ≥ 0.80.
+- Score de riesgo acotado en [0, 100], mapeado a cuatro niveles: *Bajo*, *Moderado*, *Alto*, *Muy Alto*.
+- Robustez ante entrada vacía verificada en `test_missing_data_safe`.
 
-- Ajustes sucesivos en `features.py` (incorporación de `lowFreqScore` y `avgTestScore` calculados a partir del cuestionario auditivo).
-- Cambios en las dependencias del entrenador para alcanzar compatibilidad con Render (commits `a009cd2`, `6d75311`, `72f3240`).
-- Modificación del umbral `score_to_level` y ampliación de recomendaciones por nivel.
-
-### 2.4 Métricas reportadas
-
-- **R² holdout** del modelo entrenado: ≥ 0.80 (validado por `test_model_loaded`).
-- **Score de riesgo** acotado al rango [0, 100] y mapeado a cuatro niveles: *Bajo*, *Moderado*, *Alto*, *Muy Alto*.
-- **Robustez ante entrada vacía**: el predictor responde correctamente incluso con un payload sin datos (`test_missing_data_safe`).
-
-### 2.5 Referencias citadas
+### 2.4 Referencias citadas
 
 - Breiman, L. (2001). Random forests. *Machine Learning*, 45(1), 5–32. https://doi.org/10.1023/A:1010933404324
 - Martínez-Plumed, F., Contreras-Ochando, L., Ferri, C., Hernández-Orallo, J., Kull, M., Lachiche, N., Ramírez-Quintana, M. J., & Flach, P. (2021). CRISP-DM twenty years later: From data mining processes to data science trajectories. *IEEE Transactions on Knowledge and Data Engineering*, 33(8), 3048–3061. https://doi.org/10.1109/TKDE.2019.2962680
@@ -136,23 +160,23 @@ CRISP-DM no es un proceso lineal: la fase de evaluación retroalimenta a la de p
 
 La siguiente tabla resume cómo conviven ambas metodologías sin solaparse:
 
-| Dimensión | TDD + BDD | CRISP-DM |
-|-----------|-----------|----------|
+| Dimensión | TDD + BDD (principal) | CRISP-DM (complementaria) |
+|-----------|------------------------|---------------------------|
 | Componente del sistema | Software (web, móvil, API, IoT) | Modelo de IA (`ai-service/`) |
 | Unidad de trabajo | Historia de usuario / escenario Gherkin | Iteración de modelado |
-| Salida principal | Código + pruebas | Modelo entrenado + métricas |
-| Validación | Cobertura de pruebas, SonarCloud | R² holdout, pruebas de perfil |
+| Salida principal | Código + pruebas + escenarios | Modelo entrenado + métricas |
+| Validación | Cobertura, SonarCloud, pipeline CI | R² holdout, pruebas de perfil |
 | Ciclo de vida | *Red → Green → Refactor* | Seis fases iterativas |
 
-Ambas se integran en el pipeline de CI/CD descrito en la sección 1.3: el job `ai-service` entrena el modelo y ejecuta pytest antes de que el job `deploy` publique el servicio en Render, lo que garantiza que ninguna versión del modelo llega a producción sin haber pasado por las fases 4 y 5 de CRISP-DM ni por la red de pruebas de TDD.
+Ambas se integran en el pipeline de CI/CD: el job `ai-service` entrena el modelo y ejecuta pytest antes de que el job `deploy` publique el servicio en Render, lo que garantiza que ninguna versión del modelo llegue a producción sin haber superado tanto las fases 4 y 5 de CRISP-DM como la red de pruebas TDD/BDD.
 
 ---
 
 ## 4. Limitaciones y trabajo futuro
 
-- **Tamaño del dataset.** El modelo actual se entrena con un conjunto sintético basado en heurísticas médicas; el siguiente paso natural —dentro de la fase 2 de CRISP-DM— es incorporar un dataset clínico real con consentimiento informado.
-- **Pruebas de aceptación automatizadas.** Los escenarios Gherkin actualmente están documentados en `.feature`, pero su ejecución automática con Cucumber/SpecFlow se contempla como mejora de la metodología BDD.
-- **MLOps.** La fase 6 (despliegue) podría extenderse con reentrenamiento continuo y monitoreo de *data drift*, alineándose con prácticas emergentes de MLOps (Kreuzberger, Kühl & Hirschl, 2023).
+- **Automatización de los escenarios BDD.** Los archivos `.feature` actualmente se mantienen como documentación de especificación. Una mejora directa consiste en ejecutarlos automáticamente con Cucumber o un framework equivalente para que se ejecuten en cada commit junto al resto de pruebas.
+- **Dataset clínico real.** El modelo se entrena con datos sintéticos basados en heurísticas médicas; incorporar un dataset clínico con consentimiento informado fortalecería la fase 2 de CRISP-DM.
+- **MLOps.** La fase 6 (despliegue) puede extenderse con reentrenamiento continuo y monitoreo de *data drift* (Kreuzberger, Kühl & Hirschl, 2023).
 
 ---
 
