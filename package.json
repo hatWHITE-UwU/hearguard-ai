@@ -9,7 +9,7 @@
     "docker:backend": "docker compose up --build mongodb ai-service backend",
     "mongo:local": "docker compose up -d mongodb",
     "prepare": "husky",
-    "lint:backend": "cd backend && eslint src tests --ext .js --max-warnings 0",
+    "lint:backend": "npm run lint --prefix backend",
     "lint:frontend": "cd frontend && npm run lint",
     "test:backend": "cd backend && npm test",
     "test:frontend": "cd frontend && npm run test:ci -- --browsers=chromium",
@@ -19,5 +19,5 @@
   "devDependencies": {
     "husky": "^9.1.7",
     "lint-staged": "^16.1.0"
-  },
+  }
 }

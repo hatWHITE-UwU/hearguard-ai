@@ -254,5 +254,77 @@ describe('Noise API', () => {
         .expect(401);
       expect(res.body.error).toBe('UNAUTHORIZED');
     });
+
+    it('rechaza device inactivo con 401', async () => {
+      const agent = request.agent(app);
+      const token = await login(agent, `iot_inactive_${Date.now()}@test.com`);
+      const dev = await agent
+        .post('/api/devices')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'Dispositivo Inactivo' })
+        .expect(201);
+      await Device.findByIdAndUpdate(dev.body.data.device.id, { isActive: false });
+      const res = await request(app)
+        .post('/api/noise/iot')
+        .set('X-Device-Key', dev.body.data.apiKey)
+        .send({ dbLevel: 55 })
+        .expect(401);
+      expect(res.body.error).toBe('UNAUTHORIZED');
+    });
+  });
+
+  // ── GET /api/noise — filtros de fecha ────────────────────────────────────────
+
+  describe('GET /api/noise — filtros avanzados', () => {
+    it('aplica filtro from/to de fecha correctamente', async () => {
+      const agent = request.agent(app);
+      const token = await login(agent, `noise_dates_${Date.now()}@test.com`);
+      await agent.post('/api/noise').set('Authorization', `Bearer ${token}`).send({ dbLevel: 60, source: 'app' });
+
+      const from = new Date(Date.now() - 60000).toISOString();
+      const to = new Date(Date.now() + 60000).toISOString();
+      const res = await agent
+        .get(`/api/noise?from=${from}&to=${to}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.items.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('ignora from/to con fecha inválida (no falla)', async () => {
+      const agent = request.agent(app);
+      const token = await login(agent, `noise_badate_${Date.now()}@test.com`);
+      const res = await agent
+        .get('/api/noise?from=no-es-fecha&to=tampoco')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('retorna avgDb=0 y maxDb=0 cuando no hay registros', async () => {
+      const agent = request.agent(app);
+      const token = await login(agent, `noise_empty_${Date.now()}@test.com`);
+      const res = await agent
+        .get('/api/noise')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(res.body.data.avgDb).toBe(0);
+      expect(res.body.data.maxDb).toBe(0);
+    });
+  });
+
+  // ── POST /api/noise — campos opcionales ──────────────────────────────────────
+
+  describe('POST /api/noise — location', () => {
+    it('guarda location cuando se incluye', async () => {
+      const agent = request.agent(app);
+      const token = await login(agent, `noise_loc_${Date.now()}@test.com`);
+      const res = await agent
+        .post('/api/noise')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ dbLevel: 70, source: 'app', location: 'Lima Centro' })
+        .expect(201);
+      expect(res.body.data.record.location).toBe('Lima Centro');
+    });
   });
 });

@@ -355,6 +355,67 @@ describe('HearGuard API — Fase 1', () => {
     it('rechaza sin autenticación con 401', async () => {
       await request(app).patch('/api/auth/me').send({ name: 'X' }).expect(401);
     });
+
+    it('actualiza age, gender, occupation y city', async () => {
+      const reg = await request(app)
+        .post('/api/auth/register')
+        .send(registerPayload)
+        .expect(201);
+      const token = reg.body.data.accessToken;
+      const res = await request(app)
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ age: 25, gender: 'male', occupation: 'engineer', city: 'Lima' })
+        .expect(200);
+      expect(res.body.data.user.age).toBe(25);
+      expect(res.body.data.user.gender).toBe('male');
+      expect(res.body.data.user.occupation).toBe('engineer');
+      expect(res.body.data.user.city).toBe('Lima');
+    });
+
+    it('actualiza settings.volumeUnit', async () => {
+      const reg = await request(app)
+        .post('/api/auth/register')
+        .send(registerPayload)
+        .expect(201);
+      const token = reg.body.data.accessToken;
+      const res = await request(app)
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ settings: { volumeUnit: 'dba' } })
+        .expect(200);
+      expect(res.body.data.user.settings.volumeUnit).toBe('dba');
+    });
+
+    it('ignora settings cuando no es un objeto plano (array)', async () => {
+      const reg = await request(app)
+        .post('/api/auth/register')
+        .send(registerPayload)
+        .expect(201);
+      const token = reg.body.data.accessToken;
+      const res = await request(app)
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ settings: ['darkTheme'] })
+        .expect(200);
+      expect(res.body.success).toBe(true);
+    });
+  });
+
+  describe('GET /api/auth/me — usuario eliminado', () => {
+    it('retorna 401 si el usuario fue eliminado después de obtener el token', async () => {
+      const reg = await request(app)
+        .post('/api/auth/register')
+        .send(registerPayload)
+        .expect(201);
+      const token = reg.body.data.accessToken;
+      await User.findOneAndUpdate({ email: registerPayload.email }, { isDeleted: true });
+      const res = await request(app)
+        .get('/api/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(401);
+      expect(res.body.error).toBe('UNAUTHORIZED');
+    });
   });
 
   describe('rutas inexistentes', () => {

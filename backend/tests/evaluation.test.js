@@ -1,5 +1,16 @@
 'use strict';
 
+// jest.mock is hoisted before require — replaces the module for the controller too.
+// Default: both AI calls return ok:false (matches real test env where AI is not running).
+jest.mock('../src/services/ai.service', () => {
+  const actual = jest.requireActual('../src/services/ai.service');
+  return {
+    ...actual,
+    postPredictRisk: jest.fn().mockResolvedValue({ ok: false, error: new Error('AI no disponible') }),
+    postGenerateRecommendations: jest.fn().mockResolvedValue({ ok: false, error: new Error('AI no disponible') }),
+  };
+});
+
 const request = require('supertest');
 const { app } = require('../server');
 const { connectDatabase, mongoose } = require('../src/config/database');
@@ -236,6 +247,177 @@ describe('Evaluations API', () => {
         .patch('/api/evaluations/507f1f77bcf86cd799439011')
         .send({ habitData: {} })
         .expect(401);
+    });
+  });
+
+  // ── GET /api/evaluations — skip ──────────────────────────────────────────────
+
+  describe('GET /api/evaluations — skip', () => {
+    it('aplica skip correctamente', async () => {
+      const agent = request.agent(app);
+      const token = await registerAndLogin(agent, `eskip_${Date.now()}@test.com`);
+      for (let i = 0; i < 3; i++) {
+        await agent
+          .post('/api/evaluations')
+          .set('Authorization', `Bearer ${token}`)
+          .send({ frequencyScores: scores12().slice(0, 6) });
+      }
+      const res = await agent
+        .get('/api/evaluations?limit=10&skip=2')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(res.body.data.skip).toBe(2);
+      expect(res.body.data.items.length).toBeLessThanOrEqual(1);
+    });
+  });
+
+  // ── AI service — mapRiskLevelToEnum (unit) ───────────────────────────────────
+
+  describe('mapRiskLevelToEnum', () => {
+    const { mapRiskLevelToEnum } = require('../src/services/ai.service');
+
+    it('convierte "Muy Alto" → muy_alto', () => {
+      expect(mapRiskLevelToEnum('Muy Alto')).toBe('muy_alto');
+    });
+    it('convierte "Alto" → alto', () => {
+      expect(mapRiskLevelToEnum('Alto')).toBe('alto');
+    });
+    it('convierte "Moderado" → moderado', () => {
+      expect(mapRiskLevelToEnum('Moderado')).toBe('moderado');
+    });
+    it('convierte "Bajo" → bajo', () => {
+      expect(mapRiskLevelToEnum('Bajo')).toBe('bajo');
+    });
+    it('default → moderado cuando no reconoce el nivel', () => {
+      expect(mapRiskLevelToEnum('')).toBe('moderado');
+      expect(mapRiskLevelToEnum('desconocido')).toBe('moderado');
+    });
+  });
+
+  // ── POST /api/evaluations — con IA mockeada ──────────────────────────────────
+
+  describe('POST /api/evaluations — con IA mockeada', () => {
+    const aiService = require('../src/services/ai.service');
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('guarda riskResult y recommendations cuando la IA responde ok', async () => {
+      aiService.postPredictRisk.mockResolvedValueOnce({
+        ok: true,
+        data: {
+          riskLevel: 'alto',
+          riskScore: 72,
+          yearsEstimated: 5,
+          confidence: 0.88,
+          topFactors: ['auriculares', 'volumen'],
+          aiModel: 'v2.0',
+        },
+      });
+      aiService.postGenerateRecommendations.mockResolvedValueOnce({
+        ok: true,
+        data: { recommendations: ['Reduce volumen', 'Usa protectores'] },
+      });
+
+      const agent = request.agent(app);
+      const token = await registerAndLogin(agent, `eai1_${Date.now()}@test.com`);
+      const res = await agent
+        .post('/api/evaluations')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ frequencyScores: scores12(), habitData: { headphoneHours: 4, volumeLevel: 80 } })
+        .expect(201);
+
+      expect(res.body.data.riskResult).not.toBeNull();
+      expect(res.body.data.riskResult.riskLevel).toBe('alto');
+      expect(res.body.data.riskResult.aiModel).toBe('v2.0');
+      expect(res.body.data.recommendations).toEqual(['Reduce volumen', 'Usa protectores']);
+    });
+
+    it('maneja topFactors no-array y confidence null (branches alternativos)', async () => {
+      aiService.postPredictRisk.mockResolvedValueOnce({
+        ok: true,
+        data: {
+          riskLevel: 'bajo',
+          riskScore: 18,
+          yearsEstimated: 0,
+          confidence: null,
+          topFactors: 'no-es-array',
+          aiModel: 'v1.0',
+        },
+      });
+      aiService.postGenerateRecommendations.mockResolvedValueOnce({
+        ok: false,
+        error: new Error('AI no disponible'),
+      });
+
+      const agent = request.agent(app);
+      const token = await registerAndLogin(agent, `eai2_${Date.now()}@test.com`);
+      const res = await agent
+        .post('/api/evaluations')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ frequencyScores: scores12() })
+        .expect(201);
+
+      expect(res.body.data.riskResult.topFactors).toEqual([]);
+      expect(res.body.data.recommendations).toEqual([]);
+    });
+
+    it('usa rec.data.items cuando no hay rec.data.recommendations', async () => {
+      aiService.postPredictRisk.mockResolvedValueOnce({
+        ok: true,
+        data: {
+          riskLevel: 'moderado',
+          riskScore: 50,
+          yearsEstimated: 3,
+          confidence: 0.75,
+          topFactors: ['ruido'],
+          aiModel: 'v1.0',
+        },
+      });
+      aiService.postGenerateRecommendations.mockResolvedValueOnce({
+        ok: true,
+        data: { items: ['Evita lugares ruidosos'] },
+      });
+
+      const agent = request.agent(app);
+      const token = await registerAndLogin(agent, `eai3_${Date.now()}@test.com`);
+      const res = await agent
+        .post('/api/evaluations')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ frequencyScores: scores12() })
+        .expect(201);
+
+      expect(res.body.data.recommendations).toEqual(['Evita lugares ruidosos']);
+    });
+
+    it('maneja riskScore fuera de rango [0-100] truncando con Math.min/max', async () => {
+      aiService.postPredictRisk.mockResolvedValueOnce({
+        ok: true,
+        data: {
+          riskLevel: 'muy_alto',
+          riskScore: 150,
+          yearsEstimated: 10,
+          confidence: undefined,
+          topFactors: [],
+          aiModel: 'v1.0',
+        },
+      });
+      aiService.postGenerateRecommendations.mockResolvedValueOnce({
+        ok: true,
+        data: { recommendations: [] },
+      });
+
+      const agent = request.agent(app);
+      const token = await registerAndLogin(agent, `eai4_${Date.now()}@test.com`);
+      const res = await agent
+        .post('/api/evaluations')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ frequencyScores: scores12() })
+        .expect(201);
+
+      expect(res.body.data.riskResult.riskScore).toBe(100);
+      expect(res.body.data.riskResult.riskLevel).toBe('muy_alto');
     });
   });
 });

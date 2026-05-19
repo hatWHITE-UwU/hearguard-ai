@@ -8,7 +8,7 @@ module.exports = {
   setupFiles: ['<rootDir>/tests/jest.setup.env.js'],
   setupFilesAfterEnv: ['<rootDir>/tests/jest.mongodb.js'],
   // Cubre todos los controllers: auth, noise, evaluation, device.
-  coverageReporters: ['lcov', 'text-summary'],
+  coverageReporters: ['lcov', 'text-summary', 'text'],
   collectCoverageFrom: [
     'src/**/*.js',
     '!src/**/*.test.js',
@@ -16,10 +16,10 @@ module.exports = {
   ],
   coverageThreshold: {
     global: {
-      branches: 60,
-      functions: 75,
-      lines: 75,
-      statements: 75,
+      branches: 80,
+      functions: 88,
+      lines: 88,
+      statements: 88,
     },
   },
 };

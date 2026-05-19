@@ -214,23 +214,23 @@ Plan detallado de casos (IDs, precondiciones, resultados esperados): [`docs/plan
 
 | Capa | Comando | Pruebas |
 |------|---------|---------|
-| Backend (API + Seguridad) | `cd backend && npm test` | **86** (Jest + Supertest — auth, noise, evaluation, device, 22 de seguridad) |
+| Backend (API + Seguridad) | `cd backend && npm test` | **126** (Jest + Supertest — auth, noise, evaluation, device, middleware, seguridad) |
 | AI Service | `cd ai-service && pytest tests/ -v` | **30** (test_predictor.py × 7 + test_api.py × 23) |
-| Frontend Angular | `cd frontend && npm run test:ci` | **67** (hearing-test, noise-monitor, auth service, guards, interceptors) |
+| Frontend Angular | `cd frontend && npm run test:ci` | **74** (hearing-test, noise-monitor, auth service, guards, interceptors) |
 | Flutter | `cd flutter_app && flutter test` | **42** (`test/`) |
-| E2E Playwright | `cd e2e && npx playwright test` | **35** (auth + prueba auditiva, multi-browser) |
+| E2E Playwright | `cd e2e && npx playwright test` | **72** (auth + prueba auditiva + smoke, multi-browser) |
 | Rendimiento k6 | `k6 run tests/k6/load-test.js` | 3 escenarios (smoke / load / spike) |
 
-**Total automatizado:** **260** casos de prueba + 3 escenarios de rendimiento.
+**Total automatizado:** **344** casos de prueba + 3 escenarios de rendimiento.
 
 Umbrales de cobertura mínima aplicados en CI:
 
 | Capa | Umbral | Verificación |
 |------|--------|--------------|
-| Backend | ≥ 60 % líneas | `ci.yml` — parser LCOV inline |
+| Backend | branches ≥ 80 %, statements/lines/functions ≥ 88 % | `jest.config.js` → `coverageThreshold` |
 | AI Service | ≥ 70 % líneas | `pytest --cov-fail-under=70` |
 
-Cobertura backend (última ejecución local): statements ~83 % · branches ~60 % · functions ~90 % · lines ~84 %.
+Cobertura backend (última ejecución local): statements 91.3 % · branches 82.3 % · functions 93.2 % · lines 91.9 %.
 
 ### Caja negra y caja blanca
 
@@ -264,7 +264,7 @@ Workflow [`ci.yml`](.github/workflows/ci.yml) en cada push a `main`/`develop` y 
 
 | Job | Qué hace |
 |-----|----------|
-| `backend` | **ESLint** (`npm run lint`) + Tests Jest (MongoDB en servicio) + umbral cobertura ≥ 60 % |
+| `backend` | **ESLint** (`npm run lint`) + Tests Jest (MongoDB en servicio) + umbral cobertura branches ≥ 80 % |
 | `ai-service` | Entrena modelo + pytest con `--cov-fail-under=70` |
 | `frontend` | `npm run lint` + `npm run test:ci` + `ng build` |
 | `e2e` | Playwright contra URL de Vercel preview (chromium, `continue-on-error`) |
