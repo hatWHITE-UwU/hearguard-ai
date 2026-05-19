@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const dotenv = require('dotenv');
 
 dotenv.config({ path: path.resolve(__dirname, '.env') });
@@ -11,6 +12,8 @@ const helmet = require('helmet');
 const cors = require('cors');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const swaggerUi = require('swagger-ui-express');
+const yaml = require('js-yaml');
 
 const { connectDatabase, mongoose } = require('./src/config/database');
 const logger = require('./src/utils/logger');
@@ -107,6 +110,28 @@ apiRouter.use('/devices', deviceRoutes);
 
 app.use('/api', apiRouter);
 
+// ── Swagger UI (no disponible en tests) ──────────────────────────────────────
+if (env.NODE_ENV !== 'test') {
+  const specPath = path.resolve(__dirname, '../docs/api-spec.yml');
+  if (fs.existsSync(specPath)) {
+    const swaggerDocument = yaml.load(fs.readFileSync(specPath, 'utf8'));
+    app.use(
+      '/api/docs',
+      // Helmet bloquea los assets inline de Swagger; relajamos solo en esta ruta
+      (_req, res, next) => {
+        res.setHeader('Content-Security-Policy', "default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; img-src * data:");
+        next();
+      },
+      swaggerUi.serve,
+      swaggerUi.setup(swaggerDocument, {
+        customSiteTitle: 'HearGuard AI — API Docs',
+        swaggerOptions: { persistAuthorization: true },
+      }),
+    );
+    logger.info('Swagger UI disponible en /api/docs');
+  }
+}
+
 app.use(notFoundHandler);
 app.use(errorHandler);
 
@@ -144,7 +169,7 @@ async function startServer() {
         retryMongo();
         return;
       }
-      process.exit(1);
+      process.exit(1); // eslint-disable-line n/no-process-exit
     }
     throw err;
   }
@@ -153,7 +178,7 @@ async function startServer() {
 if (require.main === module) {
   startServer().catch((err) => {
     logger.error('No se pudo iniciar el servidor: ' + err?.message);
-    process.exit(1);
+    process.exit(1); // eslint-disable-line n/no-process-exit
   });
 }
 

@@ -80,6 +80,7 @@ npm run docker:up
 |---|---|
 | Frontend Angular | http://localhost:8080 |
 | Backend API | http://localhost:3000 |
+| **Swagger UI** | http://localhost:3000/api/docs |
 | AI Service | http://localhost:5001 |
 
 ---
@@ -335,7 +336,7 @@ Análisis McCabe (1976) de las 17 funciones críticas: [`docs/complejidad-ciclom
 | [`docs/plan-de-pruebas.md`](docs/plan-de-pruebas.md) | Plan de pruebas IEEE 829-2008 con casos, precondiciones y resultados esperados |
 | [`docs/complejidad-ciclomatica.md`](docs/complejidad-ciclomatica.md) | Análisis CC McCabe — 17 funciones, escala de riesgo |
 | [`docs/matriz-trazabilidad.md`](docs/matriz-trazabilidad.md) | Matriz IEEE 829 — 60 RF + 10 RNF → BDD → tests → estado |
-| [`docs/api-spec.yml`](docs/api-spec.yml) | Especificación OpenAPI 3.1 — 18 endpoints con esquemas completos |
+| [`docs/api-spec.yml`](docs/api-spec.yml) | Especificación OpenAPI 3.1 — 18 endpoints con esquemas completos. Swagger UI interactivo en `/api/docs` |
 | [`docs/features/`](docs/features/) | 6 Feature files Gherkin — 85 escenarios BDD |
 
 ---
