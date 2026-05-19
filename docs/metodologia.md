@@ -46,13 +46,14 @@ El ciclo TDD + BDD se ejecutó en cada historia de usuario siguiendo cinco pasos
 
 | Capa | Framework de pruebas | Carpeta | N.° de casos automatizados |
 |------|----------------------|---------|----------------------------|
-| Backend Node.js / Express | Jest + Supertest | `backend/tests/` | 72 |
-| Servicio de IA Flask | pytest | `ai-service/tests/` | 7 |
-| Frontend Angular | Vitest | `frontend/src/app/**/*.spec.ts` | 18 |
+| Backend Node.js / Express | Jest + Supertest | `backend/tests/` | 118 |
+| Servicio de IA Flask | pytest | `ai-service/tests/` | 30 |
+| Frontend Angular | Vitest | `frontend/src/app/**/*.spec.ts` | 67 |
 | Aplicación móvil Flutter | flutter_test | `flutter_app/test/` | 42 |
-| **Total** | | | **~139** |
+| End-to-End multiplataforma | Playwright | `e2e/tests/` | 36 |
+| **Total** | | | **293** |
 
-La cobertura del backend reportada por Jest alcanza aproximadamente **84 %** de líneas (validada con SonarCloud). El plan de pruebas detallado, con identificadores únicos por caso (`CP-B-01`, `CP-AI-02`, etc.), precondiciones, pasos y resultados esperados, se encuentra en `docs/plan-de-pruebas.md`.
+La cobertura mínima exigida por el pipeline de CI es del **60 % de líneas** tanto en el backend (verificado con un script Node que parsea `coverage/lcov.info`) como en el servicio de IA (`pytest --cov-fail-under=60`). El reporte de Jest en local supera el 80 % de líneas en el backend; el reporte oficial es validado por SonarCloud en cada push. El plan de pruebas detallado, con identificadores únicos por caso (`CP-B-01`, `CP-AI-02`, etc.), precondiciones, pasos y resultados esperados, se encuentra en `docs/plan-de-pruebas.md`.
 
 ### 1.4 Escenarios BDD en Gherkin
 
@@ -83,28 +84,31 @@ Característica: Autenticación de usuarios
 
 | Enfoque | Aplicación en HearGuard | Evidencia |
 |---------|--------------------------|-----------|
-| **Caja negra** | API REST verificada por entrada/salida HTTP sin conocer la implementación. Pruebas BDD de aceptación. | `backend/tests/*.test.js` (Jest + Supertest), `docs/features/*.feature` |
+| **Caja negra** | API REST verificada por entrada/salida HTTP sin conocer la implementación. Endpoints Flask verificados con `test_api.py`. Pruebas E2E que recorren la app web desplegada en Vercel desde la perspectiva del usuario. Pruebas BDD de aceptación. | `backend/tests/*.test.js` (Jest + Supertest), `ai-service/tests/test_api.py`, `e2e/tests/*.spec.ts` (Playwright), `docs/features/*.feature` |
 | **Caja blanca** | Lógica interna de servicios, guards, interceptores, predictor de IA y *mappers* móviles. | `ai-service/tests/test_predictor.py`, `frontend/**/*.spec.ts`, `flutter_app/test/` |
 
 ### 1.6 Integración continua
 
-Las pruebas se ejecutan automáticamente en cada *push* a las ramas `main` y `develop`, y en cada *pull request*, mediante GitHub Actions (`.github/workflows/ci.yml`). El pipeline incluye seis jobs:
+Las pruebas se ejecutan automáticamente en cada *push* a las ramas `main` y `develop`, y en cada *pull request*, mediante GitHub Actions (`.github/workflows/ci.yml`). El pipeline incluye seis jobs principales:
 
-1. **backend** — Jest con MongoDB en servicio.
-2. **ai-service** — entrenamiento del modelo + pytest.
-3. **frontend** — Vitest + build Angular.
-4. **flutter** — `flutter analyze` + `flutter test`.
-5. **sonar** — análisis estático con SonarCloud.
-6. **deploy** — solo en `main`: despliegue automático a Render y Vercel.
+1. **backend** — `npm run lint` + Jest con MongoDB 7 como servicio, umbral mínimo del 60 % de cobertura.
+2. **ai-service** — Entrenamiento reproducible del modelo (`python -m model.trainer` con `SEED=42`) + pytest con `--cov-fail-under=60`.
+3. **frontend** — `npm run lint` + Vitest en Chromium (vía Playwright) + `npm run build` de Angular.
+4. **e2e** — Pruebas Playwright contra el despliegue real del frontend en Vercel; se ejecutan en `main` y en cada *pull request*, generando un reporte HTML como artefacto.
+5. **flutter** — `flutter analyze` + `flutter test --coverage`.
+6. **deploy** — Solo en `main`: hooks de despliegue a Render (backend e IA) y Vercel (frontend), encadenado a la aprobación de los jobs anteriores.
 
-Esta automatización implementa los principios de *continuous testing* y *continuous delivery* descritos por Humble y Farley (2010).
+El análisis estático con **SonarCloud** se ejecuta de forma **automática mediante el GitHub App** ("SonarCloud Automatic Analysis"), por lo que no requiere un job dedicado en el workflow: cada push a `main` dispara el escaneo y publica el resultado en el *quality gate* de la organización `hatwhite-uwu` (proyecto `hatWHITE-UwU_hearguard-ai`).
+
+Esta automatización implementa los principios de *continuous testing* y *continuous delivery* descritos por Humble y Farley (2010), añadiendo además pruebas E2E sobre el entorno de producción del frontend, lo que aporta evidencia directa de comportamiento del sistema integrado.
 
 ### 1.7 Resultados obtenidos
 
-- ~139 casos de prueba automatizados, todos en estado pasante.
-- Cobertura de líneas del backend ≈ 84 %.
-- Pipeline de CI con seis jobs en GitHub Actions.
-- Seis archivos de escenarios BDD documentados.
+- **293 casos de prueba automatizados** en cinco capas (118 backend, 30 servicio de IA, 67 frontend, 42 móvil, 36 E2E), todos en estado pasante.
+- Cobertura mínima de líneas exigida por CI: **60 %** en backend y servicio de IA; cobertura local del backend supera el 80 %.
+- Pipeline de CI/CD con **seis jobs** en GitHub Actions (`backend`, `ai-service`, `frontend`, `e2e`, `flutter`, `deploy`).
+- Análisis estático automatizado con **SonarCloud (GitHub App)**.
+- **Seis archivos de escenarios BDD** documentados en `docs/features/`.
 - Plan de pruebas formal documentado en `docs/plan-de-pruebas.md`.
 
 ### 1.8 Referencias citadas
