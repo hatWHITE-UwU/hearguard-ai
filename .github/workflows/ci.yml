@@ -153,8 +153,50 @@ jobs:
       - run: flutter test --coverage
 
   # ── SonarCloud ───────────────────────────────────────────────────────────────
-  # Disabled: SonarCloud Automatic Analysis (GitHub App) handles quality gate.
-  # Running both simultaneously causes conflict and duplicate gate failures.
+  # CI-based analysis (reemplaza al Automatic Analysis del GitHub App).
+  # Necesita que se cumpla TODO esto:
+  #   1. SONAR_TOKEN en GitHub Secrets (Settings → Secrets and variables → Actions).
+  #   2. Automatic Analysis DESACTIVADO en SonarCloud
+  #      (Project → Administration → Analysis Method).
+  #   3. sonar-project.properties con las rutas de los reportes lcov / coverage.xml.
+  # Aquí descargamos los artefactos de cobertura de los jobs anteriores y los
+  # colocamos en las rutas que espera sonar-project.properties.
+  sonarcloud:
+    name: SonarCloud analysis + coverage
+    runs-on: ubuntu-latest
+    needs: [backend, ai-service, frontend]
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download backend coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage
+      - name: Download AI coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: ai-coverage
+          path: ai-service
+      - name: Download frontend coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage
+        continue-on-error: true
+      - name: Verify coverage files
+        run: |
+          echo "── Coverage report tree ──"
+          ls -la backend/coverage/ || echo "no backend coverage"
+          ls -la frontend/coverage/ || echo "no frontend coverage"
+          ls -la ai-service/coverage.xml || echo "no AI coverage"
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
 
   # ── Deploy ───────────────────────────────────────────────────────────────────
   deploy:
