@@ -28,7 +28,7 @@ function errorHandler(err, req, res, _next) {
   } else if (err.name === 'TokenExpiredError') {
     statusCode = 401;
     code = 'UNAUTHORIZED';
-  } else if (err.code === 11000 || err.code === '11000') {
+  } else if (Number(err.code) === 11000) {
     statusCode = 409;
     code = 'CONFLICT';
   }

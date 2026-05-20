@@ -87,6 +87,8 @@ def train_and_save() -> str:
     model = RandomForestRegressor(
         n_estimators=120,
         max_depth=12,
+        min_samples_leaf=1,
+        max_features=1.0,
         random_state=SEED,
         n_jobs=-1,
     )
