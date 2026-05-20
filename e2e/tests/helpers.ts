@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { test, expect, type Page } from '@playwright/test';
 
 /**
@@ -67,7 +68,8 @@ export async function fillRegister(
  * Genera un email único para evitar colisiones entre runs y entre tests del mismo run.
  */
 export function uniqueEmail(prefix = 'e2e'): string {
-  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}@hearguard.test`;
+  const suffix = randomBytes(3).toString('hex');
+  return `${prefix}_${Date.now()}_${suffix}@hearguard.test`;
 }
 
 /**
