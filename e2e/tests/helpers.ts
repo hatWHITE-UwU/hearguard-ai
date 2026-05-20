@@ -5,7 +5,15 @@ import { test, expect, type Page } from '@playwright/test';
  * de pasos comunes (navegación, login/register, comprobación de "dentro/fuera de la app").
  */
 
-export const DEFAULT_PASSWORD = 'TestPass123!';
+/**
+ * Contraseña usada por los tests E2E para crear usuarios desechables.
+ * Es un credencial **de prueba**, no un secreto real: se puede sobrescribir con la
+ * variable de entorno `E2E_DEFAULT_PASSWORD` en CI. Marcada con NOSONAR para
+ * silenciar la regla javascript:S2068 (hard-coded password), que aplica a
+ * credenciales productivas.
+ */
+export const DEFAULT_PASSWORD: string =
+  process.env.E2E_DEFAULT_PASSWORD || 'TestPass123!'; // NOSONAR
 
 /**
  * Navega a una ruta del frontend y espera a que la red esté en reposo.
