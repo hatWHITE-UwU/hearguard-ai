@@ -87,7 +87,7 @@ async function applyAiPrediction(user, evaluation) {
       riskScore: Math.min(100, Math.max(0, Number(d.riskScore) || 0)),
       riskLevel: mapRiskLevelToEnum(d.riskLevel),
       yearsEstimated: Number(d.yearsEstimated) || 0,
-      confidence: d.confidence != null ? Number(d.confidence) : undefined,
+      confidence: d.confidence == null ? undefined : Number(d.confidence),
       topFactors: Array.isArray(d.topFactors) ? d.topFactors : [],
       recommendations: [],
       aiModel: String(d.aiModel || 'v1.0'),

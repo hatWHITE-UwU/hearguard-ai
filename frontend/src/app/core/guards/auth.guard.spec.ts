@@ -6,7 +6,7 @@ import { authGuard } from './auth.guard';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../../environments/environment';
 
-class StubLoginComponent {}
+class StubLoginComponent { static selector = 'app-stub-login'; }
 
 function runGuard(): ReturnType<typeof authGuard> {
   return TestBed.runInInjectionContext(() =>

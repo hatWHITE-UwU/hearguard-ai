@@ -91,7 +91,7 @@ function uniqueEmail() {
 
 // ── Main VU function ──────────────────────────────────────────────────────────
 
-export default function () {
+export default function vuLoop() {
   const email = uniqueEmail();
   let token = null;
 

@@ -22,7 +22,7 @@ function Copy-One {
     throw "No existe: $path"
   }
   Get-Content -Raw -LiteralPath $path | Set-Clipboard
-  Write-Host "Listo: $Name -> portapapeles. Pega en Wokwi con Ctrl+V."
+  Write-Output "Listo: $Name -> portapapeles. Pega en Wokwi con Ctrl+V."
 }
 
 switch ($Target) {
@@ -31,13 +31,13 @@ switch ($Target) {
   'libraries' { Copy-One 'libraries.txt' }
   'all' {
     Copy-One 'sketch.ino'
-    Write-Host ""
+    Write-Output ""
     Read-Host "Pega el sketch en el editor de Wokwi y pulsa Enter para copiar diagram.json"
     Copy-One 'diagram.json'
-    Write-Host ""
+    Write-Output ""
     Read-Host "Pega diagram.json en Wokwi y pulsa Enter para copiar libraries.txt"
     Copy-One 'libraries.txt'
-    Write-Host ""
-    Write-Host "Pega libraries.txt en Wokwi (archivo nuevo o existente)."
+    Write-Output ""
+    Write-Output "Pega libraries.txt en Wokwi (archivo nuevo o existente)."
   }
 }
