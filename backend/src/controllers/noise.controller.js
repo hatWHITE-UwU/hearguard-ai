@@ -87,7 +87,7 @@ async function createIot(req, res, next) {
         message: 'X-Device-Key requerido',
       });
     }
-    const device = await Device.findOne({ apiKey: String(key) }).select('+apiKey');
+    const device = await Device.findOne({ apiKey: { $eq: String(key) } }).select('+apiKey');
     if (!device || !device.isActive) {
       return res.status(401).json({
         success: false,
