@@ -19,11 +19,11 @@ export interface DemoUnifiedRecord {
 }
 
 function isoHoursAgo(h: number): string {
-  return new Date(Date.now() - h * 3600_000).toISOString();
+  return new Date(Date.now() - h * 3_600_000).toISOString();
 }
 
 function isoDaysAgo(d: number): string {
-  return new Date(Date.now() - d * 86400_000).toISOString();
+  return new Date(Date.now() - d * 86_400_000).toISOString();
 }
 
 /** Exactamente 10 filas demo para la vista “Registros”. */
@@ -231,9 +231,11 @@ export function evaluationBarChartData(rows: FrequencyScoreRow[]): {
     datasets: [
       {
         data,
-        backgroundColor: data.map((s) =>
-          s >= 7.5 ? '#22C55E' : s >= 5 ? '#F59E0B' : '#FF4D4D',
-        ),
+        backgroundColor: data.map((s) => {
+          if (s >= 7.5) return '#22C55E';
+          if (s >= 5) return '#F59E0B';
+          return '#FF4D4D';
+        }),
       },
     ],
   };

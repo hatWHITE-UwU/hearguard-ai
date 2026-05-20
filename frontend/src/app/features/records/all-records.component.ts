@@ -27,6 +27,19 @@ interface Row {
   route?: string[];
 }
 
+function routeForDemoRecord(d: DemoUnifiedRecord): string[] | undefined {
+  switch (d.type) {
+    case 'evaluation':
+      return ['/app/results', d.id];
+    case 'tip':
+      return ['/app/recommendations'];
+    case 'noise':
+      return ['/app/monitor'];
+    default:
+      return undefined;
+  }
+}
+
 @Component({
   selector: 'hg-all-records',
   standalone: true,
@@ -261,14 +274,7 @@ export class AllRecordsComponent implements OnInit {
           detail: d.detail,
           riskTag: d.riskTag,
           score: d.score,
-          route:
-            d.type === 'evaluation'
-              ? ['/app/results', d.id]
-              : d.type === 'tip'
-                ? ['/app/recommendations']
-                : d.type === 'noise'
-                  ? ['/app/monitor']
-                  : undefined,
+          route: routeForDemoRecord(d),
         }))
       : [];
 

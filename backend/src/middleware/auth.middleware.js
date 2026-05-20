@@ -8,7 +8,7 @@ const { verifyAccessToken } = require('../utils/jwt.utils');
  */
 function authenticate(req, res, next) {
   const header = req.headers.authorization;
-  if (!header || !header.startsWith('Bearer ')) {
+  if (!header?.startsWith('Bearer ')) {
     return res.status(401).json({
       success: false,
       error: 'UNAUTHORIZED',

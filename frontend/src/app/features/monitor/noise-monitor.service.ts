@@ -48,7 +48,7 @@ export class NoiseMonitorService {
     const buf = new Float32Array(this.analyser.fftSize);
     this.analyser.getFloatTimeDomainData(buf);
     let sum = 0;
-    for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+    for (const sample of buf) sum += sample * sample;
     const rms = Math.sqrt(sum / buf.length);
     const db = Math.round(20 * Math.log10(rms + 1e-7) + 94);
     const clamped = Math.max(30, Math.min(120, db));

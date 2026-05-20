@@ -10,9 +10,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
 
   const isApi =
-    environment.apiUrl !== ''
-      ? req.url.startsWith(environment.apiUrl)
-      : req.url.includes('/api/') || req.url.includes('/api?');
+    environment.apiUrl === ''
+      ? req.url.includes('/api/') || req.url.includes('/api?')
+      : req.url.startsWith(environment.apiUrl);
   const skipAuth =
     req.url.includes('/api/auth/login') ||
     req.url.includes('/api/auth/register') ||

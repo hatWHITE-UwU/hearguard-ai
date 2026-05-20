@@ -22,10 +22,7 @@ function errorHandler(err, req, res, _next) {
   let statusCode = err.statusCode || 500;
   let code = err.code || 'INTERNAL_ERROR';
 
-  if (err.name === 'JsonWebTokenError') {
-    statusCode = 401;
-    code = 'UNAUTHORIZED';
-  } else if (err.name === 'TokenExpiredError') {
+  if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
     statusCode = 401;
     code = 'UNAUTHORIZED';
   } else if (Number(err.code) === 11000) {

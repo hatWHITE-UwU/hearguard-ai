@@ -17,19 +17,19 @@ from model.features import build_feature_vector
 
 SEED = 42
 random.seed(SEED)
-np.random.seed(SEED)
+_RNG = np.random.default_rng(SEED)
 
 N_SAMPLES = 5000
 
 
 def _synthetic_row() -> tuple[list[float], float]:
-    age = float(np.random.randint(18, 75))
-    headphone_hours = float(np.random.uniform(0, 10))
-    volume_level = float(np.random.uniform(10, 100))
-    noise_exposure = float(np.random.choice([0.0, 1.0, 2.0], p=[0.5, 0.35, 0.15]))
-    occupation_risk = float(np.random.choice([0.0, 1.0, 2.0, 3.0], p=[0.35, 0.25, 0.2, 0.2]))
-    smoking = float(np.random.choice([0.0, 1.0, 2.0], p=[0.55, 0.3, 0.15]))
-    test_scores = [float(np.random.uniform(0, 10)) for _ in range(6)]
+    age = float(_RNG.integers(18, 75))
+    headphone_hours = float(_RNG.uniform(0, 10))
+    volume_level = float(_RNG.uniform(10, 100))
+    noise_exposure = float(_RNG.choice([0.0, 1.0, 2.0], p=[0.5, 0.35, 0.15]))
+    occupation_risk = float(_RNG.choice([0.0, 1.0, 2.0, 3.0], p=[0.35, 0.25, 0.2, 0.2]))
+    smoking = float(_RNG.choice([0.0, 1.0, 2.0], p=[0.55, 0.3, 0.15]))
+    test_scores = [float(_RNG.uniform(0, 10)) for _ in range(6)]
     avg_test = float(np.mean(test_scores))
     low_freq = float((test_scores[0] + test_scores[1]) / 2.0)
 
@@ -64,7 +64,7 @@ def _synthetic_row() -> tuple[list[float], float]:
     if avg_test < 5.0:
         risk += 22.0
 
-    noise = float(np.random.normal(0, 4))
+    noise = float(_RNG.normal(0, 4))
     risk = float(np.clip(risk + noise, 0.0, 100.0))
     return x, risk
 

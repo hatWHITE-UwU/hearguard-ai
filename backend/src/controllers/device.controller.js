@@ -1,6 +1,6 @@
 'use strict';
 
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 const { validationResult } = require('express-validator');
 const Device = require('../models/Device');
 const { createDeviceValidators } = require('../validators/device.validators');

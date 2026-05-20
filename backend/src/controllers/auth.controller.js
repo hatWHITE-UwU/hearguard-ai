@@ -1,4 +1,4 @@
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
@@ -213,7 +213,7 @@ async function refresh(req, res, next) {
       isDeleted: false,
     }).select('+refreshTokenHash');
 
-    if (!user || !user.refreshTokenHash) {
+    if (!user?.refreshTokenHash) {
       return res.status(401).json({
         success: false,
         error: 'UNAUTHORIZED',

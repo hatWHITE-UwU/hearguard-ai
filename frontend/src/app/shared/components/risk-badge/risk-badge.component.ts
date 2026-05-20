@@ -20,9 +20,7 @@ import { Component, input, computed } from '@angular/core';
   `,
 })
 export class RiskBadgeComponent {
-  readonly level = input<'bajo' | 'moderado' | 'alto' | 'muy_alto' | string>(
-    'bajo',
-  );
+  readonly level = input<string>('bajo');
 
   readonly tag = computed(() => this.level().replace('_', ' '));
 

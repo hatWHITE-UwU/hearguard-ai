@@ -99,7 +99,7 @@ async function createIot(req, res, next) {
       });
     }
     const device = await Device.findOne({ apiKey: { $eq: String(key) } }).select('+apiKey');
-    if (!device || !device.isActive) {
+    if (!device?.isActive) {
       return res.status(401).json({
         success: false,
         error: 'UNAUTHORIZED',

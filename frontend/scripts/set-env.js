@@ -6,8 +6,8 @@
  * Uso local:
  *   API_URL=https://mi-backend.onrender.com node scripts/set-env.js
  */
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const apiUrl  = process.env.API_URL  || '';
 const isDemo  = process.env.PUBLIC_DEMO === 'true';

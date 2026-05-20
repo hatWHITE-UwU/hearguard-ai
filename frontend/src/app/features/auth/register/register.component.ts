@@ -531,35 +531,36 @@ export class RegisterComponent implements OnInit {
   }
 
   private messageFromHttpError(err: unknown): string {
-    if (err instanceof HttpErrorResponse) {
-      if (err.status === 0) {
-        return 'No se pudo conectar con el servidor. Comprueba tu conexión o que el backend esté en marcha.';
-      }
-      const body = err.error as
-        | { message?: string; error?: string }
-        | string
-        | null
-        | undefined;
-      const msg =
-        body && typeof body === 'object' && typeof body.message === 'string'
-          ? body.message
-          : null;
-      if (msg) {
-        return msg;
-      }
-      if (err.status === 409) {
-        return 'Este correo ya está registrado. Prueba a iniciar sesión.';
-      }
-      if (err.status === 400) {
-        return 'Revisa los datos del formulario e inténtalo de nuevo.';
-      }
-      if (err.status === 404) {
-        return 'No se encontró el servicio de registro. Comprueba que el backend esté activo y la URL del API en el entorno.';
-      }
-      if (err.status >= 500) {
-        return 'El servidor no está disponible en este momento. Inténtalo más tarde.';
-      }
+    if (!(err instanceof HttpErrorResponse)) {
+      return 'No se pudo crear la cuenta. Inténtalo de nuevo.';
     }
-    return 'No se pudo crear la cuenta. Inténtalo de nuevo.';
+    if (err.status === 0) {
+      return 'No se pudo conectar con el servidor. Comprueba tu conexión o que el backend esté en marcha.';
+    }
+    const body = err.error as
+      | { message?: string; error?: string }
+      | string
+      | null
+      | undefined;
+    if (body && typeof body === 'object' && typeof body.message === 'string') {
+      return body.message;
+    }
+    return statusToRegisterMessage(err.status);
   }
+}
+
+function statusToRegisterMessage(status: number): string {
+  if (status === 409) {
+    return 'Este correo ya está registrado. Prueba a iniciar sesión.';
+  }
+  if (status === 400) {
+    return 'Revisa los datos del formulario e inténtalo de nuevo.';
+  }
+  if (status === 404) {
+    return 'No se encontró el servicio de registro. Comprueba que el backend esté activo y la URL del API en el entorno.';
+  }
+  if (status >= 500) {
+    return 'El servidor no está disponible en este momento. Inténtalo más tarde.';
+  }
+  return 'No se pudo crear la cuenta. Inténtalo de nuevo.';
 }

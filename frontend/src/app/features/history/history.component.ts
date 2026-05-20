@@ -253,7 +253,7 @@ export class HistoryComponent implements OnInit {
           const demoNoise = DEMO_UNIFIED_RECORDS.filter((d) => d.type === 'noise').map(
             (d) => ({
               _id: d.id,
-              dbLevel: Number(d.detail.match(/\d+/)?.[0]) || 55,
+              dbLevel: Number(/\d+/.exec(d.detail)?.[0]) || 55,
               riskTag: d.riskTag || 'moderado',
               recordedAt: d.at,
             }),
@@ -265,7 +265,7 @@ export class HistoryComponent implements OnInit {
             this.noise.set(
               DEMO_UNIFIED_RECORDS.filter((d) => d.type === 'noise').map((d) => ({
                 _id: d.id,
-                dbLevel: Number(d.detail.match(/\d+/)?.[0]) || 55,
+                dbLevel: Number(/\d+/.exec(d.detail)?.[0]) || 55,
                 riskTag: d.riskTag || 'moderado',
                 recordedAt: d.at,
               })),

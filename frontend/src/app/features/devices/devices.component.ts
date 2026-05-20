@@ -593,7 +593,7 @@ export class DevicesComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly fb = inject(FormBuilder);
 
-  readonly apiBase = environment.apiUrl || window.location.origin;
+  readonly apiBase = environment.apiUrl || globalThis.location.origin;
   readonly loading = signal(true);
   readonly devices = signal<Device[]>([]);
   readonly showForm = signal(false);

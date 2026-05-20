@@ -59,9 +59,7 @@ export class HearingTestService {
   }
 
   ensureContext(): AudioContext {
-    if (!this.ctx) {
-      this.ctx = new AudioContext();
-    }
+    this.ctx ??= new AudioContext();
     return this.ctx;
   }
 
