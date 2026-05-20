@@ -43,6 +43,24 @@ function scores12() {
   return out;
 }
 
+async function authAgent(prefix) {
+  const agent = request.agent(app);
+  const token = await registerAndLogin(agent, `${prefix}_${Date.now()}@test.com`);
+  return { agent, token };
+}
+
+function bearer(token) {
+  return { Authorization: `Bearer ${token}` };
+}
+
+async function postEval(agent, token, body, expectedStatus = 201) {
+  return agent
+    .post('/api/evaluations')
+    .set(bearer(token))
+    .send(body)
+    .expect(expectedStatus);
+}
+
 describe('Evaluations API', () => {
   beforeAll(async () => {
     await connectDatabase();
@@ -60,39 +78,27 @@ describe('Evaluations API', () => {
 
   describe('POST /api/evaluations', () => {
     it('crea evaluación completa con 12 scores (201)', async () => {
-      const agent = request.agent(app);
-      const token = await registerAndLogin(agent, `e12_${Date.now()}@test.com`);
-      const res = await agent
-        .post('/api/evaluations')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ frequencyScores: scores12(), habitData: { headphoneHours: 2, volumeLevel: 50 } })
-        .expect(201);
+      const { agent, token } = await authAgent('e12');
+      const res = await postEval(agent, token, {
+        frequencyScores: scores12(),
+        habitData: { headphoneHours: 2, volumeLevel: 50 },
+      });
       expect(res.body.success).toBe(true);
       expect(res.body.data.evaluation.overallScore).toBe(8);
       expect(res.body.data.evaluation.status).toBe('complete');
     });
 
     it('crea evaluación parcial con menos de 12 scores', async () => {
-      const agent = request.agent(app);
-      const token = await registerAndLogin(agent, `epartial_${Date.now()}@test.com`);
-      const res = await agent
-        .post('/api/evaluations')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ frequencyScores: scores12().slice(0, 6) })
-        .expect(201);
+      const { agent, token } = await authAgent('epartial');
+      const res = await postEval(agent, token, { frequencyScores: scores12().slice(0, 6) });
       expect(res.body.data.evaluation.status).toBe('partial');
     });
 
     it('rechaza scores fuera de rango con 400', async () => {
-      const agent = request.agent(app);
-      const token = await registerAndLogin(agent, `ebad_${Date.now()}@test.com`);
+      const { agent, token } = await authAgent('ebad');
       const bad = scores12();
       bad[0].score = 11;
-      await agent
-        .post('/api/evaluations')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ frequencyScores: bad })
-        .expect(400);
+      await postEval(agent, token, { frequencyScores: bad }, 400);
     });
 
     it('rechaza sin autenticación con 401', async () => {
@@ -103,13 +109,8 @@ describe('Evaluations API', () => {
     });
 
     it('rechaza frequencyScores vacío con 400', async () => {
-      const agent = request.agent(app);
-      const token = await registerAndLogin(agent, `eempty_${Date.now()}@test.com`);
-      await agent
-        .post('/api/evaluations')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ frequencyScores: [] })
-        .expect(400);
+      const { agent, token } = await authAgent('eempty');
+      await postEval(agent, token, { frequencyScores: [] }, 400);
     });
   });
 
@@ -117,29 +118,23 @@ describe('Evaluations API', () => {
 
   describe('GET /api/evaluations', () => {
     it('lista solo las evaluaciones del usuario autenticado', async () => {
-      const agent = request.agent(app);
-      const token = await registerAndLogin(agent, `elist_${Date.now()}@test.com`);
-      await agent.post('/api/evaluations').set('Authorization', `Bearer ${token}`).send({ frequencyScores: scores12().slice(0, 6) });
-      await agent.post('/api/evaluations').set('Authorization', `Bearer ${token}`).send({ frequencyScores: scores12().slice(0, 6) });
+      const { agent, token } = await authAgent('elist');
+      const body = { frequencyScores: scores12().slice(0, 6) };
+      await postEval(agent, token, body);
+      await postEval(agent, token, body);
 
-      const res = await agent
-        .get('/api/evaluations')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
+      const res = await agent.get('/api/evaluations').set(bearer(token)).expect(200);
       expect(res.body.data.items.length).toBeGreaterThanOrEqual(2);
       expect(res.body.data.total).toBeGreaterThanOrEqual(2);
     });
 
     it('respeta el límite de paginación', async () => {
-      const agent = request.agent(app);
-      const token = await registerAndLogin(agent, `epage_${Date.now()}@test.com`);
+      const { agent, token } = await authAgent('epage');
+      const body = { frequencyScores: scores12().slice(0, 6) };
       for (let i = 0; i < 3; i++) {
-        await agent.post('/api/evaluations').set('Authorization', `Bearer ${token}`).send({ frequencyScores: scores12().slice(0, 6) });
+        await postEval(agent, token, body);
       }
-      const res = await agent
-        .get('/api/evaluations?limit=1')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
+      const res = await agent.get('/api/evaluations?limit=1').set(bearer(token)).expect(200);
       expect(res.body.data.items.length).toBe(1);
     });
 
@@ -152,39 +147,26 @@ describe('Evaluations API', () => {
 
   describe('GET /api/evaluations/:id', () => {
     it('retorna evaluación por id', async () => {
-      const agent = request.agent(app);
-      const token = await registerAndLogin(agent, `ebyid_${Date.now()}@test.com`);
-      const created = await agent
-        .post('/api/evaluations')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ frequencyScores: scores12() })
-        .expect(201);
+      const { agent, token } = await authAgent('ebyid');
+      const created = await postEval(agent, token, { frequencyScores: scores12() });
       const id = created.body.data.evaluation._id;
 
-      const res = await agent
-        .get(`/api/evaluations/${id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
+      const res = await agent.get(`/api/evaluations/${id}`).set(bearer(token)).expect(200);
       expect(res.body.data.evaluation._id).toBe(id);
     });
 
     it('retorna 404 para id inexistente', async () => {
-      const agent = request.agent(app);
-      const token = await registerAndLogin(agent, `enotfound_${Date.now()}@test.com`);
+      const { agent, token } = await authAgent('enotfound');
       const res = await agent
         .get('/api/evaluations/507f1f77bcf86cd799439011')
-        .set('Authorization', `Bearer ${token}`)
+        .set(bearer(token))
         .expect(404);
       expect(res.body.error).toBe('NOT_FOUND');
     });
 
     it('rechaza id con formato inválido con 400', async () => {
-      const agent = request.agent(app);
-      const token = await registerAndLogin(agent, `ebadid_${Date.now()}@test.com`);
-      await agent
-        .get('/api/evaluations/id-invalido')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(400);
+      const { agent, token } = await authAgent('ebadid');
+      await agent.get('/api/evaluations/id-invalido').set(bearer(token)).expect(400);
     });
 
     it('rechaza sin autenticación con 401', async () => {
@@ -196,47 +178,36 @@ describe('Evaluations API', () => {
 
   describe('PATCH /api/evaluations/:id', () => {
     it('actualiza habitData de una evaluación', async () => {
-      const agent = request.agent(app);
-      const token = await registerAndLogin(agent, `epatch_${Date.now()}@test.com`);
-      const created = await agent
-        .post('/api/evaluations')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ frequencyScores: scores12().slice(0, 6) })
-        .expect(201);
+      const { agent, token } = await authAgent('epatch');
+      const created = await postEval(agent, token, { frequencyScores: scores12().slice(0, 6) });
       const id = created.body.data.evaluation._id;
 
       const res = await agent
         .patch(`/api/evaluations/${id}`)
-        .set('Authorization', `Bearer ${token}`)
+        .set(bearer(token))
         .send({ habitData: { headphoneHours: 5, volumeLevel: 70 } })
         .expect(200);
       expect(res.body.data.evaluation.habitData.headphoneHours).toBe(5);
     });
 
     it('retorna 404 para id inexistente en patch', async () => {
-      const agent = request.agent(app);
-      const token = await registerAndLogin(agent, `epatchnf_${Date.now()}@test.com`);
+      const { agent, token } = await authAgent('epatchnf');
       const res = await agent
         .patch('/api/evaluations/507f1f77bcf86cd799439011')
-        .set('Authorization', `Bearer ${token}`)
+        .set(bearer(token))
         .send({ habitData: { headphoneHours: 3 } })
         .expect(404);
       expect(res.body.error).toBe('NOT_FOUND');
     });
 
     it('retorna 400 cuando no hay campos actualizables', async () => {
-      const agent = request.agent(app);
-      const token = await registerAndLogin(agent, `epatchmt_${Date.now()}@test.com`);
-      const created = await agent
-        .post('/api/evaluations')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ frequencyScores: scores12().slice(0, 6) })
-        .expect(201);
+      const { agent, token } = await authAgent('epatchmt');
+      const created = await postEval(agent, token, { frequencyScores: scores12().slice(0, 6) });
       const id = created.body.data.evaluation._id;
 
       const res = await agent
         .patch(`/api/evaluations/${id}`)
-        .set('Authorization', `Bearer ${token}`)
+        .set(bearer(token))
         .send({ campoInvalido: 'valor' })
         .expect(400);
       expect(res.body.error).toBe('VALIDATION_ERROR');
@@ -254,17 +225,14 @@ describe('Evaluations API', () => {
 
   describe('GET /api/evaluations — skip', () => {
     it('aplica skip correctamente', async () => {
-      const agent = request.agent(app);
-      const token = await registerAndLogin(agent, `eskip_${Date.now()}@test.com`);
+      const { agent, token } = await authAgent('eskip');
+      const body = { frequencyScores: scores12().slice(0, 6) };
       for (let i = 0; i < 3; i++) {
-        await agent
-          .post('/api/evaluations')
-          .set('Authorization', `Bearer ${token}`)
-          .send({ frequencyScores: scores12().slice(0, 6) });
+        await postEval(agent, token, body);
       }
       const res = await agent
         .get('/api/evaluations?limit=10&skip=2')
-        .set('Authorization', `Bearer ${token}`)
+        .set(bearer(token))
         .expect(200);
       expect(res.body.data.skip).toBe(2);
       expect(res.body.data.items.length).toBeLessThanOrEqual(1);
@@ -299,34 +267,39 @@ describe('Evaluations API', () => {
   describe('POST /api/evaluations — con IA mockeada', () => {
     const aiService = require('../src/services/ai.service');
 
+    function mockRiskOk(data) {
+      aiService.postPredictRisk.mockResolvedValueOnce({ ok: true, data });
+    }
+    function mockRecOk(data) {
+      aiService.postGenerateRecommendations.mockResolvedValueOnce({ ok: true, data });
+    }
+    function mockRecFail() {
+      aiService.postGenerateRecommendations.mockResolvedValueOnce({
+        ok: false,
+        error: new Error('AI no disponible'),
+      });
+    }
+
     afterEach(() => {
       jest.clearAllMocks();
     });
 
     it('guarda riskResult y recommendations cuando la IA responde ok', async () => {
-      aiService.postPredictRisk.mockResolvedValueOnce({
-        ok: true,
-        data: {
-          riskLevel: 'alto',
-          riskScore: 72,
-          yearsEstimated: 5,
-          confidence: 0.88,
-          topFactors: ['auriculares', 'volumen'],
-          aiModel: 'v2.0',
-        },
+      mockRiskOk({
+        riskLevel: 'alto',
+        riskScore: 72,
+        yearsEstimated: 5,
+        confidence: 0.88,
+        topFactors: ['auriculares', 'volumen'],
+        aiModel: 'v2.0',
       });
-      aiService.postGenerateRecommendations.mockResolvedValueOnce({
-        ok: true,
-        data: { recommendations: ['Reduce volumen', 'Usa protectores'] },
-      });
+      mockRecOk({ recommendations: ['Reduce volumen', 'Usa protectores'] });
 
-      const agent = request.agent(app);
-      const token = await registerAndLogin(agent, `eai1_${Date.now()}@test.com`);
-      const res = await agent
-        .post('/api/evaluations')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ frequencyScores: scores12(), habitData: { headphoneHours: 4, volumeLevel: 80 } })
-        .expect(201);
+      const { agent, token } = await authAgent('eai1');
+      const res = await postEval(agent, token, {
+        frequencyScores: scores12(),
+        habitData: { headphoneHours: 4, volumeLevel: 80 },
+      });
 
       expect(res.body.data.riskResult).not.toBeNull();
       expect(res.body.data.riskResult.riskLevel).toBe('alto');
@@ -335,86 +308,53 @@ describe('Evaluations API', () => {
     });
 
     it('maneja topFactors no-array y confidence null (branches alternativos)', async () => {
-      aiService.postPredictRisk.mockResolvedValueOnce({
-        ok: true,
-        data: {
-          riskLevel: 'bajo',
-          riskScore: 18,
-          yearsEstimated: 0,
-          confidence: null,
-          topFactors: 'no-es-array',
-          aiModel: 'v1.0',
-        },
+      mockRiskOk({
+        riskLevel: 'bajo',
+        riskScore: 18,
+        yearsEstimated: 0,
+        confidence: null,
+        topFactors: 'no-es-array',
+        aiModel: 'v1.0',
       });
-      aiService.postGenerateRecommendations.mockResolvedValueOnce({
-        ok: false,
-        error: new Error('AI no disponible'),
-      });
+      mockRecFail();
 
-      const agent = request.agent(app);
-      const token = await registerAndLogin(agent, `eai2_${Date.now()}@test.com`);
-      const res = await agent
-        .post('/api/evaluations')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ frequencyScores: scores12() })
-        .expect(201);
+      const { agent, token } = await authAgent('eai2');
+      const res = await postEval(agent, token, { frequencyScores: scores12() });
 
       expect(res.body.data.riskResult.topFactors).toEqual([]);
       expect(res.body.data.recommendations).toEqual([]);
     });
 
     it('usa rec.data.items cuando no hay rec.data.recommendations', async () => {
-      aiService.postPredictRisk.mockResolvedValueOnce({
-        ok: true,
-        data: {
-          riskLevel: 'moderado',
-          riskScore: 50,
-          yearsEstimated: 3,
-          confidence: 0.75,
-          topFactors: ['ruido'],
-          aiModel: 'v1.0',
-        },
+      mockRiskOk({
+        riskLevel: 'moderado',
+        riskScore: 50,
+        yearsEstimated: 3,
+        confidence: 0.75,
+        topFactors: ['ruido'],
+        aiModel: 'v1.0',
       });
-      aiService.postGenerateRecommendations.mockResolvedValueOnce({
-        ok: true,
-        data: { items: ['Evita lugares ruidosos'] },
-      });
+      mockRecOk({ items: ['Evita lugares ruidosos'] });
 
-      const agent = request.agent(app);
-      const token = await registerAndLogin(agent, `eai3_${Date.now()}@test.com`);
-      const res = await agent
-        .post('/api/evaluations')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ frequencyScores: scores12() })
-        .expect(201);
+      const { agent, token } = await authAgent('eai3');
+      const res = await postEval(agent, token, { frequencyScores: scores12() });
 
       expect(res.body.data.recommendations).toEqual(['Evita lugares ruidosos']);
     });
 
     it('maneja riskScore fuera de rango [0-100] truncando con Math.min/max', async () => {
-      aiService.postPredictRisk.mockResolvedValueOnce({
-        ok: true,
-        data: {
-          riskLevel: 'muy_alto',
-          riskScore: 150,
-          yearsEstimated: 10,
-          confidence: undefined,
-          topFactors: [],
-          aiModel: 'v1.0',
-        },
+      mockRiskOk({
+        riskLevel: 'muy_alto',
+        riskScore: 150,
+        yearsEstimated: 10,
+        confidence: undefined,
+        topFactors: [],
+        aiModel: 'v1.0',
       });
-      aiService.postGenerateRecommendations.mockResolvedValueOnce({
-        ok: true,
-        data: { recommendations: [] },
-      });
+      mockRecOk({ recommendations: [] });
 
-      const agent = request.agent(app);
-      const token = await registerAndLogin(agent, `eai4_${Date.now()}@test.com`);
-      const res = await agent
-        .post('/api/evaluations')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ frequencyScores: scores12() })
-        .expect(201);
+      const { agent, token } = await authAgent('eai4');
+      const res = await postEval(agent, token, { frequencyScores: scores12() });
 
       expect(res.body.data.riskResult.riskScore).toBe(100);
       expect(res.body.data.riskResult.riskLevel).toBe('muy_alto');

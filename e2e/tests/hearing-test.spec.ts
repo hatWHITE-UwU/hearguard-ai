@@ -75,30 +75,24 @@ test.describe('Hearing test — Tone test page', () => {
 
 // ── Navigation flows ──────────────────────────────────────────────────────────
 
+const APP_ROUTES: Array<{ path: string; slug: string }> = [
+  { path: '/app/monitor', slug: 'monitor' },
+  { path: '/app/history', slug: 'history' },
+  { path: '/app/profile', slug: 'profile' },
+  { path: '/app/devices', slug: 'devices' },
+];
+
 test.describe('Navigation', () => {
   test.beforeEach(async ({ page }) => {
     await ensureInApp(page);
   });
 
-  test('navigating to /app/monitor renders monitor page', async ({ page }) => {
-    await gotoAndWait(page, '/app/monitor');
-    expect(page.url()).toContain('/monitor');
-  });
-
-  test('navigating to /app/history renders history page', async ({ page }) => {
-    await gotoAndWait(page, '/app/history');
-    expect(page.url()).toContain('/history');
-  });
-
-  test('navigating to /app/profile renders profile page', async ({ page }) => {
-    await gotoAndWait(page, '/app/profile');
-    expect(page.url()).toContain('/profile');
-  });
-
-  test('navigating to /app/devices renders devices page', async ({ page }) => {
-    await gotoAndWait(page, '/app/devices');
-    expect(page.url()).toContain('/devices');
-  });
+  for (const { path, slug } of APP_ROUTES) {
+    test(`navigating to ${path} renders ${slug} page`, async ({ page }) => {
+      await gotoAndWait(page, path);
+      expect(page.url()).toContain(`/${slug}`);
+    });
+  }
 });
 
 // ── Accessibility basics ──────────────────────────────────────────────────────
