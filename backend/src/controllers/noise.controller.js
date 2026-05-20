@@ -32,8 +32,8 @@ async function create(req, res, next) {
     const { dbLevel, source, deviceId, location } = req.body;
     if (deviceId) {
       const dev = await Device.findOne({
-        _id: deviceId,
-        userId: req.user.id,
+        _id: { $eq: deviceId },
+        userId: { $eq: req.user.id },
       });
       if (!dev) {
         return res.status(404).json({
