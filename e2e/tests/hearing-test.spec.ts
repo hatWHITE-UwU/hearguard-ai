@@ -1,18 +1,8 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { ensureInApp, gotoAndWait } from './helpers';
 
-// ── Demo-mode helpers ─────────────────────────────────────────────────────────
 // HearGuard runs in PUBLIC_DEMO=true on Vercel, auto-logging in with a demo user.
 // These tests work both in demo mode and with real credentials.
-
-async function ensureInApp(page: Page) {
-  await page.goto('/app/dashboard');
-  await page.waitForLoadState('networkidle');
-
-  // If redirected to login (non-demo mode), mark test as skipped context
-  if (page.url().includes('/login')) {
-    test.skip(true, 'Skipped: requires authenticated session (demo mode not active)');
-  }
-}
 
 // ── Dashboard ────────────────────────────────────────────────────────────────
 
@@ -29,8 +19,7 @@ test.describe('Dashboard', () => {
   test('shows dashboard content (no JS crash)', async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    await page.goto('/app/dashboard');
-    await page.waitForLoadState('networkidle');
+    await gotoAndWait(page, '/app/dashboard');
     expect(errors).toHaveLength(0);
   });
 });
@@ -40,12 +29,10 @@ test.describe('Dashboard', () => {
 test.describe('Hearing test — Habits questionnaire', () => {
   test.beforeEach(async ({ page }) => {
     await ensureInApp(page);
-    await page.goto('/app/hearing/habits');
-    await page.waitForLoadState('networkidle');
+    await gotoAndWait(page, '/app/hearing/habits');
   });
 
   test('habits form renders selectors or inputs', async ({ page }) => {
-    // Form should have some interactive elements
     const inputs = page.locator('select, input[type="range"], input[type="radio"]');
     const count = await inputs.count();
     expect(count).toBeGreaterThan(0);
@@ -61,10 +48,7 @@ test.describe('Hearing test — Habits questionnaire', () => {
 
 test.describe('Hearing test — Tone test page', () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate directly; if habits aren't filled, the page shows the "go to habits" card
-    await page.goto('/app/hearing/test');
-    await page.waitForLoadState('networkidle');
-
+    await gotoAndWait(page, '/app/hearing/test');
     if (page.url().includes('/login')) {
       test.skip(true, 'Requires authenticated session');
     }
@@ -97,26 +81,22 @@ test.describe('Navigation', () => {
   });
 
   test('navigating to /app/monitor renders monitor page', async ({ page }) => {
-    await page.goto('/app/monitor');
-    await page.waitForLoadState('networkidle');
+    await gotoAndWait(page, '/app/monitor');
     expect(page.url()).toContain('/monitor');
   });
 
   test('navigating to /app/history renders history page', async ({ page }) => {
-    await page.goto('/app/history');
-    await page.waitForLoadState('networkidle');
+    await gotoAndWait(page, '/app/history');
     expect(page.url()).toContain('/history');
   });
 
   test('navigating to /app/profile renders profile page', async ({ page }) => {
-    await page.goto('/app/profile');
-    await page.waitForLoadState('networkidle');
+    await gotoAndWait(page, '/app/profile');
     expect(page.url()).toContain('/profile');
   });
 
   test('navigating to /app/devices renders devices page', async ({ page }) => {
-    await page.goto('/app/devices');
-    await page.waitForLoadState('networkidle');
+    await gotoAndWait(page, '/app/devices');
     expect(page.url()).toContain('/devices');
   });
 });
@@ -129,8 +109,7 @@ test.describe('Accessibility — keyboard and ARIA', () => {
   });
 
   test('login page: email input has label or aria-label', async ({ page }) => {
-    await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await gotoAndWait(page, '/login');
 
     const emailInput = page.locator('input[type="email"]');
     const id = await emailInput.getAttribute('id');
@@ -144,8 +123,7 @@ test.describe('Accessibility — keyboard and ARIA', () => {
   });
 
   test('dashboard has landmark regions (main or nav)', async ({ page }) => {
-    await page.goto('/app/dashboard');
-    await page.waitForLoadState('networkidle');
+    await gotoAndWait(page, '/app/dashboard');
 
     const landmarks = await page
       .locator('main, nav, [role="main"], [role="navigation"]')
@@ -167,8 +145,7 @@ test.describe('Performance — page load', () => {
 
   test('dashboard loads in under 8 seconds (including API)', async ({ page }) => {
     const start = Date.now();
-    await page.goto('/app/dashboard');
-    await page.waitForLoadState('networkidle');
+    await gotoAndWait(page, '/app/dashboard');
     const elapsed = Date.now() - start;
     expect(elapsed).toBeLessThan(8000);
   });
