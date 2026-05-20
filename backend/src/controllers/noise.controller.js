@@ -1,6 +1,7 @@
 'use strict';
 
 const { validationResult } = require('express-validator');
+const { Types } = require('mongoose');
 const NoiseRecord = require('../models/NoiseRecord');
 const Device = require('../models/Device');
 const {
@@ -30,10 +31,20 @@ async function create(req, res, next) {
   }
   try {
     const { dbLevel, source, deviceId, location } = req.body;
-    if (deviceId) {
+    let safeDeviceId;
+    if (deviceId !== undefined && deviceId !== null && deviceId !== '') {
+      if (typeof deviceId !== 'string' || !Types.ObjectId.isValid(deviceId)) {
+        return res.status(400).json({
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'deviceId inválido',
+        });
+      }
+      safeDeviceId = new Types.ObjectId(deviceId);
+      const safeUserId = new Types.ObjectId(String(req.user.id));
       const dev = await Device.findOne({
-        _id: { $eq: deviceId },
-        userId: { $eq: req.user.id },
+        _id: safeDeviceId,
+        userId: safeUserId,
       });
       if (!dev) {
         return res.status(404).json({
@@ -47,7 +58,7 @@ async function create(req, res, next) {
     const highRisk = dbLevel > HIGH_RISK_DB_THRESHOLD;
     const doc = await NoiseRecord.create({
       userId: req.user.id,
-      deviceId: deviceId || undefined,
+      deviceId: safeDeviceId,
       dbLevel,
       riskTag,
       source,
