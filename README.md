@@ -45,9 +45,10 @@ Plataforma de salud auditiva preventiva con IA. Monitorea la exposición al ruid
 | Base de datos | MongoDB Atlas M0 |
 | Auth | JWT (access 15min + refresh 7d, rotación SHA-256) |
 | IoT | ESP32 + KY-037, puente serial Node.js |
-| CI | GitHub Actions (backend tests, AI tests, Angular build, Flutter analyze) |
+| CI | GitHub Actions (backend, AI, Angular, Playwright E2E, Flutter) + SonarCloud GitHub App |
 | Deploy | GitHub Container Registry → Render (backend + AI) + Vercel (frontend) |
 | Metodología | **TDD + BDD** (principal) y **CRISP-DM** (modelo de IA) — ver [`docs/metodologia.md`](docs/metodologia.md) y [`docs/articulo.md`](docs/articulo.md) |
+| Calidad SonarCloud | Quality Gate **Aprobado** · Security **A** · Reliability **A** · Maintainability **A** · 0 issues abiertas · 13 K LOC · duplicación 1.4 % |
 
 ---
 
@@ -218,17 +219,17 @@ Plan detallado de casos (IDs, precondiciones, resultados esperados): [`docs/plan
 | AI Service | `cd ai-service && pytest tests/ -v` | **30** (test_predictor.py × 7 + test_api.py × 23) |
 | Frontend Angular | `cd frontend && npm run test:ci` | **74** (hearing-test, noise-monitor, auth service, guards, interceptors) |
 | Flutter | `cd flutter_app && flutter test` | **42** (`test/`) |
-| E2E Playwright | `cd e2e && npx playwright test` | **72** (auth + prueba auditiva + smoke, multi-browser) |
+| E2E Playwright | `cd e2e && npx playwright test --project=chromium` | **36** (smoke + autenticación + prueba auditiva, chromium contra Vercel preview) |
 | Rendimiento k6 | `k6 run tests/k6/load-test.js` | 3 escenarios (smoke / load / spike) |
 
-**Total automatizado:** **344** casos de prueba + 3 escenarios de rendimiento.
+**Total automatizado:** **308** casos de prueba + 3 escenarios de rendimiento.
 
 Umbrales de cobertura mínima aplicados en CI:
 
 | Capa | Umbral | Verificación |
 |------|--------|--------------|
-| Backend | branches ≥ 80 %, statements/lines/functions ≥ 88 % | `jest.config.js` → `coverageThreshold` |
-| AI Service | ≥ 70 % líneas | `pytest --cov-fail-under=70` |
+| Backend | líneas ≥ 60 % (CI) — script Node parsea `coverage/lcov.info` | `ci.yml` job `backend` |
+| AI Service | ≥ 60 % líneas | `pytest --cov-fail-under=60` |
 
 Cobertura backend (última ejecución local): statements 91.3 % · branches 82.3 % · functions 93.2 % · lines 91.9 %.
 
@@ -260,17 +261,18 @@ Escenarios conductuales en lenguaje natural (Given / When / Then) en [`docs/feat
 
 ### CI automático (GitHub Actions)
 
-Workflow [`ci.yml`](.github/workflows/ci.yml) en cada push a `main`/`develop` y en pull requests:
+Workflow [`ci.yml`](.github/workflows/ci.yml) en cada push a `main`/`develop` y en pull requests. Seis jobs:
 
 | Job | Qué hace |
 |-----|----------|
-| `backend` | **ESLint** (`npm run lint`) + Tests Jest (MongoDB en servicio) + umbral cobertura branches ≥ 80 % |
-| `ai-service` | Entrena modelo + pytest con `--cov-fail-under=70` |
-| `frontend` | `npm run lint` + `npm run test:ci` + `ng build` |
-| `e2e` | Playwright contra URL de Vercel preview (chromium, `continue-on-error`) |
-| `flutter` | `flutter analyze` + `flutter test` |
-| `sonar` | SonarCloud (tras todos los jobs anteriores) |
-| `deploy` | Solo en push a `main`: hooks Render (backend + IA) y Vercel (frontend) |
+| `backend` | **ESLint** (`npm run lint`) + Tests Jest (MongoDB en servicio) + verificación de cobertura de líneas ≥ 60 % parseando `coverage/lcov.info` |
+| `ai-service` | Entrena modelo (`python -m model.trainer`, `SEED=42`) + pytest con `--cov-fail-under=60` |
+| `frontend` | `npm run lint` + `npm run test:ci` (Vitest sobre Chromium) + `ng build` |
+| `e2e` | Playwright sobre Chromium contra el preview de Vercel; reporte HTML subido como artefacto |
+| `flutter` | `flutter analyze` + `flutter test --coverage` |
+| `deploy` | Solo en push a `main`: hooks Render (backend + IA) y Vercel (frontend) tras la aprobación de los jobs anteriores |
+
+> El análisis estático de **SonarCloud** se ejecuta de forma automática vía el GitHub App "SonarCloud Automatic Analysis", no como job del workflow. Cada push a `main` dispara el escaneo y publica el resultado en el Quality Gate del proyecto.
 
 Workflow adicional [`deploy.yml`](.github/workflows/deploy.yml): build de imágenes Docker (GHCR) y despliegue manual o por push.
 
@@ -299,7 +301,7 @@ Ejecutar deploy manualmente: GitHub → Actions → **Deploy** → Run workflow.
 | Herramienta | Scope | Reglas clave |
 |-------------|-------|-------------|
 | **ESLint** (`backend/eslint.config.js`) | Node.js backend | `eslint-plugin-n` (Node builtins), `eslint-plugin-security` (OWASP), `eqeqeq`, `no-shadow`, `no-return-await` |
-| **SonarCloud** | Backend + Frontend + AI | Quality Gate: 0 bugs bloqueadores, cobertura ≥ umbral |
+| **SonarCloud** (GitHub App de Análisis Automático) | Backend + Frontend + AI | Quality Gate **Aprobado** — 0 bugs, 0 vulnerabilidades, 0 code smells abiertos · Security **A** · Reliability **A** · Maintainability **A** · duplicación 1.4 % sobre 13 K LOC |
 | **flutter analyze** | App móvil | Análisis estático Dart |
 
 Ejecutar lint backend:
@@ -348,21 +350,23 @@ hearguard-ai/
 ├── backend/              Node.js / Express API
 │   ├── src/              controllers, models, routes, services, validators
 │   ├── eslint.config.js  ESLint flat config (plugin-n + plugin-security)
-│   └── tests/            86 tests Jest + Supertest (incl. 22 de seguridad)
+│   └── tests/            126 tests Jest + Supertest (incl. 22 de seguridad)
 ├── ai-service/           Flask + scikit-learn
-│   ├── model/            trainer, predictor, features
+│   ├── model/            trainer (numpy default_rng), predictor, features
 │   └── tests/            30 tests pytest (test_predictor × 7 + test_api × 23)
 ├── frontend/             Angular 21 SPA
-│   └── src/app/features/ auth, dashboard, monitor, hearing-test,
-│                          results, history, profile, devices, recommendations
-├── flutter_app/          App móvil Flutter
+│   ├── src/app/features/ auth, dashboard, monitor, hearing-test,
+│   │                      results, history, profile, devices, recommendations
+│   └── 74 specs Vitest
+├── flutter_app/          App móvil Flutter (42 tests)
+├── e2e/                  Playwright — 36 tests (smoke + auth + hearing-test)
 ├── arduino/              Firmware IoT
 │   ├── hearguard_esp32/  ESP32 con WiFi + HTTP
 │   ├── hearguard_sensor/ Arduino Uno (modo serie)
 │   ├── wokwi/            Simulación ESP32 (diagram.json, sketch.ino)
 │   └── serial_bridge.js  Puente serie → backend
-├── docs/                 plan-de-pruebas.md · complejidad-ciclomatica.md
-│   │                     matriz-trazabilidad.md · api-spec.yml
+├── docs/                 metodologia.md · articulo.md · plan-de-pruebas.md
+│   │                     complejidad-ciclomatica.md · matriz-trazabilidad.md · api-spec.yml
 │   └── features/         6 .feature Gherkin (85 escenarios BDD)
 ├── Document/             Roadmap técnico por fases
 ├── scripts/              utilidades (Claude Code: resume / continue)
