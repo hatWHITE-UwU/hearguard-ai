@@ -95,6 +95,9 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run lint
       - run: npm run test:ci -- --browsers=chromium
+      - name: Fix lcov paths for SonarCloud (add frontend/ prefix to SF lines)
+        if: always()
+        run: sed -i 's|^SF:src/|SF:frontend/src/|g' coverage/lcov.info || true
       - run: npm run build
       - name: Upload frontend coverage
         if: always()
