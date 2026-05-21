@@ -1,7 +1,6 @@
 'use strict';
 
 const request = require('supertest');
-const { expectStatus } = require('./supertest-assert');
 const { app } = require('../server');
 const { connectDatabase, mongoose } = require('../src/config/database');
 const User = require('../src/models/User');
@@ -91,10 +90,8 @@ describe('Devices API', () => {
     });
 
     it('rechaza sin autenticación con 401', async () => {
-      await expectStatus(
-        request(app).post('/api/devices').send({ name: 'Sin auth' }),
-        401,
-      );
+      const res = await request(app).post('/api/devices').send({ name: 'Sin auth' });
+      expect(res.status).toBe(401);
     });
   });
 
@@ -129,7 +126,8 @@ describe('Devices API', () => {
     });
 
     it('rechaza sin autenticación con 401', async () => {
-      await request(app).get('/api/devices').expect(401);
+      const res = await request(app).get('/api/devices');
+      expect(res.status).toBe(401);
     });
   });
 });

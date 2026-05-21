@@ -1,7 +1,6 @@
 'use strict';
 
 const request = require('supertest');
-const { expectStatus } = require('./supertest-assert');
 const { app } = require('../server');
 const { connectDatabase, mongoose } = require('../src/config/database');
 const User = require('../src/models/User');
@@ -60,10 +59,8 @@ describe('Noise API', () => {
     });
 
     it('rechaza sin autenticación con 401', async () => {
-      await expectStatus(
-        request(app).post('/api/noise').send({ dbLevel: 50, source: 'app' }),
-        401,
-      );
+      const res = await request(app).post('/api/noise').send({ dbLevel: 50, source: 'app' });
+      expect(res.status).toBe(401);
     });
 
     it('rechaza dbLevel faltante con 400', async () => {
@@ -154,7 +151,8 @@ describe('Noise API', () => {
     });
 
     it('rechaza sin autenticación con 401', async () => {
-      await request(app).get('/api/noise').expect(401);
+      const res = await request(app).get('/api/noise');
+      expect(res.status).toBe(401);
     });
   });
 
@@ -176,7 +174,8 @@ describe('Noise API', () => {
     });
 
     it('rechaza sin autenticación con 401', async () => {
-      await request(app).get('/api/noise/latest').expect(401);
+      const res = await request(app).get('/api/noise/latest');
+      expect(res.status).toBe(401);
     });
   });
 
@@ -197,7 +196,8 @@ describe('Noise API', () => {
     });
 
     it('rechaza sin autenticación con 401', async () => {
-      await request(app).get('/api/noise/stats/today').expect(401);
+      const res = await request(app).get('/api/noise/stats/today');
+      expect(res.status).toBe(401);
     });
   });
 
@@ -215,7 +215,8 @@ describe('Noise API', () => {
     });
 
     it('rechaza sin autenticación con 401', async () => {
-      await request(app).get('/api/noise/stats/week').expect(401);
+      const res = await request(app).get('/api/noise/stats/week');
+      expect(res.status).toBe(401);
     });
   });
 
