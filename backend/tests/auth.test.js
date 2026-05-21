@@ -1,6 +1,7 @@
 'use strict';
 
 const request = require('supertest');
+const { expectStatus } = require('./supertest-assert');
 const jwt = require('jsonwebtoken');
 const { app } = require('../server');
 const { connectDatabase, mongoose } = require('../src/config/database');
@@ -202,10 +203,10 @@ describe('HearGuard API — Fase 1', () => {
         JWT_REFRESH_SECRET,
         { expiresIn: '7d' },
       );
-      await request(app)
-        .post('/api/auth/refresh')
-        .send({ refreshToken: wrongType })
-        .expect(401);
+      await expectStatus(
+        request(app).post('/api/auth/refresh').send({ refreshToken: wrongType }),
+        401,
+      );
     });
 
     it('rechaza refresh sin token en body con 400', async () => {
@@ -225,10 +226,10 @@ describe('HearGuard API — Fase 1', () => {
         },
         JWT_REFRESH_SECRET,
       );
-      await request(app)
-        .post('/api/auth/refresh')
-        .send({ refreshToken: expired })
-        .expect(401);
+      await expectStatus(
+        request(app).post('/api/auth/refresh').send({ refreshToken: expired }),
+        401,
+      );
     });
 
     it('rechaza refresh ya rotado cuando el token nuevo difiere', async () => {
@@ -281,10 +282,12 @@ describe('HearGuard API — Fase 1', () => {
     });
 
     it('rechaza token de acceso malformado con 401', async () => {
-      await request(app)
-        .get('/api/auth/me')
-        .set('Authorization', 'Bearer not-a-valid-jwt')
-        .expect(401);
+      await expectStatus(
+        request(app)
+          .get('/api/auth/me')
+          .set('Authorization', 'Bearer not-a-valid-jwt'),
+        401,
+      );
     });
   });
 
@@ -296,14 +299,16 @@ describe('HearGuard API — Fase 1', () => {
         .expect(201);
       const access = reg.body.data.accessToken;
       const refresh = reg.body.data.refreshToken;
-      await request(app)
-        .post('/api/auth/logout')
-        .set('Authorization', `Bearer ${access}`)
-        .expect(200);
-      await request(app)
-        .post('/api/auth/refresh')
-        .send({ refreshToken: refresh })
-        .expect(401);
+      await expectStatus(
+        request(app)
+          .post('/api/auth/logout')
+          .set('Authorization', `Bearer ${access}`),
+        200,
+      );
+      await expectStatus(
+        request(app).post('/api/auth/refresh').send({ refreshToken: refresh }),
+        401,
+      );
     });
   });
 
@@ -353,7 +358,7 @@ describe('HearGuard API — Fase 1', () => {
     });
 
     it('rechaza sin autenticación con 401', async () => {
-      await request(app).patch('/api/auth/me').send({ name: 'X' }).expect(401);
+      await expectStatus(request(app).patch('/api/auth/me').send({ name: 'X' }), 401);
     });
 
     it('actualiza age, gender, occupation y city', async () => {

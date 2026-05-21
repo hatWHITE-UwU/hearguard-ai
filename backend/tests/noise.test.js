@@ -1,6 +1,7 @@
 'use strict';
 
 const request = require('supertest');
+const { expectStatus } = require('./supertest-assert');
 const { app } = require('../server');
 const { connectDatabase, mongoose } = require('../src/config/database');
 const User = require('../src/models/User');
@@ -59,10 +60,10 @@ describe('Noise API', () => {
     });
 
     it('rechaza sin autenticación con 401', async () => {
-      await request(app)
-        .post('/api/noise')
-        .send({ dbLevel: 50, source: 'app' })
-        .expect(401);
+      await expectStatus(
+        request(app).post('/api/noise').send({ dbLevel: 50, source: 'app' }),
+        401,
+      );
     });
 
     it('rechaza dbLevel faltante con 400', async () => {

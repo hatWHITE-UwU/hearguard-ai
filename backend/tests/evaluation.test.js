@@ -12,6 +12,7 @@ jest.mock('../src/services/ai.service', () => {
 });
 
 const request = require('supertest');
+const { expectStatus } = require('./supertest-assert');
 const { app } = require('../server');
 const { connectDatabase, mongoose } = require('../src/config/database');
 const User = require('../src/models/User');
@@ -102,10 +103,12 @@ describe('Evaluations API', () => {
     });
 
     it('rechaza sin autenticación con 401', async () => {
-      await request(app)
-        .post('/api/evaluations')
-        .send({ frequencyScores: scores12().slice(0, 3) })
-        .expect(401);
+      await expectStatus(
+        request(app)
+          .post('/api/evaluations')
+          .send({ frequencyScores: scores12().slice(0, 3) }),
+        401,
+      );
     });
 
     it('rechaza frequencyScores vacío con 400', async () => {
@@ -214,10 +217,12 @@ describe('Evaluations API', () => {
     });
 
     it('rechaza sin autenticación con 401', async () => {
-      await request(app)
-        .patch('/api/evaluations/507f1f77bcf86cd799439011')
-        .send({ habitData: {} })
-        .expect(401);
+      await expectStatus(
+        request(app)
+          .patch('/api/evaluations/507f1f77bcf86cd799439011')
+          .send({ habitData: {} }),
+        401,
+      );
     });
   });
 
