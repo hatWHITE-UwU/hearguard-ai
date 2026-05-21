@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
@@ -5,11 +6,14 @@ import { provideHttpClientTesting, HttpTestingController } from '@angular/common
 import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment';
 
+const envSnapshot = { ...environment };
+
 describe('AuthService', () => {
   let service: AuthService;
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
+    Object.assign(environment, { publicDemo: false, useDemoMocks: false });
     localStorage.clear();
     TestBed.configureTestingModule({
       providers: [
@@ -26,6 +30,7 @@ describe('AuthService', () => {
   afterEach(() => {
     httpMock.verify();
     localStorage.clear();
+    Object.assign(environment, envSnapshot);
   });
 
   it('should be created', () => {
@@ -67,9 +72,7 @@ describe('AuthService', () => {
 
     expect(localStorage.getItem('hearguard_access')).toBeNull();
     expect(localStorage.getItem('hearguard_refresh')).toBeNull();
-    if (!environment.publicDemo) {
-      expect(service.currentUser()).toBeNull();
-    }
+    expect(service.currentUser()).toBeNull();
   });
 
   it('loadUserFromStorage fetches /api/auth/me when token exists', () => {
@@ -90,9 +93,95 @@ describe('AuthService', () => {
   });
 
   it('loadUserFromStorage sets null (no token, non-demo mode)', () => {
-    if (environment.publicDemo) return;
     service.loadUserFromStorage();
     httpMock.expectNone(`${environment.apiUrl}/api/auth/me`);
     expect(service.currentUser()).toBeNull();
+  });
+
+  it('loadUserFromStorage sets DEMO_USER (no token, publicDemo mode)', () => {
+    Object.assign(environment, { publicDemo: true });
+    service.loadUserFromStorage();
+    httpMock.expectNone(`${environment.apiUrl}/api/auth/me`);
+    expect(service.currentUser()).not.toBeNull();
+  });
+
+  it('logout sets DEMO_USER instead of null in publicDemo mode', () => {
+    Object.assign(environment, { publicDemo: true });
+    service.logout();
+    expect(service.currentUser()).not.toBeNull();
+  });
+
+  it('loadUserFromStorage llama logout si /me falla', () => {
+    localStorage.setItem('hearguard_access', 'bad-token');
+    const logoutSpy = vi.spyOn(service, 'logout');
+    service.loadUserFromStorage();
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/auth/me`);
+    req.flush('error', { status: 401, statusText: 'Unauthorized' });
+    expect(logoutSpy).toHaveBeenCalled();
+  });
+
+  it('login persiste tokens y usuario', () => {
+    const payload = {
+      user: {
+        id: '1', name: 'L', email: 'l@l.com',
+        age: 20, gender: 'male', occupation: '', city: '',
+        settings: { reminders: false, darkTheme: true, volumeUnit: 'dba' },
+      },
+      accessToken: 'acc',
+      refreshToken: 'ref',
+    };
+    service.login({ email: 'l@l.com', password: 'Pass1234' }).subscribe((d) => {
+      expect(d.accessToken).toBe('acc');
+      expect(service.currentUser()?.email).toBe('l@l.com');
+    });
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/auth/login`);
+    req.flush({ success: true, data: payload, message: 'ok' });
+    expect(localStorage.getItem('hearguard_access')).toBe('acc');
+  });
+
+  it('register persiste sesión', () => {
+    service
+      .register({ name: 'N', email: 'n@n.com', password: 'Pass1234' })
+      .subscribe();
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/auth/register`);
+    req.flush({
+      success: true,
+      data: {
+        user: {
+          id: '2', name: 'N', email: 'n@n.com',
+          age: 22, gender: 'female', occupation: 'x', city: 'y',
+          settings: { reminders: true, darkTheme: false, volumeUnit: 'dba' },
+        },
+        accessToken: 'a2',
+        refreshToken: 'r2',
+      },
+      message: 'ok',
+    });
+    expect(localStorage.getItem('hearguard_refresh')).toBe('r2');
+  });
+
+  it('refreshToken actualiza tokens en localStorage', () => {
+    localStorage.setItem('hearguard_refresh', 'old-ref');
+    service.refreshToken().subscribe((token) => {
+      expect(token).toBe('new-acc');
+    });
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/auth/refresh`);
+    expect(req.request.body).toEqual({ refreshToken: 'old-ref' });
+    req.flush({
+      success: true,
+      data: { accessToken: 'new-acc', refreshToken: 'new-ref' },
+      message: 'ok',
+    });
+    expect(localStorage.getItem('hearguard_access')).toBe('new-acc');
+  });
+
+  it('refreshToken sin refresh en storage lanza error', () => {
+    let err: Error | undefined;
+    service.refreshToken().subscribe({
+      error: (e) => {
+        err = e as Error;
+      },
+    });
+    expect(err?.message).toBe('no refresh');
   });
 });

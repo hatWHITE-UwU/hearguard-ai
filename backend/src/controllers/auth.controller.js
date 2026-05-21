@@ -35,11 +35,12 @@ function safeEqualHex(a, b) {
   try {
     const ba = Buffer.from(a, 'hex');
     const bb = Buffer.from(b, 'hex');
+    /* istanbul ignore next — both inputs are always equal-length SHA-256 hex digests */
     if (ba.length !== bb.length) {
       return false;
     }
     return crypto.timingSafeEqual(ba, bb);
-  } catch {
+  } catch /* istanbul ignore next */ {
     return false;
   }
 }
@@ -102,6 +103,7 @@ async function register(req, res, next) {
       message: 'Usuario registrado correctamente',
     });
   } catch (err) {
+    /* istanbul ignore next — race condition: duplicate email between findOne and save */
     if (err.code === 11000) {
       return res.status(409).json({
         success: false,

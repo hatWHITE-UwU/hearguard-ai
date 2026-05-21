@@ -87,3 +87,25 @@ def test_missing_data_safe():
 
 def test_recommendations_non_empty():
     assert len(recommendations_for_level("Alto")) >= 1
+
+
+def test_load_model_raises_when_file_missing(monkeypatch):
+    """Covers the FileNotFoundError branch in load_model()."""
+    import model.predictor as pred
+    saved_bundle = pred._MODEL_BUNDLE
+    pred._MODEL_BUNDLE = None  # force re-load
+    monkeypatch.setattr("os.path.isfile", lambda _path: False)
+    try:
+        with pytest.raises(FileNotFoundError):
+            pred.load_model()
+    finally:
+        pred._MODEL_BUNDLE = saved_bundle  # restore cache so other tests are unaffected
+
+
+def test_score_to_years_all_branches():
+    """Exercises all four score ranges in score_to_years."""
+    from model.predictor import score_to_years
+    assert isinstance(score_to_years(10), int)   # <= RISK_LOW_THRESHOLD
+    assert isinstance(score_to_years(35), int)   # <= RISK_MODERATE_THRESHOLD
+    assert isinstance(score_to_years(60), int)   # <= RISK_HIGH_THRESHOLD
+    assert isinstance(score_to_years(90), int)   # > RISK_HIGH_THRESHOLD
