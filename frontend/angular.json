@@ -83,7 +83,12 @@
           "options": {
             "tsConfig": "tsconfig.spec.json",
             "coverage": true,
-            "coverageReporters": ["lcov", "text-summary"]
+            "coverageReporters": ["lcov", "text-summary"],
+            "coverageExclude": [
+              "src/app/features/**",
+              "src/app/**/*.html",
+              "src/app/**/*.scss"
+            ]
           }
         }
       }

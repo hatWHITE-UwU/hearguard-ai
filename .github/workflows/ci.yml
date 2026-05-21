@@ -70,7 +70,7 @@ jobs:
           cache-dependency-path: ai-service/requirements.txt
       - run: pip install -r requirements.txt
       - run: python -m model.trainer
-      - run: pytest tests/ -q --cov=model --cov-report=xml:coverage.xml --cov-fail-under=60
+      - run: pytest tests/ -q --cov=app --cov=model --cov-report=xml:coverage.xml --cov-fail-under=60
       - name: Upload AI coverage
         uses: actions/upload-artifact@v4
         with:
@@ -184,7 +184,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: frontend-coverage
-          path: frontend/coverage
+          path: frontend/coverage/hearguard-frontend
         continue-on-error: true
       - name: Verify coverage files
         run: |

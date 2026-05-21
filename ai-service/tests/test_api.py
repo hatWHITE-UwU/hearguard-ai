@@ -34,6 +34,14 @@ class TestHealth:
         assert data["data"]["status"] == "ok"
         assert data["data"]["model"] in {"loaded", "missing"}
 
+    def test_model_missing_when_load_fails(self, client, monkeypatch):
+        def _missing():
+            raise FileNotFoundError("no model")
+
+        monkeypatch.setattr("app.load_model", _missing)
+        data = client.get("/health").get_json()
+        assert data["data"]["model"] == "missing"
+
 
 # ── POST /api/predict-risk ─────────────────────────────────────────────────────
 
@@ -124,6 +132,17 @@ class TestPredictRisk:
         # Must not crash with 500
         assert res.status_code in {200, 400}
 
+    def test_predict_internal_error_returns_500(self, client, monkeypatch):
+        def _boom(_body):
+            raise RuntimeError("model broken")
+
+        monkeypatch.setattr("app.predict_risk", _boom)
+        res = client.post("/api/predict-risk", json=self._valid_payload)
+        assert res.status_code == 500
+        body = res.get_json()
+        assert body["success"] is False
+        assert body["error"] == "PREDICT_ERROR"
+
 
 # ── POST /api/generate-recommendations ────────────────────────────────────────
 
@@ -165,6 +184,14 @@ class TestGenerateRecommendations:
     def test_empty_payload_returns_defaults(self, client):
         res = client.post("/api/generate-recommendations", json={})
         assert res.status_code == 200
+
+    def test_invalid_risk_score_keeps_level_from_body(self, client):
+        data = client.post(
+            "/api/generate-recommendations",
+            json={"riskLevel": "Bajo", "riskScore": "not-a-number"},
+        ).get_json()
+        assert data["success"] is True
+        assert len(data["data"]["recommendations"]) >= 1
 
 
 # ── GET /api/model-info ────────────────────────────────────────────────────────
