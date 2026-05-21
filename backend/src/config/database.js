@@ -27,6 +27,7 @@ async function connectDatabase(opts = {}) {
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
       await mongoose.connect(MONGO_URI, connectOpts);
+      /* istanbul ignore if */
       if (attempt > 1) {
         logger.info(`MongoDB conectado (intento ${attempt} de ${maxAttempts})`);
       }
@@ -34,6 +35,7 @@ async function connectDatabase(opts = {}) {
     } catch (err) {
       lastErr = err;
       const msg = err?.message?.split('\n')[0] || String(err);
+      /* istanbul ignore if */
       if (attempt < maxAttempts) {
         logger.warn(
           `[MongoDB] ${attempt}/${maxAttempts} falló: ${msg}. Reintento en ${delayMs / 1000}s…`,

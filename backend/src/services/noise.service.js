@@ -19,12 +19,31 @@ function classifyRiskTag(dbLevel) {
 }
 
 /**
+ * @param {{ dbLevel: number }[]} rows
+ * @returns {{ count: number, avgDb: number, maxDb: number, exposureMinutes: number }}
+ */
+function computeStats(rows) {
+  if (rows.length === 0) {
+    return { count: 0, avgDb: 0, maxDb: 0, exposureMinutes: 0 };
+  }
+  const sum = rows.reduce((a, r) => a + r.dbLevel, 0);
+  const maxDb = rows.reduce((m, r) => (r.dbLevel > m ? r.dbLevel : m), rows[0].dbLevel);
+  const exposureMinutes = rows.filter((r) => r.dbLevel > DB_EXPOSURE_THRESHOLD).length;
+  return {
+    count: rows.length,
+    avgDb: Math.round((sum / rows.length) * 10) / 10,
+    maxDb,
+    exposureMinutes,
+  };
+}
+
+/**
  * @param {import('../models/NoiseRecord')} Model
  * @param {import('mongoose').Types.ObjectId} userId
  * @param {Date} [startOfDay]
  */
 async function statsForToday(Model, userId, startOfDay = null) {
-  const start = startOfDay || new Date();
+  const start = startOfDay ? new Date(startOfDay) : new Date();
   start.setHours(0, 0, 0, 0);
   const end = new Date(start);
   end.setDate(end.getDate() + 1);
@@ -36,26 +55,7 @@ async function statsForToday(Model, userId, startOfDay = null) {
     .select('dbLevel recordedAt')
     .lean();
 
-  if (rows.length === 0) {
-    return {
-      count: 0,
-      avgDb: 0,
-      maxDb: 0,
-      exposureMinutes: 0,
-    };
-  }
-
-  const sum = rows.reduce((a, r) => a + r.dbLevel, 0);
-  const maxDb = Math.max(...rows.map((r) => r.dbLevel));
-  /** Aproximación: 1 registro ≈ 1 minuto por encima de 70 dB */
-  const exposureMinutes = rows.filter((r) => r.dbLevel > DB_EXPOSURE_THRESHOLD).length;
-
-  return {
-    count: rows.length,
-    avgDb: Math.round((sum / rows.length) * 10) / 10,
-    maxDb,
-    exposureMinutes,
-  };
+  return computeStats(rows);
 }
 
 /**
@@ -74,20 +74,7 @@ async function statsForWeek(Model, userId) {
     .select('dbLevel')
     .lean();
 
-  if (rows.length === 0) {
-    return { count: 0, avgDb: 0, maxDb: 0, exposureMinutes: 0 };
-  }
-
-  const sum = rows.reduce((a, r) => a + r.dbLevel, 0);
-  const maxDb = Math.max(...rows.map((r) => r.dbLevel));
-  const exposureMinutes = rows.filter((r) => r.dbLevel > DB_EXPOSURE_THRESHOLD).length;
-
-  return {
-    count: rows.length,
-    avgDb: Math.round((sum / rows.length) * 10) / 10,
-    maxDb,
-    exposureMinutes,
-  };
+  return computeStats(rows);
 }
 
 module.exports = {

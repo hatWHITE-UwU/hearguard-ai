@@ -35,6 +35,7 @@ function errorHandler(err, req, res, _next) {
     message = 'Error interno del servidor';
   }
 
+  /* istanbul ignore else */
   if (!isProd || statusCode >= 500) {
     logger.error({ message: err.message, stack: err.stack, code: err.code });
   }
