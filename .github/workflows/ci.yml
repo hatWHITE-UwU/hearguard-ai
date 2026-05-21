@@ -154,8 +154,8 @@ jobs:
 
   # ── SonarCloud ───────────────────────────────────────────────────────────────
   # CI-based analysis (reemplaza al Automatic Analysis del GitHub App).
-  # Necesita que se cumpla TODO esto:
-  #   1. SONAR_TOKEN en GitHub Secrets (Settings → Secrets and variables → Actions).
+  # Requisitos para que este job pase:
+  #   1. Secret SONAR_TOKEN en el repo (Settings → Secrets and variables → Actions).
   #   2. Automatic Analysis DESACTIVADO en SonarCloud
   #      (Project → Administration → Analysis Method).
   #   3. sonar-project.properties con las rutas de los reportes lcov / coverage.xml.
@@ -193,7 +193,7 @@ jobs:
           ls -la frontend/coverage/ || echo "no frontend coverage"
           ls -la ai-service/coverage.xml || echo "no AI coverage"
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v6
+        uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
