@@ -136,6 +136,19 @@ describe('authInterceptor', () => {
     httpMock.expectNone(`${environment.apiUrl}/api/auth/refresh`);
   });
 
+  it('does NOT refresh on 401 for logout endpoint', () => {
+    localStorage.setItem('hearguard_access', 'tok');
+
+    http.post(`${environment.apiUrl}/api/auth/logout`, {}).subscribe({
+      error: () => undefined,
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/auth/logout`);
+    req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
+
+    httpMock.expectNone(`${environment.apiUrl}/api/auth/refresh`);
+  });
+
   it('detects API request via URL when apiUrl is empty string', () => {
     const savedApiUrl = environment.apiUrl;
     Object.assign(environment, { apiUrl: '' });

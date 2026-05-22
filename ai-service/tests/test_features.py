@@ -76,3 +76,15 @@ def test_build_feature_vector_invalid_score_in_list():
         "testScores": ["bad", 8.0],
     })
     assert vec[6] == pytest.approx(4.0)  # (0.0 + 8.0) / 2
+
+
+def test_build_feature_vector_avg_test_score_without_list():
+    """Sin testScores usa avgTestScore para avg_test."""
+    vec = build_feature_vector({"avgTestScore": 7.5})
+    assert vec[6] == 7.5
+
+
+def test_build_feature_vector_two_scores_low_freq_average():
+    """Con 2+ scores, low_freq promedia las dos primeras frecuencias."""
+    vec = build_feature_vector({"testScores": [6.0, 8.0, 10.0]})
+    assert vec[7] == pytest.approx(7.0)

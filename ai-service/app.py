@@ -24,8 +24,12 @@ logger = logging.getLogger("hearguard.ai")
 app = Flask(__name__)
 # Stateless JWT API — CSRF does not apply (no cookies sent cross-origin).
 # Set ALLOWED_ORIGINS=https://your-frontend.com in production.
-_origins_env = os.environ.get("ALLOWED_ORIGINS")
-_ALLOWED_ORIGINS = [o.strip() for o in _origins_env.split(",") if o.strip()] if _origins_env else "*"
+def _parse_allowed_origins(env_val: str | None) -> list | str:
+    if env_val:
+        return [o.strip() for o in env_val.split(",") if o.strip()]
+    return "*"
+
+_ALLOWED_ORIGINS = _parse_allowed_origins(os.environ.get("ALLOWED_ORIGINS"))
 CORS(app, resources={r"/api/*": {"origins": _ALLOWED_ORIGINS}})  # nosonar
 
 

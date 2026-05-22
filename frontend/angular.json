@@ -87,7 +87,8 @@
             "coverageExclude": [
               "src/app/features/**",
               "src/app/**/*.html",
-              "src/app/**/*.scss"
+              "src/app/**/*.scss",
+              "src/environments/**"
             ]
           }
         }

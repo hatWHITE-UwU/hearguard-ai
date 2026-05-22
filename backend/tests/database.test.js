@@ -31,6 +31,25 @@ describe('connectDatabase', () => {
     expect(mongoose.connect).not.toHaveBeenCalled();
   });
 
+  it('registra log en reintento exitoso tras fallo', async () => {
+    const logger = require('../src/utils/logger');
+    const mongoose = {
+      connection: { readyState: 0 },
+      connect: jest
+        .fn()
+        .mockRejectedValueOnce(new Error('timeout'))
+        .mockResolvedValue({}),
+      set: jest.fn(),
+    };
+    jest.doMock('mongoose', () => mongoose);
+
+    const { connectDatabase } = require('../src/config/database');
+    await connectDatabase({ maxAttempts: 2, delayMs: 1 });
+
+    expect(mongoose.connect).toHaveBeenCalledTimes(2);
+    expect(logger.info).toHaveBeenCalled();
+  });
+
   it('conecta en el primer intento en entorno test', async () => {
     const mongoose = {
       connection: { readyState: 0 },

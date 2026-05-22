@@ -95,16 +95,16 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run lint
       - run: npm run test:ci -- --browsers=chromium
-      - name: Fix lcov paths for SonarCloud (add frontend/ prefix to SF lines)
+      - name: Fix lcov paths for SonarCloud
         if: always()
-        run: sed -i 's|^SF:src/|SF:frontend/src/|g' coverage/lcov.info || true
+        run: node ../scripts/fix-sonar-coverage-paths.js
       - run: npm run build
       - name: Upload frontend coverage
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: frontend-coverage
-          path: frontend/coverage/lcov.info
+          path: frontend/coverage/hearguard-frontend/lcov.info
           if-no-files-found: ignore
           retention-days: 1
 
@@ -189,11 +189,13 @@ jobs:
           name: frontend-coverage
           path: frontend/coverage/hearguard-frontend
         continue-on-error: true
+      - name: Fix lcov paths for SonarCloud
+        run: node scripts/fix-sonar-coverage-paths.js
       - name: Verify coverage files
         run: |
           echo "── Coverage report tree ──"
           ls -la backend/coverage/ || echo "no backend coverage"
-          ls -la frontend/coverage/ || echo "no frontend coverage"
+          ls -la frontend/coverage/hearguard-frontend/ || echo "no frontend coverage"
           ls -la ai-service/coverage.xml || echo "no AI coverage"
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6.0.0

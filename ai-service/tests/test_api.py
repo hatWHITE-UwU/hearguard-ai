@@ -211,3 +211,21 @@ class TestModelInfo:
     def test_r2_above_threshold(self, client):
         data = client.get("/api/model-info").get_json()
         assert data["data"]["r2_holdout"] >= 0.8
+
+
+# ── _parse_allowed_origins ──────────────────────────────────────────────────────
+
+class TestParseAllowedOrigins:
+    def test_returns_wildcard_when_no_env(self):
+        from app import _parse_allowed_origins
+        assert _parse_allowed_origins(None) == "*"
+
+    def test_returns_list_when_env_set(self):
+        from app import _parse_allowed_origins
+        result = _parse_allowed_origins("http://localhost:4200,https://example.com")
+        assert result == ["http://localhost:4200", "https://example.com"]
+
+    def test_strips_whitespace(self):
+        from app import _parse_allowed_origins
+        result = _parse_allowed_origins(" http://a.com , http://b.com ")
+        assert result == ["http://a.com", "http://b.com"]
