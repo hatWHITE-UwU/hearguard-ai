@@ -94,6 +94,28 @@ describe('Coverage extras — auth, noise, env', () => {
 
   // ── auth.controller.js — ramas adicionales ────────────────────────────────
 
+  describe('PATCH /api/auth/me — isPlainObject ramas null y primitivo', () => {
+    it('ignora settings=null (val !== null → false)', async () => {
+      const { accessToken } = await registerAndLogin(`nullset_${Date.now()}@t.com`);
+      const res = await request(app)
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ settings: null })
+        .expect(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('ignora settings primitivo string (typeof !== object → false)', async () => {
+      const { accessToken } = await registerAndLogin(`strset_${Date.now()}@t.com`);
+      const res = await request(app)
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ settings: 'not-an-object' })
+        .expect(200);
+      expect(res.body.success).toBe(true);
+    });
+  });
+
   describe('PATCH /api/auth/me — settings.volumeUnit', () => {
     it('actualiza volumeUnit en settings', async () => {
       const { accessToken } = await registerAndLogin(`vol_${Date.now()}@t.com`);

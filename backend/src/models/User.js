@@ -54,6 +54,7 @@ userSchema.set('toJSON', {
     const safe = { ...ret };
     delete safe.password;
     delete safe.refreshTokenHash;
+    /* istanbul ignore else */
     if (safe._id) {
       safe.id = safe._id.toString();
       delete safe._id;

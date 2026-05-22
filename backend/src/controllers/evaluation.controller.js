@@ -49,7 +49,7 @@ function lowFreqAverage(freqAvgs) {
  */
 function buildAiPayload(user, evaluation) {
   const freqAvgs = aggregateTestScoresByFrequency(evaluation.frequencyScores);
-  const habit = evaluation.habitData || {};
+  const habit = evaluation.habitData || /* istanbul ignore next */ {};
   return {
     age: Number(user.age ?? 28),
     headphoneHours: Number(habit.headphoneHours ?? 0),

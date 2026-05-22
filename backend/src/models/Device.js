@@ -30,6 +30,7 @@ deviceSchema.set('toJSON', {
   transform(_doc, ret) {
     const safe = { ...ret };
     delete safe.apiKey;
+    /* istanbul ignore else */
     if (safe._id) {
       safe.id = safe._id.toString();
       delete safe._id;

@@ -185,6 +185,64 @@ describe('Evaluation — AI prediction success path', () => {
     expect(res.body.data.recommendations).toHaveLength(1);
   });
 
+  it('cubre ramas || 0 y || v1.0 con riskScore=0, yearsEstimated=null y aiModel=null', async () => {
+    aiService.postPredictRisk.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        riskScore: 0,
+        riskLevel: 'bajo',
+        yearsEstimated: null,
+        confidence: 0.5,
+        topFactors: [],
+        aiModel: null,
+      },
+    });
+    aiService.postGenerateRecommendations.mockResolvedValueOnce(RECOMMEND_SUCCESS);
+
+    const token = await registerAndLogin(`zeroval_${Date.now()}@t.com`);
+    const res = await request(app)
+      .post('/api/evaluations')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ frequencyScores: scores12() });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.riskResult.riskScore).toBe(0);
+  });
+
+  it('cubre Array.isArray false cuando rec.data.recommendations no es array', async () => {
+    aiService.postPredictRisk.mockResolvedValueOnce(PREDICT_SUCCESS);
+    aiService.postGenerateRecommendations.mockResolvedValueOnce({
+      ok: true,
+      data: { recommendations: 'no-es-array' },
+    });
+
+    const token = await registerAndLogin(`noarrrec_${Date.now()}@t.com`);
+    const res = await request(app)
+      .post('/api/evaluations')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ frequencyScores: scores12() });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.recommendations).toHaveLength(0);
+  });
+
+  it('cubre fallback [] cuando rec.data no tiene recommendations ni items', async () => {
+    aiService.postPredictRisk.mockResolvedValueOnce(PREDICT_SUCCESS);
+    aiService.postGenerateRecommendations.mockResolvedValueOnce({
+      ok: true,
+      data: {},
+    });
+
+    const token = await registerAndLogin(`nokeys_${Date.now()}@t.com`);
+    const res = await request(app)
+      .post('/api/evaluations')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ frequencyScores: scores12() });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.recommendations).toHaveLength(0);
+  });
+
   it('cubre return 0 en aggregateTestScoresByFrequency con Hz incompletos', async () => {
     aiService.postPredictRisk.mockResolvedValueOnce(PREDICT_SUCCESS);
     aiService.postGenerateRecommendations.mockResolvedValueOnce(RECOMMEND_SUCCESS);
