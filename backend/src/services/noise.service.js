@@ -27,7 +27,7 @@ function computeStats(rows) {
     return { count: 0, avgDb: 0, maxDb: 0, exposureMinutes: 0 };
   }
   const sum = rows.reduce((a, r) => a + r.dbLevel, 0);
-  const maxDb = rows.reduce((m, r) => (r.dbLevel > m ? r.dbLevel : m), rows[0].dbLevel);
+  const maxDb = rows.reduce((m, r) => Math.max(m, r.dbLevel), rows[0].dbLevel);
   const exposureMinutes = rows.filter((r) => r.dbLevel > DB_EXPOSURE_THRESHOLD).length;
   return {
     count: rows.length,

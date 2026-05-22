@@ -185,7 +185,7 @@ async function list(req, res, next) {
         : 0;
     const maxDb =
       rows.length > 0
-        ? rows.reduce((m, r) => (r.dbLevel > m ? r.dbLevel : m), rows[0].dbLevel)
+        ? rows.reduce((m, r) => Math.max(m, r.dbLevel), rows[0].dbLevel)
         : 0;
     return res.status(200).json({
       success: true,

@@ -9,8 +9,9 @@ import { environment } from '../../../environments/environment';
 
 const envSnapshot = { ...environment };
 
+class StubLoginComponent { static readonly selector = 'app-stub-login'; }
 const testRoutes: Routes = [
-  { path: 'login', component: class {} },
+  { path: 'login', component: StubLoginComponent },
 ];
 
 describe('authInterceptor', () => {
