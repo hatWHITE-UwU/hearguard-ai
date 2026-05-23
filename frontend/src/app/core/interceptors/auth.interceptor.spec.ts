@@ -162,4 +162,40 @@ describe('authInterceptor', () => {
 
     Object.assign(environment, { apiUrl: savedApiUrl });
   });
+
+  it('detects /api? query-string URL when apiUrl is empty (covers || includes("/api?"))', () => {
+    const savedApiUrl = environment.apiUrl;
+    Object.assign(environment, { apiUrl: '' });
+    localStorage.setItem('hearguard_access', 'tok');
+
+    http.get('/api?resourceId=123').subscribe();
+
+    const req = httpMock.expectOne('/api?resourceId=123');
+    expect(req.request.headers.get('Authorization')).toBe('Bearer tok');
+    req.flush({});
+
+    Object.assign(environment, { apiUrl: savedApiUrl });
+  });
+
+  it('usa {} en setHeaders cuando getAccessToken devuelve null tras el refresh', () => {
+    localStorage.setItem('hearguard_refresh', 'valid-refresh');
+    const auth = TestBed.inject(AuthService);
+    vi.spyOn(auth, 'getAccessToken').mockReturnValue(null);
+
+    http.get(`${environment.apiUrl}/api/noise`).subscribe();
+
+    const first = httpMock.expectOne(`${environment.apiUrl}/api/noise`);
+    first.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
+
+    const refresh = httpMock.expectOne(`${environment.apiUrl}/api/auth/refresh`);
+    refresh.flush({
+      success: true,
+      data: { accessToken: 'new-token', refreshToken: 'new-ref' },
+      message: 'ok',
+    });
+
+    const retry = httpMock.expectOne(`${environment.apiUrl}/api/noise`);
+    expect(retry.request.headers.get('Authorization')).toBeNull();
+    retry.flush({});
+  });
 });

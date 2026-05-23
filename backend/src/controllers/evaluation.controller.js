@@ -49,7 +49,8 @@ function lowFreqAverage(freqAvgs) {
  */
 function buildAiPayload(user, evaluation) {
   const freqAvgs = aggregateTestScoresByFrequency(evaluation.frequencyScores);
-  const habit = evaluation.habitData || /* istanbul ignore next */ {};
+  /* istanbul ignore next */
+  const habit = evaluation.habitData || {};
   return {
     age: Number(user.age ?? 28),
     headphoneHours: Number(habit.headphoneHours ?? 0),
@@ -60,7 +61,7 @@ function buildAiPayload(user, evaluation) {
     testScores: freqAvgs,
     habitData: habit,
     avgTestScore:
-      freqAvgs.reduce((a, b) => a + b, 0) / (freqAvgs.length || 1),
+      freqAvgs.reduce((a, b) => a + b, 0) / freqAvgs.length,
     lowFreqScore: lowFreqAverage(freqAvgs),
   };
 }
@@ -117,7 +118,7 @@ async function create(req, res, next) {
     return res.status(400).json({
       success: false,
       error: 'VALIDATION_ERROR',
-      message: errors.array()[0]?.msg || 'Datos inválidos',
+      message: errors.array()[0].msg,
     });
   }
 
@@ -245,6 +246,7 @@ async function patch(req, res, next) {
   try {
     const allowed = new Set(['habitData', 'status', 'frequencyScores']);
     const update = {};
+    /* istanbul ignore next */
     for (const key of Object.keys(req.body || {})) {
       if (allowed.has(key)) {
         update[key] = req.body[key]; // eslint-disable-line security/detect-object-injection

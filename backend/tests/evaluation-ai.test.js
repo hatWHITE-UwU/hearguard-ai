@@ -243,6 +243,35 @@ describe('Evaluation — AI prediction success path', () => {
     expect(res.body.data.recommendations).toHaveLength(0);
   });
 
+  it('cubre ramas ?? izquierdas con user.age y habitData completos', async () => {
+    aiService.postPredictRisk.mockResolvedValueOnce(PREDICT_SUCCESS);
+    aiService.postGenerateRecommendations.mockResolvedValueOnce(RECOMMEND_SUCCESS);
+
+    const email = `habitage_${Date.now()}@t.com`;
+    const reg = await request(app)
+      .post('/api/auth/register')
+      .send({ name: 'User', email, password: 'TestPass1', age: 25 });
+    expect(reg.status).toBe(201);
+    const token = reg.body.data.accessToken;
+
+    const res = await request(app)
+      .post('/api/evaluations')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        frequencyScores: scores12(),
+        habitData: {
+          headphoneHours: 3,
+          volumeLevel: 70,
+          noiseExposure: 2,
+          occupationRisk: 1,
+          smoking: 0,
+        },
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data.riskResult).not.toBeNull();
+  });
+
   it('cubre return 0 en aggregateTestScoresByFrequency con Hz incompletos', async () => {
     aiService.postPredictRisk.mockResolvedValueOnce(PREDICT_SUCCESS);
     aiService.postGenerateRecommendations.mockResolvedValueOnce(RECOMMEND_SUCCESS);

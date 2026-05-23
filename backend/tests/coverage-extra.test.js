@@ -489,6 +489,111 @@ describe('Coverage extras — auth, noise, env', () => {
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('VALIDATION_ERROR');
     });
+
+    it('retorna 400 cuando no hay campos válidos para actualizar', async () => {
+      const { accessToken } = await registerAndLogin(`evnofield_${Date.now()}@t.com`);
+      const created = await request(app)
+        .post('/api/evaluations')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ frequencyScores: scores12() })
+        .expect(201);
+      const res = await request(app)
+        .patch(`/api/evaluations/${created.body.data.evaluation._id}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ foo: 'bar', unknown: 123 });
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('VALIDATION_ERROR');
+      expect(res.body.message).toMatch(/nada que actualizar/i);
+    });
+  });
+
+  describe('GET /api/evaluations — paginación con limit y skip', () => {
+    it('respeta limit y skip en la consulta', async () => {
+      const { accessToken } = await registerAndLogin(`evpag_${Date.now()}@t.com`);
+      await request(app)
+        .post('/api/evaluations')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ frequencyScores: scores12() });
+      const res = await request(app)
+        .get('/api/evaluations?limit=5&skip=0')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+      expect(res.body.data.limit).toBe(5);
+      expect(res.body.data.skip).toBe(0);
+    });
+  });
+
+  describe('GET /api/noise — paginación con skip', () => {
+    it('respeta skip en la consulta', async () => {
+      const { accessToken } = await registerAndLogin(`noiseskip_${Date.now()}@t.com`);
+      await request(app)
+        .post('/api/noise')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ dbLevel: 60, source: 'app' });
+      const res = await request(app)
+        .get('/api/noise?skip=1')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+      expect(res.body.data.page.skip).toBe(1);
+    });
+  });
+
+  describe('GET /api/noise — filtro de fecha parcial', () => {
+    it('filtra solo con from (sin to) — cubre typeof to !== "string" en buildDateFilter', async () => {
+      const { accessToken } = await registerAndLogin(`fromonly_${Date.now()}@t.com`);
+      await request(app)
+        .post('/api/noise')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ dbLevel: 65, source: 'app' });
+      const from = new Date(Date.now() - 3_600_000).toISOString();
+      const res = await request(app)
+        .get(`/api/noise?from=${from}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+      expect(res.body.data.items.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('filtra solo con to (sin from) — cubre typeof from !== "string" en buildDateFilter', async () => {
+      const { accessToken } = await registerAndLogin(`toonly_${Date.now()}@t.com`);
+      await request(app)
+        .post('/api/noise')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ dbLevel: 65, source: 'app' });
+      const to = new Date(Date.now() + 3_600_000).toISOString();
+      const res = await request(app)
+        .get(`/api/noise?to=${to}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+      expect(res.body.data.items.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe('POST /api/noise — deviceId válido', () => {
+    it('retorna 404 cuando deviceId es un ObjectId válido pero no existe', async () => {
+      const { accessToken } = await registerAndLogin(`devnotfound_${Date.now()}@t.com`);
+      const res = await request(app)
+        .post('/api/noise')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ dbLevel: 60, source: 'app', deviceId: '507f1f77bcf86cd799439011' });
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBe('NOT_FOUND');
+    });
+
+    it('crea registro cuando deviceId existe y pertenece al usuario (cubre if(!dev) false)', async () => {
+      const { accessToken } = await registerAndLogin(`devfound_${Date.now()}@t.com`);
+      const devRes = await request(app)
+        .post('/api/devices')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ name: 'Mi Sensor' })
+        .expect(201);
+      const deviceId = devRes.body.data.id;
+      const res = await request(app)
+        .post('/api/noise')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ dbLevel: 70, source: 'app', deviceId });
+      expect(res.status).toBe(201);
+      expect(res.body.data.record).toBeDefined();
+    });
   });
 
   describe('POST /api/noise/iot — errores', () => {

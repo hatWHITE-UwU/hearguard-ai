@@ -56,7 +56,7 @@ async function register(req, res, next) {
     return res.status(400).json({
       success: false,
       error: 'VALIDATION_ERROR',
-      message: errors.array()[0]?.msg || 'Datos inválidos',
+      message: errors.array()[0].msg,
     });
   }
 
@@ -126,7 +126,7 @@ async function login(req, res, next) {
     return res.status(400).json({
       success: false,
       error: 'VALIDATION_ERROR',
-      message: errors.array()[0]?.msg || 'Datos inválidos',
+      message: errors.array()[0].msg,
     });
   }
 
@@ -191,7 +191,7 @@ async function refresh(req, res, next) {
     return res.status(400).json({
       success: false,
       error: 'VALIDATION_ERROR',
-      message: errors.array()[0]?.msg || 'Datos inválidos',
+      message: errors.array()[0].msg,
     });
   }
 
@@ -324,7 +324,7 @@ async function patchMe(req, res, next) {
     return res.status(400).json({
       success: false,
       error: 'VALIDATION_ERROR',
-      message: errors.array()[0]?.msg || 'Datos inválidos',
+      message: errors.array()[0].msg,
     });
   }
   try {

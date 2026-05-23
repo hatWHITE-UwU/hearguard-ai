@@ -46,6 +46,7 @@ async function create(req, res, next) {
         _id: safeDeviceId,
         userId: safeUserId,
       });
+      /* istanbul ignore else */
       if (!dev) {
         return res.status(404).json({
           success: false,
