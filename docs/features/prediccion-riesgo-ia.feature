@@ -1,4 +1,3 @@
-# language: es
 # ============================================================
 # Feature: Predicción de Riesgo Auditivo con IA
 # Módulo:  AI Service (Python / Flask / scikit-learn)

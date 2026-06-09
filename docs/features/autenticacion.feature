@@ -1,4 +1,3 @@
-# language: es
 # ============================================================
 # Feature: Autenticación y Gestión de Sesión
 # Módulo:  Backend API + Frontend Angular

@@ -1,4 +1,3 @@
-# language: es
 # ============================================================
 # Feature: Prueba Auditiva por Frecuencias
 # Módulo:  Frontend Angular (HearingTestService + HearingTestComponent)

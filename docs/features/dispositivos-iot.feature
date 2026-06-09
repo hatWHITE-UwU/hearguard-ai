@@ -1,4 +1,3 @@
-# language: es
 # ============================================================
 # Feature: Gestión de Dispositivos IoT
 # Módulo:  Backend API

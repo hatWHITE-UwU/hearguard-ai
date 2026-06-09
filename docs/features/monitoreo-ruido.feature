@@ -1,4 +1,3 @@
-# language: es
 # ============================================================
 # Feature: Monitoreo de Ruido Ambiental
 # Módulo:  Backend API + Frontend Angular + IoT ESP32

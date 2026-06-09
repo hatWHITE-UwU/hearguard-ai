@@ -38,7 +38,7 @@ Hitos principales completados en el repositorio:
 | **Documentación académica** | [`docs/articulo.md`](docs/articulo.md), matriz Excel [`docs/matriz-registro-hearguard.xlsx`](docs/matriz-registro-hearguard.xlsx) |
 | **Operaciones** | Runbook v1.0 + Prompt maestro para ejecución por fases (estabilización y routing multi-entorno) |
 
-Pendientes documentados (no bloquean el MVP v1.0): ejecución automática de `.feature` con Cucumber; reporte k6 en producción.
+Pendientes documentados (no bloquean el MVP v1.0): reporte k6 en producción.
 
 ---
 
@@ -255,9 +255,10 @@ Plan detallado de casos (IDs, precondiciones, resultados esperados): [`docs/plan
 | Frontend Angular | `cd frontend && npm run test:ci` | **107** (auth service, interceptor, guards, hearing-test, noise-monitor, gauge, risk-badge, app) |
 | Flutter | `cd flutter_app && flutter test` | **42** (user, api_response, hearing_mapper, auth_service) |
 | E2E Playwright | `cd e2e && npx playwright test --project=chromium` | **36** (smoke + autenticación + prueba auditiva, chromium contra Vercel preview) |
+| BDD Cucumber | `cd bdd && npm test` | **85** escenarios Gherkin (API backend implementados; frontend/hardware/IA → pending) |
 | Rendimiento k6 | `k6 run tests/k6/load-test.js` | 3 escenarios (smoke / load / spike) |
 
-**Total automatizado:** **422** casos de prueba + 3 escenarios de rendimiento.
+**Total automatizado:** **507** casos de prueba + 3 escenarios de rendimiento (85 BDD Gherkin incluidos).
 
 > **Nota:** el backend se ejecuta con `--runInBand` para garantizar cobertura precisa — la ejecución paralela produce conflictos de conexión MongoDB cuando hay múltiples workers simultáneos.
 
@@ -280,6 +281,15 @@ Umbrales de cobertura aplicados en CI:
 Detalle por módulo y tipo IEEE/ISO: ver sección 3 de [`docs/plan-de-pruebas.md`](docs/plan-de-pruebas.md).
 
 ### BDD — Gherkin / Cucumber
+
+Ejecutar localmente (requiere MongoDB en `127.0.0.1:27017` o sin él — usará `mongodb-memory-server`):
+
+```bash
+cd bdd
+npm install          # solo la primera vez
+npm test             # todos los escenarios
+npm run test:api     # solo escenarios API (excluye @frontend/@hardware/@ai)
+```
 
 Escenarios conductuales en lenguaje natural (Given / When / Then) en [`docs/features/`](docs/features/):
 
@@ -305,6 +315,7 @@ Workflow [`ci.yml`](.github/workflows/ci.yml) en cada push a `main`/`develop` y 
 | `backend` | ESLint + Jest (`--runInBand`) con MongoDB 7 + umbral cobertura ≥ 60 % + artefacto `lcov.info` |
 | `ai-service` | `python -m model.trainer` (`SEED=42`) + pytest `--cov-fail-under=60` + `coverage.xml` |
 | `frontend` | ESLint + Vitest (Chromium) + `ng build` + artefacto lcov (`hearguard-frontend/`) |
+| `bdd` | Cucumber.js contra Express app con MongoDB en memoria — 85 escenarios Gherkin; artefacto HTML |
 | `e2e` | Playwright contra preview Vercel; reporte HTML como artefacto |
 | `k6-smoke` | K6 smoke (1 VU, 30 s) contra backend en producción; artefacto de texto |
 | `lighthouse` | Lighthouse CI contra Vercel — accessibility ≥ 90 % (error), perf/BP/SEO ≥ 80/85/80 (warn) |

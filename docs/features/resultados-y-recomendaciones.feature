@@ -1,4 +1,3 @@
-# language: es
 # ============================================================
 # Feature: Resultados y Recomendaciones de Salud Auditiva
 # Módulo:  Frontend Angular (ResultsComponent)
