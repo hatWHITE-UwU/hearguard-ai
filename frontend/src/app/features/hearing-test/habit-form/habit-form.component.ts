@@ -76,35 +76,7 @@ import { HearingTestService } from '../hearing-test.service';
       </form>
     </div>
   `,
-  styles: `
-    .page {
-      padding: 1.25rem;
-      max-width: 480px;
-      margin: 0 auto;
-    }
-    .muted {
-      color: var(--text-muted);
-    }
-    form {
-      margin-top: 1rem;
-    }
-    .demo-tools {
-      margin-top: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    .linkish {
-      background: none;
-      border: none;
-      color: var(--accent-cyan);
-      text-decoration: underline;
-      cursor: pointer;
-      font-size: 0.88rem;
-      text-align: left;
-      padding: 0;
-    }
-  `,
+  styleUrl: './habit-form.component.scss',
 })
 export class HabitFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);

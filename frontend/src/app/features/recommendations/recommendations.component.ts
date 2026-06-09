@@ -40,44 +40,7 @@ import { EvaluationService } from '../../core/services/evaluation.service';
       </button>
     </div>
   `,
-  styles: `
-    .page {
-      padding: 1rem;
-      max-width: 520px;
-      margin: 0 auto;
-    }
-    .head {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-    .ghost {
-      background: none;
-      border: none;
-      color: var(--accent-cyan);
-      cursor: pointer;
-    }
-    .lead {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-    }
-    .top h3 {
-      margin-top: 0;
-      color: var(--accent-cyan);
-    }
-    .row {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
-      align-items: center;
-    }
-    button.hg-btn-primary {
-      margin-top: 1.25rem;
-    }
-    .muted {
-      color: var(--text-muted);
-    }
-  `,
+  styleUrl: './recommendations.component.scss',
 })
 export class RecommendationsComponent implements OnInit {
   private readonly evalService = inject(EvaluationService);
