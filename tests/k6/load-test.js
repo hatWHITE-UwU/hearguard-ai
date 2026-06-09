@@ -1,10 +1,13 @@
 /**
  * HearGuard AI — k6 Load & Performance Tests
  *
- * Run locally:
+ * Run locally (all scenarios, ~4 min):
  *   k6 run tests/k6/load-test.js
  *
- * Run against production:
+ * Run smoke only (CI mode, 30 s):
+ *   K6_SMOKE_ONLY=true BASE_URL=https://api.hearguard.onrender.com k6 run tests/k6/load-test.js
+ *
+ * Run all scenarios against production:
  *   BASE_URL=https://hearguard-ai.onrender.com k6 run tests/k6/load-test.js
  *
  * Install k6: https://k6.io/docs/getting-started/installation
@@ -22,50 +25,52 @@ const successRate = new Rate('success_rate');
 const loginDuration = new Trend('login_duration_ms', true);
 const noiseDuration = new Trend('noise_post_duration_ms', true);
 
+// ── Scenario definitions ──────────────────────────────────────────────────────
+
+const SMOKE_SCENARIO = {
+  executor: 'constant-vus',
+  vus: 1,
+  duration: '30s',
+  tags: { scenario: 'smoke' },
+  env: { SCENARIO: 'smoke' },
+};
+
+const LOAD_SCENARIO = {
+  executor: 'ramping-vus',
+  startVUs: 0,
+  stages: [
+    { duration: '30s', target: 10 },
+    { duration: '1m', target: 10 },
+    { duration: '15s', target: 0 },
+  ],
+  tags: { scenario: 'load' },
+  env: { SCENARIO: 'load' },
+  startTime: '35s',
+};
+
+const SPIKE_SCENARIO = {
+  executor: 'ramping-vus',
+  startVUs: 0,
+  stages: [
+    { duration: '10s', target: 50 },
+    { duration: '30s', target: 50 },
+    { duration: '10s', target: 0 },
+  ],
+  tags: { scenario: 'spike' },
+  env: { SCENARIO: 'spike' },
+  startTime: '3m',
+};
+
 // ── Configuration ─────────────────────────────────────────────────────────────
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
 const TEST_PASSWORD = __ENV.TEST_PASSWORD || 'HGload#test1'; // NOSONAR — load test credential, not a real secret
+const SMOKE_ONLY = __ENV.K6_SMOKE_ONLY === 'true';
 
 export const options = {
-  scenarios: {
-    // Smoke test — 1 VU, minimal load to verify system is up
-    smoke: {
-      executor: 'constant-vus',
-      vus: 1,
-      duration: '30s',
-      tags: { scenario: 'smoke' },
-      env: { SCENARIO: 'smoke' },
-    },
-
-    // Load test — normal expected traffic
-    load: {
-      executor: 'ramping-vus',
-      startVUs: 0,
-      stages: [
-        { duration: '30s', target: 10 },
-        { duration: '1m', target: 10 },
-        { duration: '15s', target: 0 },
-      ],
-      tags: { scenario: 'load' },
-      env: { SCENARIO: 'load' },
-      startTime: '35s',
-    },
-
-    // Spike test — sudden traffic burst
-    spike: {
-      executor: 'ramping-vus',
-      startVUs: 0,
-      stages: [
-        { duration: '10s', target: 50 },
-        { duration: '30s', target: 50 },
-        { duration: '10s', target: 0 },
-      ],
-      tags: { scenario: 'spike' },
-      env: { SCENARIO: 'spike' },
-      startTime: '3m',
-    },
-  },
+  scenarios: SMOKE_ONLY
+    ? { smoke: SMOKE_SCENARIO }
+    : { smoke: SMOKE_SCENARIO, load: LOAD_SCENARIO, spike: SPIKE_SCENARIO },
 
   thresholds: {
     http_req_duration: ['p(95)<2000', 'p(99)<5000'],

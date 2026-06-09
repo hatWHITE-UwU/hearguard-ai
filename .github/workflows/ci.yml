@@ -141,6 +141,41 @@ jobs:
           path: reports/e2e-html/
           retention-days: 7
 
+  # ── K6 Performance smoke (against deployed backend) ──────────────────────────
+  # Corre solo en main push, después de deploy, para validar los RNFs de
+  # performance en producción. Solo ejecuta el escenario smoke (30 s, 1 VU).
+  k6-smoke:
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: grafana/setup-k6-action@v1
+      - name: Wait for backend to be ready
+        run: |
+          for i in {1..30}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.BACKEND_URL }}/health" || echo 000)
+            echo "Attempt $i: HTTP $STATUS"
+            [ "$STATUS" = "200" ] && exit 0
+            sleep 15
+          done
+          echo "Backend not ready after 7.5 minutes"
+          exit 1
+      - name: Run K6 smoke test against production
+        shell: bash
+        run: |
+          set -o pipefail
+          k6 run --env K6_SMOKE_ONLY=true tests/k6/load-test.js 2>&1 | tee k6-smoke-output.txt
+        env:
+          BASE_URL: ${{ secrets.BACKEND_URL }}
+      - name: Upload K6 smoke report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: k6-smoke-report
+          path: k6-smoke-output.txt
+          retention-days: 7
+
   # ── Flutter ──────────────────────────────────────────────────────────────────
   flutter:
     runs-on: ubuntu-latest
