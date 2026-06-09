@@ -103,9 +103,27 @@ def test_load_model_raises_when_file_missing(monkeypatch):
 
 
 def test_score_to_years_all_branches():
-    """Exercises all four score ranges in score_to_years."""
+    """Cubre las cuatro bandas y verifica que los valores caen en rango."""
     from model.predictor import score_to_years
-    assert isinstance(score_to_years(10), int)   # <= RISK_LOW_THRESHOLD
-    assert isinstance(score_to_years(35), int)   # <= RISK_MODERATE_THRESHOLD
-    assert isinstance(score_to_years(60), int)   # <= RISK_HIGH_THRESHOLD
-    assert isinstance(score_to_years(90), int)   # > RISK_HIGH_THRESHOLD
+    assert 20 <= score_to_years(10) <= 30   # Bajo
+    assert 7  <= score_to_years(35) <= 15   # Moderado
+    assert 3  <= score_to_years(60) <= 7    # Alto
+    assert 1  <= score_to_years(90) <= 3    # Muy Alto
+
+
+def test_score_to_years_is_deterministic():
+    """Mismo score produce el mismo resultado en llamadas sucesivas."""
+    from model.predictor import score_to_years
+    for s in [5, 25, 26, 50, 51, 75, 76, 100]:
+        assert score_to_years(s) == score_to_years(s), f"No determinista para score={s}"
+
+
+def test_score_to_years_monotonic():
+    """Mayor score de riesgo → menos años estimados (o igual)."""
+    from model.predictor import score_to_years
+    scores = [0, 10, 20, 25, 30, 40, 50, 55, 65, 75, 80, 90, 100]
+    years  = [score_to_years(s) for s in scores]
+    for i in range(len(years) - 1):
+        assert years[i] >= years[i + 1], (
+            f"No monótono: score {scores[i]}→{years[i]}y > {scores[i+1]}→{years[i+1]}y"
+        )

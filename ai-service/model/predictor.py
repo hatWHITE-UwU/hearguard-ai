@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-import secrets
 from typing import Any
 
 import joblib
@@ -66,14 +65,28 @@ def score_to_level(score: float) -> str:
 
 
 def score_to_years(score: float) -> int:
+    """Estimación determinista de años antes de pérdida auditiva.
+
+    Usa interpolación lineal dentro de cada banda de riesgo:
+    mayor score → menos años estimados. Mismo input = mismo output.
+    """
     s = int(round(float(score)))
+
+    def _lerp(s_val: int, s_lo: int, s_hi: int, y_max: int, y_min: int) -> int:
+        t = (s_val - s_lo) / max(1, s_hi - s_lo)
+        return max(y_min, round(y_max - t * (y_max - y_min)))
+
     if s <= RISK_LOW_THRESHOLD:
-        return secrets.randbelow(YEARS_LOW_RANGE) + YEARS_LOW_MIN
+        return _lerp(s, 0, RISK_LOW_THRESHOLD,
+                     YEARS_LOW_MIN + YEARS_LOW_RANGE - 1, YEARS_LOW_MIN)
     if s <= RISK_MODERATE_THRESHOLD:
-        return secrets.randbelow(YEARS_MODERATE_RANGE) + YEARS_MODERATE_MIN
+        return _lerp(s, RISK_LOW_THRESHOLD + 1, RISK_MODERATE_THRESHOLD,
+                     YEARS_MODERATE_MIN + YEARS_MODERATE_RANGE - 1, YEARS_MODERATE_MIN)
     if s <= RISK_HIGH_THRESHOLD:
-        return secrets.randbelow(YEARS_HIGH_RANGE) + YEARS_HIGH_MIN
-    return secrets.randbelow(YEARS_VERY_HIGH_RANGE) + YEARS_VERY_HIGH_MIN
+        return _lerp(s, RISK_MODERATE_THRESHOLD + 1, RISK_HIGH_THRESHOLD,
+                     YEARS_HIGH_MIN + YEARS_HIGH_RANGE - 1, YEARS_HIGH_MIN)
+    return _lerp(s, RISK_HIGH_THRESHOLD + 1, 100,
+                 YEARS_VERY_HIGH_MIN + YEARS_VERY_HIGH_RANGE - 1, YEARS_VERY_HIGH_MIN)
 
 
 def predict_risk(payload: dict[str, Any]) -> dict[str, Any]:
