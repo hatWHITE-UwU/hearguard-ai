@@ -1,6 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { Chart, registerables } from 'chart.js';
 import type { ChartData, ChartOptions } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
@@ -10,11 +9,10 @@ import {
   evaluationBarChartData,
   averageScoreFromRows,
 } from '../../core/data/demo-mocks';
-import type { ApiEnvelope } from '../../shared/models/auth.model';
-import type { EvaluationCreate, EvaluationDetail } from '../../shared/models/api.model';
 import { HearingTestService } from '../hearing-test/hearing-test.service';
 import type { FrequencyScoreRow } from '../hearing-test/hearing-test.service';
 import { GaugeComponent } from '../../shared/components/gauge/gauge.component';
+import { EvaluationService } from '../../core/services/evaluation.service';
 
 Chart.register(...registerables);
 
@@ -98,7 +96,7 @@ Chart.register(...registerables);
 })
 export class ResultsComponent implements OnInit {
   readonly hearing = inject(HearingTestService);
-  private readonly http = inject(HttpClient);
+  private readonly evalService = inject(EvaluationService);
   private readonly route = inject(ActivatedRoute);
   readonly router = inject(Router);
 
@@ -129,8 +127,8 @@ export class ResultsComponent implements OnInit {
       this.chartData = evaluationBarChartData(d.rows);
       this.loading.set(false);
     } else if (id) {
-      this.http
-        .get<ApiEnvelope<EvaluationDetail>>(`${environment.apiUrl}/api/evaluations/${id}`)
+      this.evalService
+        .getById(id)
         .subscribe({
           next: (res) => {
             const ev = res.data.evaluation;
@@ -168,8 +166,8 @@ export class ResultsComponent implements OnInit {
       })),
       habitData: habit,
     };
-    this.http
-      .post<ApiEnvelope<EvaluationCreate>>(`${environment.apiUrl}/api/evaluations`, body)
+    this.evalService
+      .create(body)
       .subscribe({
         next: (res) => {
           const ev = res.data.evaluation;

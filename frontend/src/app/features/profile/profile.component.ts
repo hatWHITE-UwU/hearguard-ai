@@ -4,11 +4,9 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { environment } from '../../../environments/environment';
-import type { ApiEnvelope } from '../../shared/models/auth.model';
 import type { User } from '../../shared/models/user.model';
 
 @Component({
@@ -313,7 +311,6 @@ import type { User } from '../../shared/models/user.model';
 })
 export class ProfileComponent {
   readonly auth = inject(AuthService);
-  private readonly http = inject(HttpClient);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
 
@@ -374,23 +371,20 @@ export class ProfileComponent {
       return;
     }
     this.saving.set(true);
-    this.http
-      .patch<ApiEnvelope<{ user: User }>>(`${environment.apiUrl}/api/auth/me`, {
-        age: v.age ?? undefined,
-        gender: v.gender,
-        occupation: v.occupation,
-        city: v.city,
-        settings: { reminders: v.reminders, darkTheme: v.darkTheme, volumeUnit: 'dba' },
-      })
-      .subscribe({
-        next: (r) => {
-          this.auth.currentUser.set(r.data.user);
-          this.saving.set(false);
-          this.saved.set(true);
-          setTimeout(() => this.saved.set(false), 3000);
-        },
-        error: () => this.saving.set(false),
-      });
+    this.auth.patchMe({
+      age: v.age ?? undefined,
+      gender: v.gender,
+      occupation: v.occupation,
+      city: v.city,
+      settings: { reminders: v.reminders, darkTheme: v.darkTheme, volumeUnit: 'dba' },
+    }).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.saved.set(true);
+        setTimeout(() => this.saved.set(false), 3000);
+      },
+      error: () => this.saving.set(false),
+    });
   }
 
   out(): void {

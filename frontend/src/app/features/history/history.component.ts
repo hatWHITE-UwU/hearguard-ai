@@ -1,12 +1,12 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { DEMO_UNIFIED_RECORDS } from '../../core/data/demo-mocks';
 import { RiskBadgeComponent } from '../../shared/components/risk-badge/risk-badge.component';
-import type { ApiEnvelope } from '../../shared/models/auth.model';
-import type { NoiseRecord, EvaluationItem, PaginatedList } from '../../shared/models/api.model';
+import type { NoiseRecord, EvaluationItem } from '../../shared/models/api.model';
+import { EvaluationService } from '../../core/services/evaluation.service';
+import { NoiseService } from '../../core/services/noise.service';
 
 @Component({
   selector: 'hg-history',
@@ -234,16 +234,15 @@ import type { NoiseRecord, EvaluationItem, PaginatedList } from '../../shared/mo
   `,
 })
 export class HistoryComponent implements OnInit {
-  private readonly http = inject(HttpClient);
+  private readonly noiseService = inject(NoiseService);
+  private readonly evalService = inject(EvaluationService);
 
   readonly tab = signal<'noise' | 'eval' | 'tips'>('noise');
   readonly noise = signal<NoiseRecord[]>([]);
   readonly evals = signal<EvaluationItem[]>([]);
 
   ngOnInit(): void {
-    this.http
-      .get<ApiEnvelope<PaginatedList<NoiseRecord>>>(`${environment.apiUrl}/api/noise?limit=50`)
-      .subscribe({
+    this.noiseService.getList().subscribe({
         next: (r) => {
           const api = r.data?.items || [];
           if (!environment.useDemoMocks) {
@@ -273,9 +272,7 @@ export class HistoryComponent implements OnInit {
           }
         },
       });
-    this.http
-      .get<ApiEnvelope<PaginatedList<EvaluationItem>>>(`${environment.apiUrl}/api/evaluations?limit=50`)
-      .subscribe({
+    this.evalService.getList().subscribe({
         next: (r) => {
           const api = r.data?.items || [];
           if (!environment.useDemoMocks) {

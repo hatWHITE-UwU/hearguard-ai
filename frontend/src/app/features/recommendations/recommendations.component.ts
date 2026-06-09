@@ -1,9 +1,8 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { DEMO_RECOMMENDATION_BULLETS } from '../../core/data/demo-mocks';
-import type { ApiEnvelope } from '../../shared/models/auth.model';
+import { EvaluationService } from '../../core/services/evaluation.service';
 
 @Component({
   selector: 'hg-recommendations',
@@ -81,16 +80,12 @@ import type { ApiEnvelope } from '../../shared/models/auth.model';
   `,
 })
 export class RecommendationsComponent implements OnInit {
-  private readonly http = inject(HttpClient);
+  private readonly evalService = inject(EvaluationService);
   readonly router = inject(Router);
   readonly items = signal<string[]>([]);
 
   ngOnInit(): void {
-    this.http
-      .get<ApiEnvelope<{ items: { recommendations?: string[] }[] }>>(
-        `${environment.apiUrl}/api/evaluations?limit=1`,
-      )
-      .subscribe({
+    this.evalService.getLatest().subscribe({
         next: () => {
           if (environment.useDemoMocks) {
             this.items.set([...DEMO_RECOMMENDATION_BULLETS]);

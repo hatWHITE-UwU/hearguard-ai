@@ -1,6 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -9,9 +8,10 @@ import {
   DEMO_UNIFIED_RECORDS,
   type DemoUnifiedRecord,
 } from '../../core/data/demo-mocks';
-import type { ApiEnvelope } from '../../shared/models/auth.model';
-import type { NoiseRecord, EvaluationItem, PaginatedList } from '../../shared/models/api.model';
+import type { NoiseRecord, EvaluationItem } from '../../shared/models/api.model';
 import { RiskBadgeComponent } from '../../shared/components/risk-badge/risk-badge.component';
+import { EvaluationService } from '../../core/services/evaluation.service';
+import { NoiseService } from '../../core/services/noise.service';
 
 type SourceTag = 'demo' | 'servidor';
 
@@ -255,7 +255,8 @@ function routeForDemoRecord(d: DemoUnifiedRecord): string[] | undefined {
   `,
 })
 export class AllRecordsComponent implements OnInit {
-  private readonly http = inject(HttpClient);
+  private readonly evalService = inject(EvaluationService);
+  private readonly noiseService = inject(NoiseService);
 
   readonly environment = environment;
   readonly rows = signal<Row[]>([]);
@@ -279,22 +280,14 @@ export class AllRecordsComponent implements OnInit {
       : [];
 
     forkJoin({
-      noise: this.http
-        .get<ApiEnvelope<PaginatedList<NoiseRecord>>>(
-          `${environment.apiUrl}/api/noise?limit=50`,
-        )
-        .pipe(
-          map((r) => r.data?.items ?? []),
-          catchError(() => of([] as NoiseRecord[])),
-        ),
-      evals: this.http
-        .get<ApiEnvelope<PaginatedList<EvaluationItem>>>(
-          `${environment.apiUrl}/api/evaluations?limit=50`,
-        )
-        .pipe(
-          map((r) => r.data?.items ?? []),
-          catchError(() => of([] as EvaluationItem[])),
-        ),
+      noise: this.noiseService.getList().pipe(
+        map((r) => r.data?.items ?? []),
+        catchError(() => of([] as NoiseRecord[])),
+      ),
+      evals: this.evalService.getList().pipe(
+        map((r) => r.data?.items ?? []),
+        catchError(() => of([] as EvaluationItem[])),
+      ),
     }).subscribe(({ noise, evals }) => {
       const fromApi: Row[] = [];
 

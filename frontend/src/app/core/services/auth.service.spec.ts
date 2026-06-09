@@ -184,4 +184,56 @@ describe('AuthService', () => {
     });
     expect(err?.message).toBe('no refresh');
   });
+
+  it('patchMe() llama PATCH /api/auth/me con el body dado', () => {
+    const body = { age: 28, city: 'Lima' };
+    service.patchMe(body).subscribe();
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/auth/me`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual(body);
+    req.flush({
+      success: true,
+      data: {
+        user: {
+          id: '1', name: 'Luis', email: 'l@l.com',
+          age: 28, gender: 'male', occupation: '', city: 'Lima',
+          settings: { reminders: true, darkTheme: true, volumeUnit: 'dba' },
+        },
+      },
+    });
+  });
+
+  it('patchMe() actualiza currentUser con la respuesta del servidor', () => {
+    const updatedUser = {
+      id: '1', name: 'Luis', email: 'l@l.com',
+      age: 30, gender: 'male', occupation: 'Dev', city: 'Huancayo',
+      settings: { reminders: false, darkTheme: true, volumeUnit: 'dba' },
+    };
+    service.patchMe({ age: 30, city: 'Huancayo' }).subscribe((u) => {
+      expect(u.city).toBe('Huancayo');
+    });
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/auth/me`);
+    req.flush({ success: true, data: { user: updatedUser } });
+    expect(service.currentUser()?.city).toBe('Huancayo');
+    expect(service.currentUser()?.age).toBe(30);
+  });
+
+  it('patchMe() devuelve el User del servidor como Observable', () => {
+    let result: { name: string } | undefined;
+    service.patchMe({ name: 'Hardy' }).subscribe((u) => {
+      result = u;
+    });
+    const req = httpMock.expectOne(`${environment.apiUrl}/api/auth/me`);
+    req.flush({
+      success: true,
+      data: {
+        user: {
+          id: '2', name: 'Hardy', email: 'h@h.com',
+          age: 25, gender: 'male', occupation: '', city: '',
+          settings: { reminders: true, darkTheme: true, volumeUnit: 'dba' },
+        },
+      },
+    });
+    expect(result?.name).toBe('Hardy');
+  });
 });

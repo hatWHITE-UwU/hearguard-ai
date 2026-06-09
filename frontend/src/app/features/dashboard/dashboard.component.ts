@@ -1,6 +1,5 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import {
   DEMO_AVG_NOISE_DB,
@@ -10,8 +9,8 @@ import {
   demoNoiseChartValues,
 } from '../../core/data/demo-mocks';
 import { AuthService } from '../../core/services/auth.service';
-import type { ApiEnvelope } from '../../shared/models/auth.model';
-import type { EvaluationItem, NoiseStats, PaginatedList } from '../../shared/models/api.model';
+import { EvaluationService } from '../../core/services/evaluation.service';
+import { NoiseService } from '../../core/services/noise.service';
 import type { ChartData, ChartOptions } from 'chart.js';
 import { GaugeComponent } from '../../shared/components/gauge/gauge.component';
 import { BaseChartDirective } from 'ng2-charts';
@@ -330,7 +329,8 @@ export class DashboardComponent implements OnInit {
   }
 
   readonly auth = inject(AuthService);
-  private readonly http = inject(HttpClient);
+  private readonly evalService = inject(EvaluationService);
+  private readonly noiseService = inject(NoiseService);
 
   readonly greetName = computed(() => {
     const n = this.auth.currentUser()?.name?.trim();
@@ -366,11 +366,7 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.auth.loadUserFromStorage();
-    this.http
-      .get<ApiEnvelope<PaginatedList<EvaluationItem>>>(
-        `${environment.apiUrl}/api/evaluations?limit=1`,
-      )
-      .subscribe({
+    this.evalService.getLatest().subscribe({
         next: (r) => {
           const first = r.data?.items?.[0];
           if (first?.overallScore != null) {
@@ -388,7 +384,7 @@ export class DashboardComponent implements OnInit {
           }
         },
       });
-    this.http.get<ApiEnvelope<NoiseStats>>(`${environment.apiUrl}/api/noise/stats/today`).subscribe({
+    this.noiseService.getStatsToday().subscribe({
       next: (r) => {
         const d = r.data;
         const avg = d?.avgDb;

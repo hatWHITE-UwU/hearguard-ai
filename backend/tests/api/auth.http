@@ -69,6 +69,35 @@ Content-Type: {{contentType}}
 POST {{baseUrl}}/api/auth/logout
 Authorization: Bearer {{accessToken}}
 
+### ──────────────────────────────────────────────
+### 7. Actualizar perfil (PATCH /me — todos los campos son opcionales)
+### ──────────────────────────────────────────────
+PATCH {{baseUrl}}/api/auth/me
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "Luis Terreros",
+  "age": 22,
+  "gender": "male",
+  "occupation": "Estudiante Ingeniería",
+  "city": "Lima",
+  "settings": {
+    "reminders": true,
+    "darkTheme": true,
+    "volumeUnit": "dba"
+  }
+}
+
+### Error: PATCH /me campo inválido (400) — gender fuera de enum
+PATCH {{baseUrl}}/api/auth/me
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "gender": "alien"
+}
+
 ### ════════════════════════════════════════════════
 ### ERRORES ESPERADOS (ordenar según tu BD)
 ### ════════════════════════════════════════════════

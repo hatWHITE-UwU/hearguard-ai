@@ -1,0 +1,40 @@
+{
+  "model_version": "risk_rf_v1",
+  "algorithm": "RandomForestRegressor",
+  "trained_at": "2026-06-09T03:36:29.983087+00:00",
+  "hyperparameters": {
+    "n_estimators": 120,
+    "max_depth": 12,
+    "min_samples_leaf": 1,
+    "max_features": 1.0,
+    "random_state": 42
+  },
+  "features": [
+    "age",
+    "headphoneHours",
+    "volumeLevel",
+    "noiseExposure",
+    "occupationRisk",
+    "smoking",
+    "avgTestScore",
+    "lowFreqScore"
+  ],
+  "dataset": {
+    "n_samples": 5000,
+    "n_train": 4000,
+    "n_test": 1000,
+    "test_size": 0.2,
+    "seed": 42,
+    "source": "synthetic"
+  },
+  "metrics": {
+    "r2_holdout": 0.9151,
+    "mae_holdout": 3.5356,
+    "rmse_holdout": 5.362
+  },
+  "score_range": {
+    "min": 0,
+    "max": 100
+  },
+  "output_file": "risk_model.pkl"
+}

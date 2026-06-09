@@ -1,20 +1,9 @@
 import { DatePipe } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { environment } from '../../../environments/environment';
-import type { ApiEnvelope } from '../../shared/models/auth.model';
-
-interface Device {
-  _id: string;
-  name: string;
-  type: 'arduino' | 'esp32' | 'other';
-  hardwareId?: string;
-  firmwareVersion?: string;
-  isActive: boolean;
-  lastSeenAt?: string;
-  createdAt: string;
-}
+import type { Device } from '../../shared/models/api.model';
+import { DeviceService } from '../../core/services/device.service';
 
 @Component({
   selector: 'hg-devices',
@@ -590,7 +579,7 @@ interface Device {
   `,
 })
 export class DevicesComponent implements OnInit {
-  private readonly http = inject(HttpClient);
+  private readonly deviceService = inject(DeviceService);
   private readonly fb = inject(FormBuilder);
 
   readonly apiBase = environment.apiUrl || globalThis.location.origin;
@@ -615,12 +604,10 @@ export class DevicesComponent implements OnInit {
 
   private loadDevices(): void {
     this.loading.set(true);
-    this.http
-      .get<ApiEnvelope<{ items: Device[] }>>(`${environment.apiUrl}/api/devices`)
-      .subscribe({
-        next: (r) => { this.devices.set(r.data.items); this.loading.set(false); },
-        error: () => this.loading.set(false),
-      });
+    this.deviceService.getList().subscribe({
+      next: (r) => { this.devices.set(r.data.items); this.loading.set(false); },
+      error: () => this.loading.set(false),
+    });
   }
 
   toggleForm(): void {
@@ -636,27 +623,23 @@ export class DevicesComponent implements OnInit {
     this.creating.set(true);
     this.createError.set(null);
     const v = this.form.getRawValue();
-    this.http
-      .post<ApiEnvelope<{ device: Device; apiKey: string }>>(`${environment.apiUrl}/api/devices`, {
-        name: v.name,
-        type: v.type,
-        ...(v.hardwareId ? { hardwareId: v.hardwareId } : {}),
-        ...(v.firmwareVersion ? { firmwareVersion: v.firmwareVersion } : {}),
-      })
-      .subscribe({
-        next: (r) => {
-          this.devices.update((list) => [r.data.device, ...list]);
-          this.newKey.set(r.data.apiKey);
-          this.showForm.set(false);
-          this.form.reset({ name: '', type: 'arduino', hardwareId: '', firmwareVersion: '' });
-          this.creating.set(false);
-        },
-        error: (err) => {
-          this.creating.set(false);
-          const msg = err?.error?.message;
-          this.createError.set(msg || 'No se pudo registrar el dispositivo.');
-        },
-      });
+    this.deviceService.create({
+      name: v.name,
+      type: v.type as 'arduino' | 'esp32' | 'other',
+      ...(v.hardwareId ? { hardwareId: v.hardwareId } : {}),
+    }).subscribe({
+      next: (r) => {
+        this.devices.update((list) => [r.data.device, ...list]);
+        this.newKey.set(r.data.apiKey);
+        this.showForm.set(false);
+        this.form.reset({ name: '', type: 'arduino', hardwareId: '', firmwareVersion: '' });
+        this.creating.set(false);
+      },
+      error: (err: { error?: { message?: string } }) => {
+        this.creating.set(false);
+        this.createError.set(err?.error?.message ?? 'No se pudo registrar el dispositivo.');
+      },
+    });
   }
 
   copyKey(): void {

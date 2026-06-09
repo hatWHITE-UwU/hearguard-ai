@@ -52,3 +52,14 @@ export interface PaginatedList<T> {
   items: T[];
   total: number;
 }
+
+export interface Device {
+  _id: string;
+  name: string;
+  type: 'arduino' | 'esp32' | 'other';
+  hardwareId?: string;
+  firmwareVersion?: string;
+  isActive: boolean;
+  lastSeenAt?: string;
+  createdAt: string;
+}
