@@ -38,7 +38,7 @@ Hitos principales completados en el repositorio:
 | **Documentación académica** | [`docs/articulo.md`](docs/articulo.md), matriz Excel [`docs/matriz-registro-hearguard.xlsx`](docs/matriz-registro-hearguard.xlsx) |
 | **Operaciones** | Runbook v1.0 + Prompt maestro para ejecución por fases (estabilización y routing multi-entorno) |
 
-Pendientes documentados (no bloquean el MVP v1.0): ejecución automática de `.feature` con Cucumber; reporte k6 en producción; Lighthouse en Vercel.
+Pendientes documentados (no bloquean el MVP v1.0): ejecución automática de `.feature` con Cucumber; reporte k6 en producción.
 
 ---
 
@@ -306,6 +306,8 @@ Workflow [`ci.yml`](.github/workflows/ci.yml) en cada push a `main`/`develop` y 
 | `ai-service` | `python -m model.trainer` (`SEED=42`) + pytest `--cov-fail-under=60` + `coverage.xml` |
 | `frontend` | ESLint + Vitest (Chromium) + `ng build` + artefacto lcov (`hearguard-frontend/`) |
 | `e2e` | Playwright contra preview Vercel; reporte HTML como artefacto |
+| `k6-smoke` | K6 smoke (1 VU, 30 s) contra backend en producción; artefacto de texto |
+| `lighthouse` | Lighthouse CI contra Vercel — accessibility ≥ 90 % (error), perf/BP/SEO ≥ 80/85/80 (warn) |
 | `flutter` | `flutter analyze` + `flutter test --coverage` |
 | `sonarcloud` | Descarga coberturas, ejecuta `fix-sonar-coverage-paths.js`, escaneo SonarCloud scan-action v6 |
 | `deploy` | Solo en `main`: hooks Render (backend + IA) y Vercel (frontend) |
@@ -328,7 +330,7 @@ Configura los siguientes secrets en GitHub → Settings → Secrets:
 | `VERCEL_PROJECT_ID` | ID de proyecto Vercel |
 | `VERCEL_FRONTEND_HOOK` | Deploy hook de Vercel (usado en `ci.yml`) |
 | `SONAR_TOKEN` | Token de análisis SonarCloud (job `sonarcloud` en `ci.yml`) |
-| `VERCEL_FRONTEND_URL` | URL del frontend en Vercel (job `e2e`) |
+| `VERCEL_FRONTEND_URL` | URL del frontend en Vercel (jobs `e2e` y `lighthouse`) |
 
 Ejecutar deploy manualmente: GitHub → Actions → **Deploy** → Run workflow.
 
