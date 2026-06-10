@@ -8,6 +8,7 @@ jobs:
   # ── Backend ──────────────────────────────────────────────────────────────────
   backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       mongodb:
         image: mongo:7
@@ -24,6 +25,8 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
+      - name: npm audit (sin vulnerabilidades críticas/altas)
+        run: npm audit --audit-level=high
       - run: npm run lint
       - run: npm test
         env:
@@ -58,6 +61,7 @@ jobs:
   # ── AI Service ───────────────────────────────────────────────────────────────
   ai-service:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: ai-service
@@ -81,6 +85,7 @@ jobs:
   # ── Frontend ─────────────────────────────────────────────────────────────────
   frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: frontend
@@ -113,6 +118,7 @@ jobs:
   # para testear la versión realmente desplegada (no la anterior).
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: [deploy]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     defaults:
@@ -146,6 +152,7 @@ jobs:
   # performance en producción. Solo ejecuta el escenario smoke (30 s, 1 VU).
   k6-smoke:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: [deploy]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
@@ -180,6 +187,7 @@ jobs:
   # Performance / Best-Practices / SEO emiten warning pero no bloquean.
   lighthouse:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [deploy]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
@@ -201,6 +209,7 @@ jobs:
   # Los escenarios frontend/hardware/IA están marcados como pending (no fallan).
   bdd:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [backend]
     services:
       mongodb:
@@ -242,6 +251,7 @@ jobs:
   # ── Flutter ──────────────────────────────────────────────────────────────────
   flutter:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: flutter_app
@@ -268,6 +278,7 @@ jobs:
   sonarcloud:
     name: SonarCloud analysis + coverage
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [backend, ai-service, frontend]
     if: github.event_name == 'push' || github.event_name == 'pull_request'
     steps:
@@ -308,6 +319,7 @@ jobs:
   deploy:
     name: Deploy to production
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [backend, ai-service, frontend]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:

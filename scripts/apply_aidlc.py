@@ -126,7 +126,7 @@ RAW = [
 ("INT-003","CI/CD — Validaciones automaticas","002","Artefactos cobertura + fix-sonar-coverage-paths.js","Claude Sonnet 4.6","21/05/2026","CI/CD","RNF-03",RESP_LUIS,"Si","scripts/fix-sonar-coverage-paths.js","",""),
 ("INT-003","CI/CD — Validaciones automaticas","003","deploy.yml — Render (backend+IA) + Vercel (frontend)","Claude Sonnet 4.6","03/2026","Deploy","—",RESP_LUIS,"Si","deploy.yml","",""),
 ("INT-003","CI/CD — Validaciones automaticas","004","Badge CI verde en README","GitHub Actions","05/2026","CI/CD","—",RESP_LUIS,"Si","README badge CI","",""),
-("INT-003","CI/CD — Validaciones automaticas","005","Optimizar duracion pipeline con metricas SLA","—","—","CI/CD","—",RESP_LUIS,"Parcial","Jobs paralelos OK","Sin benchmark formal","Agregar job de metricas SLA"),
+("INT-003","CI/CD — Validaciones automaticas","005","Optimizar duracion pipeline con metricas SLA","Claude Sonnet 4.6","06/2026","CI/CD","—",RESP_LUIS,"Si","timeout-minutes en los 10 jobs de ci.yml (5–30 min por SLA)","",""),
 # INT-004
 ("INT-004","Calidad — SonarCloud","001","sonar-project.properties + exclusiones CPD y cobertura","Claude Sonnet 4.6","05/2026","Calidad","RNF-09",RESP_LUIS,"Si","sonar-project.properties","",""),
 ("INT-004","Calidad — SonarCloud","002","Ratings Security/Reliability/Maintainability = A","Claude Sonnet 4.6","21/05/2026","Calidad","—",RESP_LUIS,"Si","Commit 28925d5","0 issues abiertos",""),
@@ -135,7 +135,7 @@ RAW = [
 # INT-005
 ("INT-005","Seguridad","001","S5147 NoSQL injection: $eq en Device,Noise,buildDateFilter","Claude Sonnet 4.6","19–20/05/2026","Seguridad","RNF-06",RESP_LUIS,"Si","Commits 25c1603,1998062","",""),
 ("INT-005","Seguridad","002","S2068 + PRNG seguro en helpers E2E (crypto.randomBytes)","Claude Sonnet 4.6","20/05/2026","Seguridad","—",RESP_LUIS,"Si","Commits fb4119c,8c5d890","Regresion Rating C->A",""),
-("INT-005","Seguridad","003","npm audit periodico — sin vulnerabilidades criticas","Equipo","—","Seguridad","—",RESP_LUIS,"Parcial","Manual — npm audit OK","Sin job automatico bundler-audit","Agregar job npm audit en CI"),
+("INT-005","Seguridad","003","npm audit periodico — sin vulnerabilidades criticas","Claude Sonnet 4.6","06/2026","Seguridad","—",RESP_LUIS,"Si","step 'npm audit --audit-level=high' en job backend de ci.yml","",""),
 # INT-006
 ("INT-006","Modelo IA — CRISP-DM","001","CRISP-DM Fase 1-2: comprension negocio y variables auditivas","Claude Sonnet 4.6","03/2026","IA","RF-04",RESP_LUIS,"Si","README · docs/metodologia.md","",""),
 ("INT-006","Modelo IA — CRISP-DM","002","Fase 3: features.py + constants.py (8 features tonales)","Claude Sonnet 4.6","03/2026","IA","RF-04",RESP_LUIS,"Si","ai-service/model/features.py","8 features 250-8000 Hz",""),
