@@ -81,7 +81,7 @@ def write_procesos(ws):
         ("PROC-007","Misional","Frontend Angular y App Flutter","main","Terreros H. L.F.","Completado","v1.0","SPA standalone + Signals, app movil Flutter 3 — INT-013,INT-014"),
         ("PROC-008","Apoyo","Aseguramiento de Calidad (TDD)","main","Terreros H. L.F.","Completado","v1.0","Jest, pytest, Vitest, flutter_test, Playwright, k6 — INT-001,INT-007"),
         ("PROC-009","Apoyo","Analisis Estatico y Seguridad (SonarCloud)","main","Terreros H. L.F.","Completado","v1.0","ESLint, SonarCloud Quality Gate A, 0 issues — INT-004,INT-005"),
-        ("PROC-010","Apoyo","CI/CD y Despliegue en Nube","main","Terreros H. L.F.","Completado","v1.0","GitHub Actions 6 jobs, Render, Vercel, GHCR — INT-003"),
+        ("PROC-010","Apoyo","CI/CD y Despliegue en Nube","main","Terreros H. L.F.","Completado","v1.0","GitHub Actions 10 jobs + timeout-minutes SLA, Render, Vercel, GHCR — INT-003"),
         ("PROC-011","Apoyo","Documentacion y Entregables","main","Terreros H. L.F.","Completado","v1.0","README, api-spec OpenAPI 3.1, BDD Gherkin, complejidad — INT-002,INT-008"),
         ("PROC-012","Apoyo","Gestion de Trazabilidad y BDD","main","Terreros H. L.F.","Completado","v1.0","6 .feature Gherkin (85 escenarios), matriz RF-RNF — INT-002"),
     ]
@@ -359,7 +359,7 @@ def write_artefactos(ws):
         ("ART-016","Test","INT-001","env.test.js","backend/tests/env.test.js","v1.0","Activo","Ramas fallback env.js con dotenv mockeado"),
         ("ART-017","Test","INT-001","auth.interceptor.spec.ts","frontend/src/app/core/interceptors/auth.interceptor.spec.ts","v1.0","Activo","107 tests Vitest incluyendo refresco 401"),
         # Configuracion
-        ("ART-018","Configuracion","INT-003","ci.yml",".github/workflows/ci.yml","v1.0","Activo","6 jobs: backend,ai-service,frontend,e2e,flutter,sonarcloud"),
+        ("ART-018","Configuracion","INT-003","ci.yml",".github/workflows/ci.yml","v1.0","Activo","10 jobs: backend,ai-service,frontend,bdd,e2e,flutter,sonarcloud,k6-smoke,lighthouse,deploy"),
         ("ART-019","Configuracion","INT-003","deploy.yml",".github/workflows/deploy.yml","v1.0","Activo","Build GHCR + hooks Render + deploy Vercel"),
         ("ART-020","Configuracion","INT-004","sonar-project.properties","sonar-project.properties","v1.0","Activo","Multi-lenguaje: JS+TS+Python+Dart, exclusiones CPD"),
         ("ART-021","Configuracion","INT-009","User.js","backend/src/models/User.js","v1.0","Activo","Schema Mongoose: bcrypt pre-save salt=12, toJSON seguro"),
@@ -461,6 +461,9 @@ def write_merges(ws):
         ("MRG-012","Direct push","main (feature/sonarcloud)","main","18–22/05/2026","LUIS","Integrado","INT-004,INT-005 (7 bolts)","SonarCloud Quality Gate Aprobado: 40 commits"),
         ("MRG-013","Direct push","main (feature/coverage-100)","main","22/05/2026","LUIS","Integrado","INT-001 (3 bolts)","Cobertura 100% todas las metricas — 8ebc768"),
         ("MRG-014","Direct push","main (feature/docs)","main","05–06/2026","LUIS","Integrado","INT-008 (4 bolts)","README, api-spec, articulo.md, matriz Excel v3"),
+        ("MRG-015","Direct push","main (feature/bdd-cucumber)","main","06/2026","LUIS","Integrado","INT-002 (1 bolt)","Cucumber.js CI: job bdd, 85 escenarios Gherkin — 27bef44"),
+        ("MRG-016","Direct push","main (feature/ci-complete)","main","06/2026","LUIS","Integrado","INT-003,INT-007 (3 bolts)","k6-smoke HTML + Lighthouse CI + timeout SLA + npm audit — 507 tests"),
+        ("MRG-017","Direct push","main (feature/docs-sync)","main","06/2026","LUIS","Integrado","INT-008 (1 bolt)","Sincronizacion docs: 422→507, 7→10 jobs, matrix 100% — 5 commits"),
     ]
 
     for i, d in enumerate(merges, 3):
