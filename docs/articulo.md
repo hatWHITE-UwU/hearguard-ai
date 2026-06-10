@@ -14,7 +14,7 @@
 
 ## Resumen
 
-HearGuard AI es una plataforma de salud auditiva preventiva que monitorea la exposición al ruido en tiempo real, ejecuta una prueba auditiva por cuestionario y predice el nivel de riesgo del usuario mediante un modelo de aprendizaje automático. El sistema se compone de una API REST en Node.js/Express, una aplicación web en Angular, una aplicación móvil en Flutter, un microservicio Python/Flask con un clasificador Random Forest y un firmware IoT para ESP32. El desarrollo se realizó aplicando **Test-Driven Development y Behavior-Driven Development** como metodología principal, complementada con **CRISP-DM** para la construcción del modelo predictivo. Como resultados, se reportan **422 casos de prueba automatizados** distribuidos en cinco capas (backend, servicio de IA, frontend, aplicación móvil y E2E con Playwright), un modelo con R² holdout ≥ 0.80 y un pipeline completo de integración y despliegue continuo basado en GitHub Actions, SonarCloud (job dedicado con cobertura 100 %), Render y Vercel.
+HearGuard AI es una plataforma de salud auditiva preventiva que monitorea la exposición al ruido en tiempo real, ejecuta una prueba auditiva por cuestionario y predice el nivel de riesgo del usuario mediante un modelo de aprendizaje automático. El sistema se compone de una API REST en Node.js/Express, una aplicación web en Angular, una aplicación móvil en Flutter, un microservicio Python/Flask con un clasificador Random Forest y un firmware IoT para ESP32. El desarrollo se realizó aplicando **Test-Driven Development y Behavior-Driven Development** como metodología principal, complementada con **CRISP-DM** para la construcción del modelo predictivo. Como resultados, se reportan **507 casos de prueba automatizados** distribuidos en seis capas (backend, servicio de IA, frontend, aplicación móvil, E2E con Playwright y **85 escenarios BDD Gherkin/Cucumber.js**), un modelo con R² holdout ≥ 0.80 y un pipeline de diez jobs en GitHub Actions con análisis estático en SonarCloud (cobertura 100 %), rendimiento con k6, auditoría Lighthouse, y despliegue continuo en Render y Vercel.
 
 **Palabras clave:** salud auditiva, IoT, Random Forest, TDD, BDD, CRISP-DM, ingeniería de software, machine learning.
 
@@ -77,7 +77,7 @@ El ciclo de vida del software siguió **Test-Driven Development (TDD)**, formali
 
 TDD se complementó con **Behavior-Driven Development (BDD)**, propuesto por North (2006) y formalizado por Smart (2014). En BDD los criterios de aceptación de cada historia de usuario se redactan en lenguaje natural estructurado mediante Gherkin (`Dado/Cuando/Entonces`), lo que permite que actores no técnicos participen en su definición (Solis & Wang, 2011). En HearGuard AI se crearon seis archivos `.feature` en `docs/features/`, uno por módulo funcional, que sirven a la vez como **especificación**, **documentación viva** y **base para los casos de prueba** del plan formal documentado en `docs/plan-de-pruebas.md`.
 
-El ciclo aplicado por cada historia de usuario fue de cinco pasos: (1) redacción del escenario Gherkin, (2) traducción a una prueba unitaria o de integración que falla, (3) implementación del código mínimo necesario, (4) refactorización y (5) verificación automática en el pipeline de GitHub Actions, complementada con análisis estático en SonarCloud mediante el job `sonarcloud` del workflow CI. La aplicación de la metodología en las cinco capas del software se resume en la siguiente tabla:
+El ciclo aplicado por cada historia de usuario fue de cinco pasos: (1) redacción del escenario Gherkin, (2) traducción a una prueba unitaria o de integración que falla, (3) implementación del código mínimo necesario, (4) refactorización y (5) verificación automática en el pipeline de GitHub Actions, complementada con análisis estático en SonarCloud mediante el job `sonarcloud` del workflow CI. La aplicación de la metodología en las seis capas del software se resume en la siguiente tabla:
 
 | Capa | Framework de pruebas | Carpeta | Casos automatizados |
 |------|----------------------|---------|---------------------|
@@ -86,9 +86,10 @@ El ciclo aplicado por cada historia de usuario fue de cinco pasos: (1) redacció
 | Frontend Angular | Vitest | `frontend/src/app/**/*.spec.ts` | 107 |
 | Aplicación móvil Flutter | flutter_test | `flutter_app/test/` | 42 |
 | End-to-End multiplataforma | Playwright | `e2e/tests/` | 36 |
-| **Total** | | | **422** |
+| Escenarios BDD (Gherkin/Cucumber.js) | Cucumber.js | `bdd/step_definitions/` | 85 |
+| **Total** | | | **507** |
 
-Se aplicaron tanto pruebas de **caja negra** —API REST verificada mediante Supertest sin conocer la implementación interna y escenarios BDD de aceptación— como pruebas de **caja blanca** sobre la lógica interna del predictor de IA, los servicios Angular, los guards e interceptores y los *mappers* de Flutter. El detalle completo se encuentra en `docs/metodologia.md` y `docs/plan-de-pruebas.md`.
+Se aplicaron tanto pruebas de **caja negra** —API REST verificada mediante Supertest y 85 escenarios de aceptación ejecutados con Cucumber.js— como pruebas de **caja blanca** sobre la lógica interna del predictor de IA, los servicios Angular, los guards e interceptores y los *mappers* de Flutter. El detalle completo se encuentra en `docs/metodologia.md` y `docs/plan-de-pruebas.md`.
 
 ### 3.2 Metodología complementaria: CRISP-DM
 
@@ -176,7 +177,7 @@ El modelo predictivo se construyó siguiendo CRISP-DM y se serializa como un *bu
 
 ### 5.3 Integración continua y despliegue
 
-- **CI:** `.github/workflows/ci.yml` con siete jobs: `backend`, `ai-service`, `frontend`, `e2e`, `flutter`, `sonarcloud` y `deploy` (hooks a Render y Vercel, solo en `main`).
+- **CI:** `.github/workflows/ci.yml` con diez jobs: `backend`, `ai-service`, `frontend`, `bdd` (Cucumber.js, 85 escenarios), `e2e`, `flutter`, `sonarcloud`, `k6-smoke` (reporte HTML con `handleSummary`), `lighthouse` (accessibility ≥ 90 %) y `deploy` (hooks a Render y Vercel, solo en `main`).
 - **Análisis estático:** SonarCloud mediante job CI con `SONAR_TOKEN` y `sonar-project.properties` (proyecto `hatWHITE-UwU_hearguard-ai`, organización `hatwhite-uwu`). Los artefactos de cobertura se normalizan con `scripts/fix-sonar-coverage-paths.js` antes del escaneo.
 - **Despliegue:** Render para backend e IA, Vercel para el frontend; los hooks se disparan automáticamente tras la aprobación de los jobs de pruebas en `main`.
 
@@ -193,7 +194,8 @@ El modelo predictivo se construyó siguiendo CRISP-DM y se serializa como un *bu
 | Frontend | Vitest | 107 | Pasan |
 | Móvil | flutter_test | 42 | Pasan |
 | End-to-End | Playwright | 36 | Pasan |
-| **Total** | | **422** | **Pasan** |
+| BDD Gherkin | Cucumber.js | 85 | Pasan (API); frontend/IA → pending |
+| **Total** | | **507** | **Pasan** |
 
 **Cobertura mínima exigida por el pipeline:** 60 % de líneas en backend y en servicio de IA. En local, el backend alcanza 100 % de líneas con `--runInBand`. SonarCloud consolida la cobertura de las tres capas analizadas (backend, frontend, IA) y reporta **100 %** en el Quality Gate.
 
@@ -222,7 +224,7 @@ Las remediaciones de seguridad (host Flask configurable, CORS endurecido, manejo
 
 ### 6.4 Trazabilidad escenario BDD ↔ prueba automatizada
 
-La siguiente tabla muestra ejemplos representativos de la trazabilidad entre escenarios Gherkin y casos de prueba automatizados a través de las cinco capas:
+La siguiente tabla muestra ejemplos representativos de la trazabilidad entre escenarios Gherkin ejecutados con Cucumber.js y casos de prueba automatizados a través de las seis capas:
 
 | Escenario Gherkin | Capa | Prueba automatizada |
 |-------------------|------|---------------------|
@@ -236,6 +238,8 @@ La siguiente tabla muestra ejemplos representativos de la trazabilidad entre esc
 | `prediccion-riesgo-ia.feature`: R² del modelo en producción ≥ 0.80 | IA | `test_api.py`: `test_r2_above_threshold` |
 | `prueba-auditiva.feature`: cuestionario auditivo completo | Frontend / Móvil | `hearing-test.service.spec.ts` (Angular) + `hearing_mapper_test.dart` (Flutter) |
 | `autenticacion.feature`: login desde la app web (flujo completo) | E2E | `e2e/tests/auth.spec.ts` (Playwright contra Vercel) |
+| `autenticacion.feature`: registro exitoso ejecutado por Cucumber | BDD | `bdd/step_definitions/auth.steps.js`: `POST /api/auth/register` con supertest |
+| `monitoreo-ruido.feature`: IDOR — userA no accede a registros de userB | BDD | `bdd/step_definitions/noise.steps.js`: aserción `items.length === 0` sobre userA autenticado |
 
 ---
 
@@ -243,7 +247,7 @@ La siguiente tabla muestra ejemplos representativos de la trazabilidad entre esc
 
 Los resultados muestran que la combinación TDD/BDD + CRISP-DM es viable y efectiva para un proyecto de salud auditiva preventiva con componentes heterogéneos (software multiplataforma + modelo de IA + hardware IoT). Tres observaciones merecen destacarse.
 
-**Beneficio del enfoque TDD/BDD en proyectos multiplataforma.** Disponer de 422 casos automatizados distribuidos en cinco capas —incluyendo 36 pruebas E2E con Playwright que se ejecutan contra el despliegue real del frontend en Vercel— permitió detectar regresiones rápidamente durante los cambios estructurales del proyecto, por ejemplo durante la migración del servicio de IA a Python 3.11 y la actualización de dependencias para compatibilidad con Render. Sin esta red de pruebas, cada cambio habría exigido validación manual de extremo a extremo. La existencia previa de los seis archivos `.feature` facilitó identificar qué comportamientos críticos debían quedar cubiertos por pruebas automatizadas y, en particular, qué flujos completos merecían una prueba E2E (autenticación, prueba auditiva y *smoke* del despliegue).
+**Beneficio del enfoque TDD/BDD en proyectos multiplataforma.** Disponer de 507 casos automatizados distribuidos en seis capas —incluyendo 85 escenarios Gherkin ejecutados con Cucumber.js en CI y 36 pruebas E2E con Playwright contra el frontend desplegado en Vercel— permitió detectar regresiones rápidamente durante los cambios estructurales del proyecto, por ejemplo durante la migración del servicio de IA a Python 3.11 y la actualización de dependencias para compatibilidad con Render. Sin esta red de pruebas, cada cambio habría exigido validación manual de extremo a extremo. La existencia previa de los seis archivos `.feature` facilitó identificar qué comportamientos críticos debían quedar cubiertos por pruebas automatizadas y, en particular, qué flujos completos merecían una prueba E2E (autenticación, prueba auditiva y *smoke* del despliegue).
 
 **Adecuación de CRISP-DM al microservicio de IA.** CRISP-DM aportó al modelo predictivo el rigor que TDD aporta al resto del sistema. Su separación clara entre comprensión del problema, preparación de datos, modelado y evaluación permitió iterar sobre el conjunto de variables sin acoplar esta evolución al ciclo del software principal. Esto resultó especialmente útil porque el modelo se entrena dentro del pipeline de CI (`python -m model.trainer`), lo que convierte cada *push* a `main` en una nueva ejecución reproducible de las fases 3, 4 y 5 de CRISP-DM.
 
@@ -256,9 +260,8 @@ Los resultados muestran que la combinación TDD/BDD + CRISP-DM es viable y efect
 ## 8. Limitaciones
 
 - **Dataset sintético.** El modelo se entrena con datos generados a partir de heurísticas médicas y no a partir de un dataset clínico real. Esto limita la generalización del modelo y debe interpretarse como una **prueba de concepto** del proceso CRISP-DM, no como una herramienta diagnóstica.
-- **Escenarios BDD no automatizados todavía.** Los archivos `.feature` documentan el comportamiento esperado pero aún no se ejecutan automáticamente con Cucumber o un framework equivalente; su cumplimiento se valida indirectamente mediante las pruebas Jest/pytest/Vitest/flutter_test.
+- **Escenarios BDD frontend/hardware/IA pendientes.** Los 85 escenarios Gherkin se ejecutan automáticamente con Cucumber.js en CI; sin embargo, los escenarios que requieren navegador (Angular), hardware físico (ESP32) o el microservicio Flask activo permanecen en estado *pending* y no se ejecutan en el pipeline principal, a la espera de integración con Playwright E2E y un entorno de pruebas del servicio de IA.
 - **Calibración del sensor de ruido.** El mapeo lineal del ADC del ESP32 a dB(A) es una aproximación didáctica; el uso clínico exigiría calibración contra un sonómetro de referencia clase 2.
-- **Ejecución BDD en CI.** Los seis archivos `.feature` documentan 85 escenarios de aceptación; la ejecución automática con Cucumber en el pipeline queda como mejora futura (los comportamientos críticos ya están cubiertos por pruebas unitarias, de integración y E2E).
 
 ---
 
@@ -266,17 +269,16 @@ Los resultados muestran que la combinación TDD/BDD + CRISP-DM es viable y efect
 
 Este trabajo presentó HearGuard AI, una plataforma de salud auditiva preventiva que integra monitoreo IoT, cuestionario auditivo y predicción de riesgo con aprendizaje automático, desarrollada bajo TDD/BDD como metodología principal y CRISP-DM como metodología complementaria para el modelado predictivo.
 
-A partir de la pregunta de investigación planteada en la introducción —si era posible construir tal plataforma aplicando metodologías formales que garantizaran reproducibilidad y trazabilidad—, los resultados obtenidos respaldan una respuesta afirmativa: se construyó un sistema funcional, multiplataforma y desplegado en producción, con **422 casos de prueba automatizados** en cinco capas (incluyendo pruebas E2E con Playwright contra el frontend en Vercel), cobertura consolidada del **100 %** en SonarCloud, un modelo con R² holdout ≥ 0.80 validado en producción mediante el endpoint `/api/model-info`, y trazabilidad explícita entre escenarios Gherkin, casos de prueba y código fuente.
+A partir de la pregunta de investigación planteada en la introducción —si era posible construir tal plataforma aplicando metodologías formales que garantizaran reproducibilidad y trazabilidad—, los resultados obtenidos respaldan una respuesta afirmativa: se construyó un sistema funcional, multiplataforma y desplegado en producción, con **507 casos de prueba automatizados** en seis capas (incluyendo 85 escenarios Gherkin ejecutados con Cucumber.js en CI y pruebas E2E con Playwright contra el frontend en Vercel), cobertura consolidada del **100 %** en SonarCloud, un modelo con R² holdout ≥ 0.80 validado en producción mediante el endpoint `/api/model-info`, y trazabilidad explícita entre escenarios Gherkin, casos de prueba y código fuente.
 
 La combinación TDD/BDD + CRISP-DM demostró ser adecuada para gestionar la heterogeneidad del sistema: TDD/BDD aportó disciplina al ciclo del software multiplataforma y CRISP-DM aportó rigor al ciclo del modelo de IA, sin solapamiento entre ambas. Ambas se integraron en el mismo pipeline de CI/CD, lo que permite que cada *push* a `main` regenere y valide tanto el software como el modelo.
 
 ### Trabajo futuro
 
-- Automatizar la ejecución de los escenarios BDD con Cucumber o un framework equivalente, de modo que los archivos `.feature` se ejecuten en cada commit junto al resto de pruebas.
+- Completar los step definitions BDD de escenarios frontend/Angular (con Playwright) y del microservicio de IA (Flask en contenedor), de modo que los 85 escenarios pasen de *pending* a *executed*.
 - Reentrenar el modelo con un dataset clínico real, recolectado con consentimiento informado, para fortalecer la fase 2 de CRISP-DM y aumentar la validez externa del clasificador.
 - Incorporar prácticas de MLOps (Kreuzberger, Kühl & Hirschl, 2023) para reentrenamiento continuo y monitoreo de *data drift* en producción.
 - Calibrar el sensor de ruido del ESP32 contra un sonómetro de referencia clase 2 para uso en estudios de campo.
-- Integrar la ejecución automática de escenarios Gherkin (Cucumber) en el pipeline CI.
 
 ---
 
