@@ -96,7 +96,7 @@ La primera versión funcional corresponde a la versión **v1.0**, desarrollada m
 - ✅ Firmware IoT (ESP32 + KY-037)
 - ✅ Microservicio de inteligencia artificial (Flask + scikit-learn)
 - ✅ Integración continua (GitHub Actions + SonarCloud)
-- ✅ Pruebas automatizadas (422 casos en 5 capas + 3 escenarios k6)
+- ✅ Pruebas automatizadas (507 casos en 6 capas + 3 escenarios k6 + 85 escenarios BDD Gherkin)
 - ✅ Análisis de calidad estática (SonarCloud — Quality Gate Aprobado)
 - ✅ Documentación técnica y académica (IEEE 829, BDD Gherkin, matriz de trazabilidad)
 
@@ -138,8 +138,9 @@ HearGuard AI implementa una arquitectura de **microservicios desacoplados** orie
 | Servicio IA Flask | pytest | 30 |
 | App Móvil Flutter | flutter_test | 42 |
 | End-to-End | Playwright | 36 |
+| Escenarios BDD Gherkin | Cucumber.js | 85 |
 | Carga y rendimiento | k6 | 3 escenarios |
-| **Total** | | **422 casos + 3 escenarios k6** |
+| **Total** | | **507 casos + 3 escenarios k6** |
 
 La arquitectura permite incorporar nuevos módulos (p. ej. audiometría clínica, integración con wearables) sin afectar el funcionamiento del sistema principal, garantizando escalabilidad a largo plazo.
 

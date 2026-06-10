@@ -172,11 +172,12 @@
 
 | Capa         | Archivo(s) de test                                                  | Casos | Estado     |
 |--------------|---------------------------------------------------------------------|-------|------------|
-| Backend API  | `auth.test.js`, `noise.test.js`, `evaluation.test.js`, `device.test.js` | ~60   | ✅ Completo |
-| Seguridad    | `security.test.js`                                                  | 22    | ✅ Completo |
-| AI Service   | `test_predictor.py`, `test_api.py`                                  | ~35   | ✅ Completo |
-| Frontend UI  | `hearing-test.service.spec.ts`, `noise-monitor.service.spec.ts`, `auth.service.spec.ts`, `auth.guard.spec.ts`, `auth.interceptor.spec.ts` | ~60 | ✅ Completo |
-| E2E          | `e2e/tests/auth.spec.ts`, `e2e/tests/hearing-test.spec.ts`         | 35    | ⚠️ CI demo |
+| Backend API  | `auth.test.js`, `noise.test.js`, `evaluation.test.js`, `device.test.js`, `middleware.test.js`, `security.test.js`, `noise.service.test.js`, `database.test.js`, `logger.test.js`, `evaluation-ai.test.js`, `env.test.js`, `coverage-extra.test.js` | 207 | ✅ Completo |
+| AI Service   | `test_predictor.py`, `test_api.py`                                  | 30    | ✅ Completo |
+| Frontend UI  | `hearing-test.service.spec.ts`, `noise-monitor.service.spec.ts`, `auth.service.spec.ts`, `auth.guard.spec.ts`, `auth.interceptor.spec.ts` + demás specs | 107 | ✅ Completo |
+| Flutter      | `user_test.dart`, `api_response_test.dart`, `hearing_mapper_test.dart`, `auth_service_test.dart` | 42 | ✅ Completo |
+| E2E          | `e2e/tests/auth.spec.ts`, `e2e/tests/hearing-test.spec.ts`         | 36    | ⚠️ CI demo |
+| BDD Gherkin  | `bdd/step_definitions/` (Cucumber.js)                              | 85    | ✅ API completo · frontend/IA pending |
 | Rendimiento  | `tests/k6/load-test.js`                                             | 3 escenarios | ✅ Configurado |
 
 **Total requisitos funcionales trazados:** 60 RF  
@@ -201,6 +202,7 @@
 | `frontend/src/app/**/*.spec.ts`              | Tests unitarios Angular (Karma/Jasmine)          |
 | `ai-service/tests/`                          | Tests unitarios e integración Python (pytest)    |
 | `e2e/tests/`                                 | Tests E2E Playwright (multi-navegador)           |
+| `bdd/step_definitions/`                      | Step definitions Cucumber.js (85 escenarios)    |
 | `tests/k6/`                                  | Tests de rendimiento k6                         |
 
 ---

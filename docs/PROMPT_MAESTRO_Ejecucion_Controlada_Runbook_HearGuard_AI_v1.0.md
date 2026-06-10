@@ -290,7 +290,7 @@ Explicar por qué no se rompió (según aplique):
 * evaluaciones + integración IA;  
 * dispositivos IoT y `apiKey`;  
 * builds Docker y deploy Render/Vercel;  
-* suite de pruebas (422 casos + k6).
+* suite de pruebas (507 casos: 422 unitarios/integración/E2E + 85 BDD Gherkin + k6).
 
 ---
 
