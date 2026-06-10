@@ -29,10 +29,10 @@ Hitos principales completados en el repositorio:
 |------|--------|
 | **Funcionalidad** | API REST (auth, ruido, evaluaciones, dispositivos IoT), web Angular, app Flutter, firmware ESP32, microservicio IA Flask |
 | **Metodología** | TDD + BDD (principal) documentado en [`docs/metodologia.md`](docs/metodologia.md); CRISP-DM para el modelo ML |
-| **Pruebas** | **422** casos automatizados + **3** escenarios k6; plan IEEE 829 en [`docs/plan-de-pruebas.md`](docs/plan-de-pruebas.md) |
+| **Pruebas** | **507** casos automatizados (207+30+107+42+36+85 BDD) + **3** escenarios k6; plan IEEE 829 en [`docs/plan-de-pruebas.md`](docs/plan-de-pruebas.md) |
 | **Trazabilidad** | 60 RF + 10 RNF → BDD → tests en [`docs/matriz-trazabilidad.md`](docs/matriz-trazabilidad.md) |
 | **SonarCloud** | Quality Gate **OK** · Security / Reliability / Maintainability **A** · **0** issues · duplicación **0 %** · cobertura **100 %** |
-| **CI/CD** | GitHub Actions (backend, IA, frontend, e2e, flutter, **sonarcloud**, deploy) + Render + Vercel |
+| **CI/CD** | GitHub Actions **10 jobs** (backend, ai-service, frontend, bdd, e2e, flutter, sonarcloud, k6-smoke, lighthouse, deploy) + Render + Vercel |
 | **Cobertura** | Job `sonarcloud` con artefactos lcov/coverage.xml; script [`scripts/fix-sonar-coverage-paths.js`](scripts/fix-sonar-coverage-paths.js) para mapeo de rutas |
 | **Seguridad** | Suite `security.test.js`; correcciones S2068, S5147, regresiones C→A en Sonar |
 | **Documentación académica** | [`docs/articulo.md`](docs/articulo.md), matriz Excel [`docs/matriz-registro-hearguard.xlsx`](docs/matriz-registro-hearguard.xlsx) |

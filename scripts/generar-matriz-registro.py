@@ -783,7 +783,7 @@ def _write_portada(wb: Workbook) -> None:
         ("Matriz de registro",    "Bolts detallados con evidencia, enlace y estado",            f"{len(BOLTS)} bolts"),
         ("Requisitos funcionales","Resumen RF-01 a RF-06 con feature BDD y tests",              "6 RF-grupos"),
         ("Requisitos no funcionales", "RNF-01 a RNF-10 con verificación y evidencia",          "10 RNF"),
-        ("Métricas pruebas",      "422 tests por capa con comandos de ejecución",               "8 capas"),
+        ("Métricas pruebas",      "507 tests por capa con comandos de ejecución",               "8 capas"),
         ("Resumen Intents",       "Tabla compacta de avance por Intent",                        "8 Intents"),
         ("TRAZABILIDAD",          "RF → Feature BDD → Test ID → Tipo → Estado",               "60 RF + 10 RNF"),
         ("PROCESOS",              "15 procesos BPMN: Misional / Estratégico / Apoyo",           "15 procesos"),
