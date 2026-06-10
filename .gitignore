@@ -36,6 +36,7 @@ out/
 
 # === Coverage y tests ===
 coverage/
+reports/
 *.lcov
 .nyc_output/
 .jest/

@@ -16,6 +16,8 @@
 import http from 'k6/http';
 import { check, sleep, group } from 'k6';
 import { Counter, Rate, Trend } from 'k6/metrics';
+import { htmlReport } from 'https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js';
+import { textSummary } from 'https://jslib.k6.io/k6-summary/0.0.2/index.js';
 
 // ── Custom metrics ────────────────────────────────────────────────────────────
 
@@ -194,4 +196,14 @@ export function setup() {
     throw new Error(`Backend unreachable at ${BASE_URL}/health → HTTP ${res.status}`);
   }
   console.log('[k6] Backend healthy — starting scenarios');
+}
+
+// ── Summary report ────────────────────────────────────────────────────────────
+// Generates reports/k6/index.html and echoes the text summary to stdout.
+// The reports/ directory must exist before k6 runs (CI creates it with mkdir -p).
+export function handleSummary(data) {
+  return {
+    'reports/k6/index.html': htmlReport(data),
+    stdout: textSummary(data, { indent: ' ', enableColors: true }),
+  };
 }

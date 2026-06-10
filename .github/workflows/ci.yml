@@ -161,11 +161,10 @@ jobs:
           done
           echo "Backend not ready after 7.5 minutes"
           exit 1
+      - name: Create k6 report directory
+        run: mkdir -p reports/k6
       - name: Run K6 smoke test against production
-        shell: bash
-        run: |
-          set -o pipefail
-          k6 run --env K6_SMOKE_ONLY=true tests/k6/load-test.js 2>&1 | tee k6-smoke-output.txt
+        run: k6 run --env K6_SMOKE_ONLY=true tests/k6/load-test.js
         env:
           BASE_URL: ${{ secrets.BACKEND_URL }}
       - name: Upload K6 smoke report
@@ -173,7 +172,7 @@ jobs:
         if: always()
         with:
           name: k6-smoke-report
-          path: k6-smoke-output.txt
+          path: reports/k6/
           retention-days: 7
 
   # ── Lighthouse (performance audit — against deployed Vercel frontend) ────────
