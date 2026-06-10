@@ -122,7 +122,7 @@ RAW = [
 ("INT-002","BDD — Gherkin y trazabilidad","003","Metodologia TDD+BDD documentada con referencias APA","Claude Sonnet 4.6","05/2026","Docs","—",RESP_LUIS,"Si","docs/metodologia.md","",""),
 ("INT-002","BDD — Gherkin y trazabilidad","004","Ejecutar .feature con Cucumber en CI","Claude Sonnet 4.6","06/2026","BDD","—",RESP_LUIS,"Si","job bdd en ci.yml — 85 escenarios Cucumber.js","",""),
 # INT-003
-("INT-003","CI/CD — Validaciones automaticas","001","6 jobs: backend,ai-service,frontend,e2e,flutter,sonarcloud","Claude Sonnet 4.6","03–05/2026","CI/CD","RNF-09",RESP_LUIS,"Si","ci.yml — 6 jobs","",""),
+("INT-003","CI/CD — Validaciones automaticas","001","10 jobs: backend,ai-service,frontend,bdd,e2e,flutter,sonarcloud,k6-smoke,lighthouse,deploy","Claude Sonnet 4.6","03–06/2026","CI/CD","RNF-09",RESP_LUIS,"Si","ci.yml — 10 jobs con timeout-minutes","",""),
 ("INT-003","CI/CD — Validaciones automaticas","002","Artefactos cobertura + fix-sonar-coverage-paths.js","Claude Sonnet 4.6","21/05/2026","CI/CD","RNF-03",RESP_LUIS,"Si","scripts/fix-sonar-coverage-paths.js","",""),
 ("INT-003","CI/CD — Validaciones automaticas","003","deploy.yml — Render (backend+IA) + Vercel (frontend)","Claude Sonnet 4.6","03/2026","Deploy","—",RESP_LUIS,"Si","deploy.yml","",""),
 ("INT-003","CI/CD — Validaciones automaticas","004","Badge CI verde en README","GitHub Actions","05/2026","CI/CD","—",RESP_LUIS,"Si","README badge CI","",""),
