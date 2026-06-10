@@ -7,7 +7,7 @@
 - **Autor(es):** Luis Francisco Terreros Hinojosa · Hardy Eduardo Rondinel Aquino
 - **Asesor(es):** [Nombre del docente asesor]
 - **Institución:** Universidad Continental — Escuela Académico Profesional de Ingeniería de Sistemas e informatica
-- **Correo de contacto:** [luisterreroshinojosa@gmail.com]
+- **Correo de contacto:** luisterreroshinojosa@gmail.com
 - **Año:** 2026
 
 ---
