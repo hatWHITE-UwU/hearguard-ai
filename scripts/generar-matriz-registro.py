@@ -229,7 +229,7 @@ BOLTS: list[Bolt] = [
          "Claude Sonnet", "05/2026", "Docs", "BDD", "Sí", "docs/metodologia.md", None, "—", ""),
     Bolt("INT-002", "BDD — Gherkin y trazabilidad", "INT-002-BOLT-004",
          "Ejecutar .feature con Cucumber en CI",
-         "—", "—", "BDD", "BDD", "No", "Futuro", None, "—", "Validación vía Jest/pytest"),
+         "Claude Sonnet", "06/2026", "BDD", "BDD", "Sí", "job bdd en ci.yml — 85 escenarios", None, "—", ""),
     Bolt("INT-003", "CI/CD — Validaciones automáticas", "INT-003-BOLT-001",
          "Jobs: backend, ai-service, frontend, e2e, flutter, sonarcloud",
          "Claude Sonnet", "03–05/2026", "CI/CD", "CI", "Sí", "ci.yml", CI_URL, "RNF-09", ""),
@@ -289,10 +289,10 @@ BOLTS: list[Bolt] = [
          "Claude Sonnet", "03/2026", "Rendimiento", "RNF", "Sí", "tests/k6/load-test.js", None, "RNF-01, RNF-02", ""),
     Bolt("INT-007", "Rendimiento (RNF)", "INT-007-BOLT-002",
          "Ejecutar k6 en Render y adjuntar reporte al informe",
-         "—", "—", "Rendimiento", "RNF", "No", "Pendiente entrega", None, "RNF-01", "BASE_URL=..."),
+         "Claude Sonnet", "06/2026", "Rendimiento", "RNF", "Sí", "k6-smoke job ci.yml — reports/k6/index.html", None, "RNF-01", ""),
     Bolt("INT-007", "Rendimiento (RNF)", "INT-007-BOLT-003",
          "Lighthouse en frontend Vercel",
-         "—", "—", "Frontend", "RNF", "No", "Chrome DevTools", None, "—", ""),
+         "Claude Sonnet", "06/2026", "Frontend", "RNF", "Sí", "lighthouse job ci.yml (treosh/lighthouse-ci-action)", None, "—", ""),
     Bolt("INT-008", "Documentación y entregables", "INT-008-BOLT-001",
          "articulo.md + README + api-spec",
          "Claude Sonnet", "05/2026", "Docs", "—", "Sí", "docs/articulo.md", None, "—", ""),
@@ -329,10 +329,10 @@ PROCESOS: list[Proceso] = [
             "ESP32 + X-Device-Key + serial_bridge.js, highRisk flag cuando dB>85"),
     Proceso("P-007", "Estratégico", "Framework de Testing (TDD)", "main",
             "Luis F. Terreros H.", "Completado", "1.0",
-            "422 tests: Jest+Supertest 207, pytest 30, Vitest 107, flutter_test 42, Playwright 36"),
+            "507 tests: Jest+Supertest 207, pytest 30, Vitest 107, flutter_test 42, Playwright 36, Cucumber.js 85"),
     Proceso("P-008", "Estratégico", "Behavior-Driven Development (BDD)", "main",
             "Luis F. Terreros H.", "Completado", "1.0",
-            "6 archivos .feature Gherkin — 60 RF + 10 RNF trazados. Cucumber CI pendiente"),
+            "6 archivos .feature Gherkin — 85 escenarios ejecutados con Cucumber.js en job bdd de CI"),
     Proceso("P-009", "Estratégico", "CI/CD Validaciones Automáticas", "main",
             "Luis F. Terreros H.", "Completado", "1.0",
             "GitHub Actions: 7 jobs (backend, ai-service, frontend, e2e, flutter, sonar, deploy)"),
@@ -346,8 +346,8 @@ PROCESOS: list[Proceso] = [
             "Luis F. Terreros H.", "Completado", "1.0",
             "Random Forest + Flask microservice + Render deploy + reentrenamiento en CI"),
     Proceso("P-013", "Apoyo", "Rendimiento y Escalabilidad", "main",
-            "Luis F. Terreros H.", "Parcial", "1.0",
-            "k6 configurado; ejecución en Render producción pendiente. Lighthouse pendiente"),
+            "Luis F. Terreros H.", "Completado", "1.0",
+            "k6-smoke job ci.yml con handleSummary (reports/k6/index.html). Lighthouse job ci.yml (accessibility >=90%)"),
     Proceso("P-014", "Apoyo", "Documentación y Entregables UC", "main",
             "Luis F. Terreros H.", "Completado", "1.0",
             "articulo.md + README + api-spec.yml + plan-de-pruebas.md + complejidad + esta matriz"),
@@ -870,7 +870,7 @@ def _write_dashboard(wb: Workbook) -> None:
     kpis_cols = [
         (1,  "Bolts Completados",   f"{si}/{total}"),
         (2,  "Avance Global",        f"{g_pct}%"),
-        (3,  "Tests Automatizados",  "422"),
+        (3,  "Tests Automatizados",  "507"),
         (4,  "Cobertura Backend",    "100%"),
         (5,  "Cobertura Frontend",   "100%"),
         (6,  "Req. Funcionales RF",  f"{total_rf}"),
@@ -978,7 +978,7 @@ def _write_dashboard(wb: Workbook) -> None:
         ("Bugs Sonar",                  "0",       "0",      "✅"),
         ("Vulnerabilities",             "0",       "0",      "✅"),
         ("Duplicación",                 "0%",      "< 3%",   "✅"),
-        ("Tests automatizados",         "422",     "≥ 200",  "✅"),
+        ("Tests automatizados",         "507",     "≥ 200",  "✅"),
         ("Escenarios k6",               "3",       "≥ 1",    "✅"),
     ]
     for j, (metric, val, thresh, status) in enumerate(quality):
@@ -1268,7 +1268,7 @@ def _write_metricas(wb: Workbook) -> None:
     ws.row_dimensions[1].height = 32
 
     ws.merge_cells("A2:F2")
-    ws["A2"] = "TDD + BDD · 422 casos automatizados en 5 capas · SonarCloud cobertura 100 %"
+    ws["A2"] = "TDD + BDD · 507 casos automatizados en 6 capas · SonarCloud cobertura 100 %"
     ws["A2"].font = Font(italic=True, size=9, color="FFFFFF")
     ws["A2"].fill = PatternFill("solid", fgColor=BRAND_LIGHT)
     ws["A2"].alignment = Alignment(horizontal="center")
@@ -1286,9 +1286,10 @@ def _write_metricas(wb: Workbook) -> None:
         ("Frontend Web",     "Vitest",            "frontend/src/app/**/*.spec.ts",        107, "100%",    "cd frontend && npm run test:ci"),
         ("App Móvil",        "flutter_test",      "flutter_app/test/",                    42, "parcial", "cd flutter_app && flutter test --coverage"),
         ("E2E Web",          "Playwright",        "e2e/tests/",                           36, "E2E",     "npx playwright test --project=chromium"),
+        ("BDD Gherkin",      "Cucumber.js",       "bdd/step_definitions/",                85, "API",     "cd bdd && npm test"),
         ("Rendimiento",      "Grafana k6",        "tests/k6/",                            3,  "—",       "k6 run tests/k6/load-test.js"),
     ]
-    layer_colors = [SEM_INF, SEM_INF, "E4DFEC", "D9E1F2", "F8CBAD", SEM_WAR, "E7E6E6"]
+    layer_colors = [SEM_INF, SEM_INF, "E4DFEC", "D9E1F2", "F8CBAD", SEM_WAR, "C6EFCE", "E7E6E6"]
 
     chart_labels_row  = []
     chart_values_row  = []
@@ -1320,7 +1321,7 @@ def _write_metricas(wb: Workbook) -> None:
     tc.font = Font(bold=True, size=11, color="FFFFFF")
     tc.fill = PatternFill("solid", fgColor=BRAND)
     tc.alignment = Alignment(horizontal="center", vertical="center")
-    tn = ws.cell(tot_row, 4, 422)
+    tn = ws.cell(tot_row, 4, 507)
     tn.font = Font(bold=True, size=14, color="FFFFFF")
     tn.fill = PatternFill("solid", fgColor=BRAND)
     tn.alignment = Alignment(horizontal="center", vertical="center")
@@ -1433,7 +1434,7 @@ def _write_instrucciones(wb: Workbook) -> None:
         ("Matriz de registro",        f"Tabla principal de bolts ({len(BOLTS)} bolts) con estado, evidencia e hipervínculos a GitHub"),
         ("Requisitos funcionales",    "6 grupos RF-01→RF-06 · 60 sub-requisitos · Feature BDD y tests asociados"),
         ("Requisitos no funcionales", "10 RNF con verificación, herramienta y evidencia"),
-        ("Métricas pruebas",          "422 casos automatizados en 7 capas · Tabla SonarCloud · Gráfico por capa"),
+        ("Métricas pruebas",          "507 casos automatizados en 6 capas · Tabla SonarCloud · Gráfico por capa"),
         ("Resumen Intents",           "Vista compacta de los 8 Intents con semáforo y gráfico de barras horizontal"),
         ("Trazabilidad",              "60 RF + 10 RNF → Escenario Gherkin → Test ID → Tipo → Estado (✅/⚠️)"),
         ("PROCESOS",                  "15 procesos BPMN clasificados: Misional / Estratégico / Apoyo · Estado y versión"),

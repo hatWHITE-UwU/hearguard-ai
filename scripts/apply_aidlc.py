@@ -120,7 +120,7 @@ RAW = [
 ("INT-002","BDD — Gherkin y trazabilidad","001","6 archivos .feature (auth,ruido,auditiva,IA,IoT,resultados) — 85 escenarios","Claude Sonnet 4.6","03/2026","BDD","RF-01–06",RESP_LUIS,"Si","docs/features/ — 85 escenarios","",""),
 ("INT-002","BDD — Gherkin y trazabilidad","002","Matriz trazabilidad RF/RNF <-> BDD <-> test (60 RF, 10 RNF)","Claude Sonnet 4.6","03/2026","Docs","—",RESP_LUIS,"Si","docs/matriz-trazabilidad.md","",""),
 ("INT-002","BDD — Gherkin y trazabilidad","003","Metodologia TDD+BDD documentada con referencias APA","Claude Sonnet 4.6","05/2026","Docs","—",RESP_LUIS,"Si","docs/metodologia.md","",""),
-("INT-002","BDD — Gherkin y trazabilidad","004","Ejecutar .feature con Cucumber en CI","—","—","BDD","—",RESP_LUIS,"No","Pendiente CI","Validacion via Jest/pytest","Integrar Cucumber en ci.yml"),
+("INT-002","BDD — Gherkin y trazabilidad","004","Ejecutar .feature con Cucumber en CI","Claude Sonnet 4.6","06/2026","BDD","—",RESP_LUIS,"Si","job bdd en ci.yml — 85 escenarios Cucumber.js","",""),
 # INT-003
 ("INT-003","CI/CD — Validaciones automaticas","001","6 jobs: backend,ai-service,frontend,e2e,flutter,sonarcloud","Claude Sonnet 4.6","03–05/2026","CI/CD","RNF-09",RESP_LUIS,"Si","ci.yml — 6 jobs","",""),
 ("INT-003","CI/CD — Validaciones automaticas","002","Artefactos cobertura + fix-sonar-coverage-paths.js","Claude Sonnet 4.6","21/05/2026","CI/CD","RNF-03",RESP_LUIS,"Si","scripts/fix-sonar-coverage-paths.js","",""),
@@ -145,8 +145,8 @@ RAW = [
 ("INT-006","Modelo IA — CRISP-DM","006","Reentrenamiento deterministico en CI (job ai-service)","Claude Sonnet 4.6","05/2026","IA","—",RESP_LUIS,"Si","ci.yml job ai-service","SEED=42 reproducible",""),
 # INT-007
 ("INT-007","Rendimiento (RNF)","001","k6: smoke,load,spike — umbrales p95<2s y error<5%","Claude Sonnet 4.6","03/2026","Rendimiento","RNF-01,02",RESP_LUIS,"Si","tests/k6/load-test.js","3 escenarios",""),
-("INT-007","Rendimiento (RNF)","002","Ejecutar k6 contra Render produccion y adjuntar reporte","—","—","Rendimiento","RNF-01",RESP_LUIS,"No","Pendiente entrega","BASE_URL pendiente","Ejecutar k6 vs URL produccion"),
-("INT-007","Rendimiento (RNF)","003","Lighthouse en frontend Vercel (Performance,A11y,SEO)","—","—","Frontend","—",RESP_LUIS,"No","Chrome DevTools","","Automatizar job Lighthouse"),
+("INT-007","Rendimiento (RNF)","002","Ejecutar k6 contra Render produccion y adjuntar reporte","Claude Sonnet 4.6","06/2026","Rendimiento","RNF-01",RESP_LUIS,"Si","k6-smoke job ci.yml — reports/k6/index.html (handleSummary)","",""),
+("INT-007","Rendimiento (RNF)","003","Lighthouse en frontend Vercel (Performance,A11y,SEO)","Claude Sonnet 4.6","06/2026","Frontend","—",RESP_LUIS,"Si","lighthouse job ci.yml (treosh/lighthouse-ci-action) — accessibility >=90%","",""),
 # INT-008
 ("INT-008","Documentacion y entregables","001","articulo.md + README.md + api-spec.yml OpenAPI 3.1","Claude Sonnet 4.6","05/2026","Docs","—",RESP_LUIS,"Si","docs/articulo.md · README.md · docs/api-spec.yml","",""),
 ("INT-008","Documentacion y entregables","002","Matriz de registro Excel AI-DLC v3 (77 columnas)","Claude Sonnet 4.6","06/2026","Docs","—",RESP_LUIS,"Si","docs/matriz-registro-hearguard.xlsx","v3.0",""),
@@ -215,7 +215,7 @@ def _build(raw):
         # S2.2
         "s22dr":r("Si","Si","No"), "s22de":r("README · docs/api-spec.yml","Parcialmente","No implementado"),
         "s22cr":r("Si","Parcial","No"), "s22ce":ev,
-        "s22pr":r("Si","Parcial","No"), "s22pe":r("422 tests pasando","Tests parciales","Sin tests"),
+        "s22pr":r("Si","Parcial","No"), "s22pe":r("507 tests pasando","Tests parciales","Sin tests"),
         "s22x":r("Aprobado","En progreso","Pendiente"),
         # S2.3
         "s23dr":deploy_r, "s23de":deploy_e,
@@ -249,7 +249,7 @@ def _build(raw):
         # S5.2
         "s52sr":r("Si","Si","N/A"), "s52se":r("ESLint 0 err · SonarCloud A","ESLint OK","—"),
         "s52cr":r("Si","Si","N/A"), "s52ce":r("npm audit · security.test.js","npm audit OK","—"),
-        "s52pr":r("Si","Parcial","No"), "s52pe":r("422/422 tests","Tests parciales","Sin tests"),
+        "s52pr":r("Si","Parcial","No"), "s52pe":r("507/507 tests","Tests parciales","Sin tests"),
         "s52rr":r("Si","Parcial","No"), "s52re":r("CI pipeline verde","Revision parcial","Sin revision"),
         "s52x":r("Aprobado","En progreso","Pendiente"),
         "s5x":r("Aprobado","En progreso","Pendiente"),
@@ -507,7 +507,7 @@ def write_matriz(ws):
         (9,  "Cobertura backend: 100 %"),
         (10, "Cobertura frontend: 100 %"),
         (11, "SonarCloud: Quality Gate Aprobado"),
-        (12, "Intents: 15 | Tests: 422"),
+        (12, "Intents: 15 | Tests: 507"),
     ]
     for col, txt in summary_data:
         c = ws.cell(sr, col, value=txt)
