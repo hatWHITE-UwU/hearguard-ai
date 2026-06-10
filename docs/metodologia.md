@@ -51,13 +51,14 @@ El ciclo TDD + BDD se ejecutó en cada historia de usuario siguiendo cinco pasos
 | Frontend Angular | Vitest | `frontend/src/app/**/*.spec.ts` | 107 |
 | Aplicación móvil Flutter | flutter_test | `flutter_app/test/` | 42 |
 | End-to-End multiplataforma | Playwright | `e2e/tests/` | 36 |
-| **Total** | | | **422** |
+| Escenarios BDD (Gherkin/Cucumber.js) | Cucumber.js | `bdd/step_definitions/` | 85 |
+| **Total** | | | **507** |
 
 La cobertura mínima exigida por el pipeline de CI es del **60 % de líneas** tanto en el backend (verificado con un script Node que parsea `coverage/lcov.info`) como en el servicio de IA (`pytest --cov-fail-under=60`). En local, el backend alcanza **100 %** de líneas con `npm test -- --runInBand`; el reporte consolidado se publica en SonarCloud mediante el job `sonarcloud`, que inyecta los artefactos lcov/coverage.xml (con prefijos corregidos por `scripts/fix-sonar-coverage-paths.js`). El plan de pruebas detallado, con identificadores únicos por caso (`CP-B-01`, `CP-AI-02`, etc.), precondiciones, pasos y resultados esperados, se encuentra en `docs/plan-de-pruebas.md`.
 
-### 1.4 Escenarios BDD en Gherkin
+### 1.4 Escenarios BDD en Gherkin — ejecutados con Cucumber.js
 
-Se redactaron seis archivos `.feature` en `docs/features/`, uno por cada módulo funcional del sistema:
+Se redactaron seis archivos `.feature` en `docs/features/`, uno por cada módulo funcional del sistema. Todos se ejecutan automáticamente con **Cucumber.js** en el job `bdd` del pipeline CI (`bdd/` package con `npm test`):
 
 | Archivo | Módulo cubierto |
 |---------|-----------------|
@@ -89,15 +90,18 @@ Característica: Autenticación de usuarios
 
 ### 1.6 Integración continua
 
-Las pruebas se ejecutan automáticamente en cada *push* a las ramas `main` y `develop`, y en cada *pull request*, mediante GitHub Actions (`.github/workflows/ci.yml`). El pipeline incluye siete jobs:
+Las pruebas se ejecutan automáticamente en cada *push* a las ramas `main` y `develop`, y en cada *pull request*, mediante GitHub Actions (`.github/workflows/ci.yml`). El pipeline incluye diez jobs:
 
 1. **backend** — `npm run lint` + Jest (`--runInBand`) con MongoDB 7, umbral mínimo del 60 % de cobertura y artefacto `lcov.info`.
 2. **ai-service** — Entrenamiento reproducible del modelo (`python -m model.trainer` con `SEED=42`) + pytest con `--cov-fail-under=60` y `coverage.xml`.
 3. **frontend** — `npm run lint` + Vitest en Chromium + `npm run build` de Angular y artefacto lcov.
-4. **e2e** — Pruebas Playwright contra el frontend en Vercel; reporte HTML como artefacto.
-5. **flutter** — `flutter analyze` + `flutter test --coverage`.
-6. **sonarcloud** — Descarga coberturas, ejecuta `scripts/fix-sonar-coverage-paths.js` y escanea con SonarCloud scan-action (requiere secret `SONAR_TOKEN`; **Automatic Analysis desactivado** en el proyecto SonarCloud).
-7. **deploy** — Solo en `main`: hooks de despliegue a Render (backend e IA) y Vercel (frontend).
+4. **bdd** — Cucumber.js (`npm test`, `bdd/`) contra Express con MongoDB 7; 85 escenarios Gherkin; artefacto HTML con reporte de resultados.
+5. **e2e** — Pruebas Playwright contra el frontend en Vercel; reporte HTML como artefacto.
+6. **flutter** — `flutter analyze` + `flutter test --coverage`.
+7. **sonarcloud** — Descarga coberturas, ejecuta `scripts/fix-sonar-coverage-paths.js` y escanea con SonarCloud scan-action (requiere secret `SONAR_TOKEN`; **Automatic Analysis desactivado** en el proyecto SonarCloud).
+8. **k6-smoke** — K6 smoke test (1 VU, 30 s) contra el backend en producción; genera `reports/k6/index.html` mediante `handleSummary` y lo sube como artefacto HTML.
+9. **lighthouse** — Lighthouse CI contra el frontend en Vercel; falla si accessibility < 90 %.
+10. **deploy** — Solo en `main`: hooks de despliegue a Render (backend e IA) y Vercel (frontend).
 
 El análisis estático consolidado se publica en el *quality gate* de la organización `hatwhite-uwu` (proyecto `hatWHITE-UwU_hearguard-ai`), configurado en `sonar-project.properties`.
 
@@ -105,11 +109,11 @@ Esta automatización implementa los principios de *continuous testing* y *contin
 
 ### 1.7 Resultados obtenidos
 
-- **422 casos de prueba automatizados** en cinco capas (207 backend, 30 servicio de IA, 107 frontend, 42 móvil, 36 E2E), todos en estado pasante, más **3 escenarios k6** de rendimiento.
+- **507 casos de prueba automatizados** en seis capas (207 backend, 30 servicio de IA, 107 frontend, 42 móvil, 36 E2E, **85 escenarios BDD Gherkin/Cucumber.js**), todos en estado pasante, más **3 escenarios k6** de rendimiento.
 - Cobertura mínima de líneas exigida por CI: **60 %** en backend y servicio de IA; cobertura consolidada en SonarCloud: **100 %**.
-- Pipeline de CI/CD con **siete jobs** en GitHub Actions (`backend`, `ai-service`, `frontend`, `e2e`, `flutter`, `sonarcloud`, `deploy`).
+- Pipeline de CI/CD con **diez jobs** en GitHub Actions (`backend`, `ai-service`, `frontend`, `bdd`, `e2e`, `flutter`, `sonarcloud`, `k6-smoke`, `lighthouse`, `deploy`).
 - Análisis estático con **SonarCloud** (job CI): Quality Gate OK, ratings **A** en Security, Reliability y Maintainability, **0** issues, duplicación **0 %**.
-- **Seis archivos de escenarios BDD** documentados en `docs/features/`; matriz de registro académica en `docs/matriz-registro-hearguard.xlsx`.
+- **Seis archivos de escenarios BDD** en `docs/features/`, ejecutados automáticamente con Cucumber.js en CI; matriz de registro académica en `docs/matriz-registro-hearguard.xlsx`.
 - Runbook operativo v1.0 y Prompt maestro para estabilización multi-entorno (`docs/Runbook_HearGuard_AI_v1.0_Estabilizacion_Operativa.md`).
 - Plan de pruebas formal documentado en `docs/plan-de-pruebas.md`.
 

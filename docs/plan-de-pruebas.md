@@ -20,6 +20,9 @@ El presente documento describe el plan de pruebas del software HearGuard AI v1.0
 | Frontend Web | Angular 21 / TypeScript | Unitarias |
 | Aplicación Móvil | Flutter / Dart | Unitarias |
 | Módulo IoT | ESP32 / Arduino | Simulación (Wokwi) |
+| Escenarios de aceptación BDD | Cucumber.js + supertest | Integración (Gherkin) |
+| End-to-End multiplataforma | Playwright | E2E contra Vercel |
+| Rendimiento | k6 | Smoke / Load / Spike |
 
 ---
 
@@ -39,6 +42,15 @@ SonarCloud detecta vulnerabilidades, código duplicado y deuda técnica.
 
 ### 3.5 Pruebas de Simulación IoT
 Firmware ESP32 probado en simulador Wokwi con potenciómetro como sensor de ruido.
+
+### 3.6 Pruebas de Aceptación BDD (Gherkin/Cucumber.js)
+Escenarios Given/When/Then redactados en `docs/features/` y ejecutados automáticamente con Cucumber.js en el job `bdd` del pipeline CI. Sirven como especificación viva y evidencia de aceptación.
+
+### 3.7 Pruebas End-to-End (Playwright)
+Flujos completos de usuario (autenticación, prueba auditiva, smoke) ejecutados con Playwright contra el frontend desplegado en Vercel.
+
+### 3.8 Pruebas de Rendimiento (k6)
+Escenarios smoke (1 VU, 30 s), load (10 VU, 1:45 min) y spike (50 VU, 50 s) ejecutados contra el backend en producción. Generan reporte HTML en `reports/k6/index.html`.
 
 ---
 
@@ -1133,12 +1145,14 @@ Firmware ESP32 probado en simulador Wokwi con potenciómetro como sensor de ruid
 
 | Módulo | Statements | Branches | Functions | Lines |
 |---|---|---|---|---|
-| Backend (Node.js) | 81% | 60% | 88% | 82% |
-| AI Service (Python) | pytest-cov | — | — | — |
-| Frontend (Angular) | lcov | — | — | — |
-| Flutter (Dart) | 16 tests | — | — | — |
+| Backend (Node.js) | **100 %** | **100 %** | **100 %** | **100 %** |
+| AI Service (Python) | ≥ 60 % (CI) | — | — | — |
+| Frontend (Angular) | lcov (CI) | — | — | — |
+| Flutter (Dart) | 42 tests | — | — | — |
+| SonarCloud consolidado | **100 %** | — | — | — |
 
-**Total de casos de prueba: 37 detallados** distribuidos en 7 módulos.
+**Total de casos de prueba detallados en este plan: 37** distribuidos en 7 módulos.  
+**Total de casos automatizados en el repositorio: 507** (207 backend + 30 IA + 107 frontend + 42 Flutter + 36 E2E + 85 BDD Gherkin) + 3 escenarios k6.
 
 ---
 
@@ -1146,19 +1160,23 @@ Firmware ESP32 probado en simulador Wokwi con potenciómetro como sensor de ruid
 
 - Todos los tests deben pasar en verde antes de hacer merge a `main`.
 - El pipeline de GitHub Actions debe completarse sin errores.
-- La cobertura del backend no debe bajar del 75% en statements.
+- La cobertura del backend no debe bajar del 60 % de líneas en CI (umbral mínimo del job `backend`); localmente alcanza 100 % con `--runInBand`.
 - SonarCloud no debe reportar vulnerabilidades de severidad alta o crítica.
 
 ---
 
 ## 8. Pipeline CI/CD
 
-1. **Backend** — `npm test`
-2. **AI Service** — `pytest tests/ --cov=model --cov-report=xml`
-3. **Frontend** — `npm run test:ci`
-4. **Flutter** — `flutter test --coverage`
-5. **SonarCloud** — Análisis estático
-6. **Deploy** — Solo si todo pasa en rama `main`
+1. **backend** — `npm run lint` + Jest (`--runInBand`) con MongoDB 7 + umbral ≥ 60 % + artefacto lcov
+2. **ai-service** — `python -m model.trainer` + pytest `--cov-fail-under=60` + artefacto coverage.xml
+3. **frontend** — `npm run lint` + Vitest (Chromium) + `ng build` + artefacto lcov
+4. **bdd** — Cucumber.js (`npm test`) con MongoDB 7 + 85 escenarios Gherkin; artefacto HTML
+5. **e2e** — Playwright contra frontend en Vercel; artefacto HTML
+6. **flutter** — `flutter analyze` + `flutter test --coverage`
+7. **sonarcloud** — Descarga coberturas, corrige paths, SonarCloud scan-action
+8. **k6-smoke** — k6 (1 VU, 30 s) contra backend en producción; artefacto HTML `reports/k6/`
+9. **lighthouse** — Lighthouse CI contra Vercel; falla si accessibility < 90 %
+10. **deploy** — Solo en `main`: hooks Render (backend + IA) + Vercel (frontend)
 
 ---
 
