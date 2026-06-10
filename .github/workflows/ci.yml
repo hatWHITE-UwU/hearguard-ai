@@ -222,12 +222,14 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-          cache-dependency-path: backend/package-lock.json
+          cache-dependency-path: |
+            backend/package-lock.json
+            bdd/package-lock.json
       - name: Install backend dependencies
         run: npm ci
         working-directory: backend
       - name: Install BDD dependencies
-        run: npm install
+        run: npm ci
         working-directory: bdd
       - name: Run Cucumber BDD scenarios
         run: npm test
