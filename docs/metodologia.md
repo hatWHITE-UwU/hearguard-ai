@@ -1,8 +1,8 @@
 # Metodología del proyecto HearGuard AI
 
 **Autor:** Equipo HearGuard AI — Universidad Continental
-**Versión:** 2.0
-**Última actualización:** mayo 2026
+**Versión:** 2.1
+**Última actualización:** junio 2026
 
 ---
 
@@ -184,7 +184,7 @@ Ambas se integran en el pipeline de CI/CD: el job `ai-service` entrena el modelo
 
 ## 4. Limitaciones y trabajo futuro
 
-- **Automatización de los escenarios BDD.** Los archivos `.feature` actualmente se mantienen como documentación de especificación. Una mejora directa consiste en ejecutarlos automáticamente con Cucumber o un framework equivalente para que se ejecuten en cada commit junto al resto de pruebas.
+- **Escenarios BDD frontend/hardware/IA pendientes.** Los 85 escenarios Gherkin se ejecutan automáticamente con Cucumber.js en CI (job `bdd`); sin embargo, los escenarios que requieren navegador (Angular), hardware físico (ESP32) o el microservicio Flask activo permanecen en estado *pending* y no se ejecutan en el pipeline principal, a la espera de integración con Playwright E2E y un entorno de pruebas del servicio de IA.
 - **Dataset clínico real.** El modelo se entrena con datos sintéticos basados en heurísticas médicas; incorporar un dataset clínico con consentimiento informado fortalecería la fase 2 de CRISP-DM.
 - **MLOps.** La fase 6 (despliegue) puede extenderse con reentrenamiento continuo y monitoreo de *data drift* (Kreuzberger, Kühl & Hirschl, 2023).
 
