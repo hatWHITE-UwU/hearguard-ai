@@ -99,10 +99,12 @@ Registrar de manera sistemática y verificable el comportamiento funcional, el r
 | 4.2 | Respuesta del microservicio | JSON con `riskScore` (0–100), `riskLevel`, `topFactors`, `yearsEstimated` | ___ | |
 | 4.3 | Clasificación por nivel de riesgo | 0–25 → Bajo · 26–50 → Moderado · 51–75 → Alto · 76–100 → Muy Alto | ___ | |
 | 4.4 | Almacenamiento del resultado | `riskResults` creado y vinculado a la evaluación | ___ | |
-| 4.5 | Tolerancia a fallo del microservicio | Si Flask no responde, el backend reintenta 3 veces (backoff) y retorna error controlado | ___ | |
-| 4.6 | Endpoint de información del modelo | `GET /api/model-info` → métricas R², MAE, n_estimators | ___ | |
+| 4.5 | Retry con backoff exponencial | Si Flask falla, el backend reintenta hasta 3 veces (500 ms → 1 000 ms → 2 000 ms) | ___ | |
+| 4.6 | Circuit breaker — apertura | Tras 5 fallos consecutivos el circuito se abre y retorna error inmediato sin llamar a Flask | ___ | |
+| 4.7 | Circuit breaker — recuperación | Tras 30 s en estado OPEN, el circuito pasa a HALF_OPEN y permite un intento de recuperación | ___ | |
+| 4.8 | Endpoint de información del modelo | `GET /api/model-info` → métricas R², MAE, n_estimators | ___ | |
 
-**Subtotal RF-04:** \_\_\_\_ / 18
+**Subtotal RF-04:** \_\_\_\_ / 24
 
 ---
 
@@ -167,7 +169,22 @@ Registrar de manera sistemática y verificable el comportamiento funcional, el r
 
 ---
 
-### XII. APP MÓVIL (Flutter 3)
+### XII. ISO 9126 — USABILIDAD Y DOCUMENTACIÓN
+
+| N.° | Indicador observado | Comportamiento esperado | Valor | Observaciones |
+|:---:|---|---|:---:|---|
+| U.1 | Manual de usuario disponible | `docs/manual-usuario-hearguard-ai.md` accesible; cubre 17 secciones incluyendo glosario y FAQ | ___ | |
+| U.2 | Manual de instalación disponible | `docs/manual-instalacion.md` cubre instalación Docker, manual, producción e intercambiabilidad | ___ | |
+| U.3 | Cuestionario SUS preparado | `docs/cuestionario-sus-hearguard-ai.md` listo para aplicar a usuarios reales (10 ítems + 5 complementarios) | ___ | |
+| U.4 | Lighthouse Accessibility | Job `lighthouse` en CI reporta Accessibility ≥ 90 % | ___ | \_\_\_\_ % |
+| U.5 | Lighthouse Performance | Job `lighthouse` en CI reporta Performance ≥ 80 % | ___ | \_\_\_\_ % |
+| U.6 | Memoria Descriptiva completa | `docs/memoria-descriptiva-hearguard-ai.md` contiene 13 capítulos, referencias ISO y anexos | ___ | |
+
+**Subtotal Usabilidad/Docs:** \_\_\_\_ / 18
+
+---
+
+### XIII. APP MÓVIL (Flutter 3)
 
 | N.° | Indicador observado | Comportamiento esperado | Valor | Observaciones |
 |:---:|---|---|:---:|---|
@@ -181,33 +198,34 @@ Registrar de manera sistemática y verificable el comportamiento funcional, el r
 
 ---
 
-### XIII. RESUMEN DE PUNTUACIÓN
+### XIV. RESUMEN DE PUNTUACIÓN
 
-| Módulo | Puntaje obtenido | Puntaje máximo | % |
-|---|:---:|:---:|:---:|
-| RF-01 — Autenticación | ___ | 21 | \_\_\_ % |
-| RF-02 — Monitoreo de ruido | ___ | 21 | \_\_\_ % |
-| RF-03 — Evaluación auditiva | ___ | 18 | \_\_\_ % |
-| RF-04 — Predicción IA | ___ | 18 | \_\_\_ % |
-| RF-05 — Resultados | ___ | 12 | \_\_\_ % |
-| RF-06 — Dispositivos IoT | ___ | 15 | \_\_\_ % |
-| RNF — No funcionales | ___ | 30 | \_\_\_ % |
-| Recursos — Eficiencia | ___ | 18 | \_\_\_ % |
-| App Móvil Flutter | ___ | 15 | \_\_\_ % |
-| **TOTAL** | **___** | **168** | **\_\_\_ %** |
+| Módulo | Indicadores | Puntaje obtenido | Puntaje máximo | % |
+|---|:---:|:---:|:---:|:---:|
+| RF-01 — Autenticación y sesión | 7 | ___ | 21 | \_\_\_ % |
+| RF-02 — Monitoreo de ruido | 7 | ___ | 21 | \_\_\_ % |
+| RF-03 — Evaluación auditiva | 6 | ___ | 18 | \_\_\_ % |
+| RF-04 — Predicción IA + Resiliencia | 8 | ___ | 24 | \_\_\_ % |
+| RF-05 — Resultados y recomendaciones | 4 | ___ | 12 | \_\_\_ % |
+| RF-06 — Dispositivos IoT | 5 | ___ | 15 | \_\_\_ % |
+| RNF — No funcionales | 10 | ___ | 30 | \_\_\_ % |
+| Recursos — Eficiencia (ISO 9126) | 6 | ___ | 18 | \_\_\_ % |
+| Usabilidad y Documentación (ISO 9126) | 6 | ___ | 18 | \_\_\_ % |
+| App Móvil Flutter | 5 | ___ | 15 | \_\_\_ % |
+| **TOTAL** | **64** | **___** | **192** | **\_\_\_ %** |
 
 **Nivel de cumplimiento:**
 
 | Rango | Nivel |
 |---|---|
-| 151 – 168 (90–100 %) | Excelente |
-| 134 – 150 (80–89 %) | Bueno |
-| 118 – 133 (70–79 %) | Regular |
-| < 118 (< 70 %) | Deficiente |
+| 173 – 192 (90–100 %) | Excelente |
+| 154 – 172 (80–89 %) | Bueno |
+| 135 – 153 (70–79 %) | Regular |
+| < 135 (< 70 %) | Deficiente |
 
 ---
 
-### XIV. OBSERVACIONES GENERALES
+### XV. OBSERVACIONES GENERALES
 
 \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
 \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
@@ -215,7 +233,7 @@ Registrar de manera sistemática y verificable el comportamiento funcional, el r
 
 ---
 
-### XV. FIRMAS
+### XVI. FIRMAS
 
 |  |  |
 |---|---|
