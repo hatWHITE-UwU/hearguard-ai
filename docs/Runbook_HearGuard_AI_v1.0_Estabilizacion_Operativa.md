@@ -36,7 +36,7 @@ La versión actual del repositorio incluye:
 | Frontend Angular 21 | Web + modo demo (`publicDemo`, `useDemoMocks`) |
 | App Flutter + firmware ESP32 | Clientes adicionales |
 | Calidad | SonarCloud: Quality Gate OK, cobertura 100 %, ratings A |
-| Pruebas | 507 casos automatizados (85 BDD Gherkin incluidos) + k6 (3 escenarios) |
+| Pruebas | 422 casos automatizados + k6 (3 escenarios) |
 | CI/CD | GitHub Actions + deploy Render/Vercel |
 
 Sin embargo, en pruebas operativas y despliegues pueden aparecer inconsistencias que deben resolverse **antes** de agregar nuevas funcionalidades de negocio (p. ej. multi-clínica, subdominios por institución).
@@ -364,7 +364,7 @@ docs/Runbook_HearGuard_AI_v1.0_Estabilizacion_Operativa.md
 Objetivo: estabilización operativa (NO nuevas features).
 
 Contexto: stack Node 3000 + Flask 5001 + Angular 4200/8080 + MongoDB;
-deploy Render+Vercel; JWT; modos publicDemo/useDemoMocks; 507 tests (85 BDD Gherkin incluidos); Sonar 100%.
+deploy Render+Vercel; JWT; modos publicDemo/useDemoMocks; 422 tests; Sonar 100%.
 
 Problemas a investigar con evidencia:
 1. Baseline limpio (Mongo, Docker volumes, localStorage, demo flags).
