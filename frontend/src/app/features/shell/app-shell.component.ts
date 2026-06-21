@@ -155,7 +155,239 @@ import { filter } from 'rxjs/operators';
       </div>
     </div>
   `,
-  styleUrl: './app-shell.component.scss',
+  styles: `
+    /* ── Base shell ── */
+    .shell {
+      display: flex;
+      flex-direction: row;
+      min-height: 100vh;
+      background: var(--bg-primary);
+    }
+
+    /* ── Backdrop (mobile) ── */
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 41;
+      width: min(260px, 85vw);
+      display: flex;
+      flex-direction: column;
+      padding: var(--space-lg) var(--space-gutter);
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      box-shadow: 8px 0 32px rgba(0, 0, 0, 0.4);
+      transform: translateX(-100%);
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow-y: auto;
+    }
+
+    .sidebar--open {
+      transform: translateX(0);
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: var(--space-lg);
+      padding-bottom: var(--space-md);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 10px;
+      border-radius: 10px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .sidebar-link svg { flex-shrink: 0; opacity: 0.65; transition: opacity 0.15s; }
+
+    .sidebar-link:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .sidebar-link:hover svg { opacity: 1; }
+
+    .sidebar-link.active {
+      color: var(--accent-cyan);
+      background: rgba(0, 229, 255, 0.1);
+      font-weight: 600;
+    }
+    .sidebar-link.active svg { opacity: 1; }
+
+    .sidebar-link:focus-visible {
+      outline: 2px solid var(--accent-cyan);
+      outline-offset: 1px;
+    }
+
+    /* ── Page wrap ── */
+    .page-wrap {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+      background: rgba(21, 29, 30, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .header-inner {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: var(--space-sm) var(--space-gutter);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .toolbar-title {
+      flex: 1;
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 600;
+      text-align: center;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .icon-btn {
+      flex-shrink: 0;
+      width: 40px; height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text-primary);
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .icon-btn:hover { background: rgba(255, 255, 255, 0.06); }
+    .icon-btn:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
+
+    .notif-btn { position: relative; }
+    .notif-badge {
+      position: absolute;
+      top: 8px; right: 8px;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent-purple);
+      border: 2px solid var(--bg-primary);
+    }
+
+    /* ── Main ── */
+    .main {
+      flex: 1;
+      width: 100%;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding-bottom: 76px;
+    }
+
+    /* ── Bottom nav (mobile) ── */
+    .bottom-nav {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      z-index: 20;
+      display: flex;
+      justify-content: space-around;
+      align-items: stretch;
+      padding: 6px var(--space-xs) calc(8px + env(safe-area-inset-bottom, 0));
+      background: rgba(13, 21, 22, 0.97);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid var(--border);
+    }
+
+    .bottom-link {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 6px 2px;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 0.6rem;
+      font-weight: 500;
+      line-height: 1.2;
+      transition: color 0.15s;
+    }
+    .bottom-link.active { color: var(--accent-cyan); }
+    .bottom-link:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 1px; }
+
+    /* ── Tablet / Desktop (≥768px) ── */
+    @media (min-width: 768px) {
+      .sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        width: 220px;
+        flex-shrink: 0;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .menu-btn { display: none; }
+
+      .bottom-nav { display: none; }
+
+      .main { padding-bottom: var(--space-xl); }
+
+      .toolbar-title { text-align: left; }
+    }
+
+    /* ── Large desktop (≥1200px) ── */
+    @media (min-width: 1200px) {
+      .sidebar { width: 240px; }
+    }
+  `,
 })
 export class AppShellComponent implements OnInit {
   private readonly router = inject(Router);

@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { Chart, registerables } from 'chart.js';
 import type { ChartData, ChartOptions } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
@@ -9,10 +10,11 @@ import {
   evaluationBarChartData,
   averageScoreFromRows,
 } from '../../core/data/demo-mocks';
+import type { ApiEnvelope } from '../../shared/models/auth.model';
+import type { EvaluationCreate, EvaluationDetail } from '../../shared/models/api.model';
 import { HearingTestService } from '../hearing-test/hearing-test.service';
 import type { FrequencyScoreRow } from '../hearing-test/hearing-test.service';
 import { GaugeComponent } from '../../shared/components/gauge/gauge.component';
-import { EvaluationService } from '../../core/services/evaluation.service';
 
 Chart.register(...registerables);
 
@@ -57,11 +59,46 @@ Chart.register(...registerables);
       }
     </div>
   `,
-  styleUrl: './results.component.scss',
+  styles: `
+    .page {
+      padding: 1rem;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+    .head {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .ghost {
+      background: none;
+      border: none;
+      color: var(--accent-cyan);
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+    .center {
+      display: flex;
+      justify-content: center;
+    }
+    .muted {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+    .danger {
+      color: var(--danger);
+    }
+    .link {
+      display: block;
+      text-align: center;
+      text-decoration: none;
+      margin-top: 1.25rem;
+    }
+  `,
 })
 export class ResultsComponent implements OnInit {
   readonly hearing = inject(HearingTestService);
-  private readonly evalService = inject(EvaluationService);
+  private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   readonly router = inject(Router);
 
@@ -92,8 +129,8 @@ export class ResultsComponent implements OnInit {
       this.chartData = evaluationBarChartData(d.rows);
       this.loading.set(false);
     } else if (id) {
-      this.evalService
-        .getById(id)
+      this.http
+        .get<ApiEnvelope<EvaluationDetail>>(`${environment.apiUrl}/api/evaluations/${id}`)
         .subscribe({
           next: (res) => {
             const ev = res.data.evaluation;
@@ -131,8 +168,8 @@ export class ResultsComponent implements OnInit {
       })),
       habitData: habit,
     };
-    this.evalService
-      .create(body)
+    this.http
+      .post<ApiEnvelope<EvaluationCreate>>(`${environment.apiUrl}/api/evaluations`, body)
       .subscribe({
         next: (res) => {
           const ev = res.data.evaluation;

@@ -45,7 +45,111 @@ const FILL_COLOR = 'rgba(0, 229, 255, 0.12)';
       </div>
     </div>
   `,
-  styleUrl: './monitor.component.scss',
+  styles: `
+    .page {
+      padding: var(--space-md) var(--space-gutter) var(--space-xl);
+      max-width: 600px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+
+    .hero-card {
+      text-align: center;
+      padding: var(--space-lg) var(--space-gutter);
+    }
+
+    .source-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted2);
+      margin: 0 0 var(--space-md);
+    }
+
+    .db-display {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 0.35rem;
+      margin-bottom: var(--space-sm);
+    }
+
+    .db-value {
+      font-size: 4.5rem;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      transition: color 0.4s ease;
+    }
+
+    .db-unit {
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      align-self: flex-end;
+      padding-bottom: 0.6rem;
+    }
+
+    .risk-tag {
+      display: inline-block;
+      padding: 4px 16px;
+      border-radius: var(--radius-pill);
+      border: 1px solid;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: var(--space-sm);
+      transition: color 0.4s ease, border-color 0.4s ease;
+    }
+
+    .oms-note {
+      font-size: 0.75rem;
+      color: var(--text-muted2);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .chart-section {
+      padding: var(--space-gutter);
+    }
+
+    .chart-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0 0 0.15rem;
+    }
+
+    .chart-hint {
+      font-size: 0.72rem;
+      color: var(--text-muted2);
+      margin: 0 0 var(--space-sm);
+    }
+
+    .chart-wrap {
+      height: 160px;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+    .save-btn {
+      border-radius: var(--radius-input);
+    }
+
+    @media (min-width: 768px) {
+      .page { padding: var(--space-lg) var(--space-margin); }
+      .db-value { font-size: 5.5rem; }
+      .chart-wrap { height: 200px; }
+    }
+  `,
 })
 export class MonitorComponent implements OnInit, OnDestroy {
   readonly noise = inject(NoiseMonitorService);

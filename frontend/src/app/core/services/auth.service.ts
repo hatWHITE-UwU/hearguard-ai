@@ -92,15 +92,6 @@ export class AuthService {
     return localStorage.getItem(ACCESS);
   }
 
-  patchMe(body: object): Observable<User> {
-    return this.http
-      .patch<ApiEnvelope<{ user: User }>>(`${environment.apiUrl}/api/auth/me`, body)
-      .pipe(
-        map((r) => r.data.user),
-        tap((u) => this.currentUser.set(u)),
-      );
-  }
-
   private persistSession(data: AuthResponse): void {
     localStorage.setItem(ACCESS, data.accessToken);
     localStorage.setItem(REFRESH, data.refreshToken);

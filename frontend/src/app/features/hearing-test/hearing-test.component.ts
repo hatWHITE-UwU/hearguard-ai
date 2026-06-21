@@ -99,7 +99,212 @@ import { HearingTestService } from './hearing-test.service';
       }
     </div>
   `,
-  styleUrl: './hearing-test.component.scss',
+  styles: `
+    .page {
+      padding: var(--space-md) var(--space-gutter) var(--space-xl);
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* ── Sin hábitos ── */
+    .no-habits {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-md);
+      padding: var(--space-lg) var(--space-gutter);
+      text-align: center;
+    }
+
+    .no-habits-icon {
+      width: 72px; height: 72px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      background: rgba(0, 229, 255, 0.08);
+      border: 2px solid rgba(0, 229, 255, 0.25);
+      color: var(--accent-cyan);
+    }
+
+    .no-habits-msg {
+      margin: 0;
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ── Barra de progreso ── */
+    .progress-bar-wrap {
+      margin-bottom: var(--space-md);
+    }
+
+    .progress-track {
+      height: 6px;
+      border-radius: 999px;
+      background: var(--bg-card2);
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--accent-gradient);
+      transition: width 0.35s ease;
+    }
+
+    .progress-label {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--text-muted2);
+      margin: 0;
+      text-align: right;
+    }
+
+    /* ── Tarjeta de paso ── */
+    .step-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-md);
+      padding: var(--space-lg) var(--space-gutter);
+      text-align: center;
+    }
+
+    .ear-badge {
+      margin: 0;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 999px;
+    }
+
+    .ear-left {
+      background: rgba(0, 229, 255, 0.12);
+      border: 1px solid rgba(0, 229, 255, 0.3);
+      color: var(--accent-cyan);
+    }
+
+    .ear-right {
+      background: rgba(124, 77, 255, 0.12);
+      border: 1px solid rgba(124, 77, 255, 0.3);
+      color: #c0acff;
+    }
+
+    .hz-label {
+      margin: 0;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.04em;
+    }
+
+    /* ── Visualizador ── */
+    .visualizer {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 5px;
+      height: 56px;
+      width: 100%;
+    }
+
+    .vis-bar {
+      width: 7px;
+      min-height: 6px;
+      border-radius: 4px;
+      background: var(--accent-cyan);
+      opacity: 0.7;
+      transition: height 0.05s ease;
+    }
+
+    /* ── Botón play ── */
+    .play-btn {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      border: 2px solid rgba(124, 77, 255, 0.5);
+      background: rgba(124, 77, 255, 0.15);
+      color: #c0acff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+    }
+
+    .play-btn--on {
+      background: rgba(124, 77, 255, 0.35);
+      border-color: var(--accent-purple);
+      color: #fff;
+    }
+
+    .play-btn:focus-visible {
+      outline: 2px solid var(--accent-cyan);
+      outline-offset: 3px;
+    }
+
+    .question {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* ── Slider de volumen ── */
+    .vol-row {
+      width: 100%;
+      text-align: left;
+    }
+
+    .vol-range {
+      width: 100%;
+      accent-color: var(--accent-cyan);
+      cursor: pointer;
+    }
+
+    /* ── Botones CTA ── */
+    .cta-row {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+      width: 100%;
+    }
+
+    .btn-ghost {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-input);
+      border: 1px solid rgba(0, 229, 255, 0.3);
+      background: transparent;
+      color: var(--accent-cyan);
+      font-weight: 600;
+      font-size: 0.9rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(0, 229, 255, 0.06);
+      border-color: rgba(0, 229, 255, 0.55);
+    }
+
+    .btn-ghost:focus-visible {
+      outline: 2px solid var(--accent-cyan);
+      outline-offset: 2px;
+    }
+
+    .cta-heard {
+      border-radius: var(--radius-input);
+    }
+
+    @media (min-width: 768px) {
+      .page { padding: var(--space-lg) var(--space-margin); }
+      .hz-label { font-size: 3rem; }
+    }
+  `,
 })
 export class HearingTestComponent implements OnDestroy {
   readonly hearing = inject(HearingTestService);

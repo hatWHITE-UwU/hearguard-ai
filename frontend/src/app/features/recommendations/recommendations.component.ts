@@ -1,8 +1,9 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { DEMO_RECOMMENDATION_BULLETS } from '../../core/data/demo-mocks';
-import { EvaluationService } from '../../core/services/evaluation.service';
+import type { ApiEnvelope } from '../../shared/models/auth.model';
 
 @Component({
   selector: 'hg-recommendations',
@@ -40,15 +41,56 @@ import { EvaluationService } from '../../core/services/evaluation.service';
       </button>
     </div>
   `,
-  styleUrl: './recommendations.component.scss',
+  styles: `
+    .page {
+      padding: 1rem;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    .head {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .ghost {
+      background: none;
+      border: none;
+      color: var(--accent-cyan);
+      cursor: pointer;
+    }
+    .lead {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    .top h3 {
+      margin-top: 0;
+      color: var(--accent-cyan);
+    }
+    .row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      align-items: center;
+    }
+    button.hg-btn-primary {
+      margin-top: 1.25rem;
+    }
+    .muted {
+      color: var(--text-muted);
+    }
+  `,
 })
 export class RecommendationsComponent implements OnInit {
-  private readonly evalService = inject(EvaluationService);
+  private readonly http = inject(HttpClient);
   readonly router = inject(Router);
   readonly items = signal<string[]>([]);
 
   ngOnInit(): void {
-    this.evalService.getLatest().subscribe({
+    this.http
+      .get<ApiEnvelope<{ items: { recommendations?: string[] }[] }>>(
+        `${environment.apiUrl}/api/evaluations?limit=1`,
+      )
+      .subscribe({
         next: () => {
           if (environment.useDemoMocks) {
             this.items.set([...DEMO_RECOMMENDATION_BULLETS]);

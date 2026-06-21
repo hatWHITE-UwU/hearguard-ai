@@ -8,7 +8,16 @@ import { Component, input, computed } from '@angular/core';
       tag()
     }}</span>
   `,
-  styleUrl: './risk-badge.component.scss',
+  styles: `
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+  `,
 })
 export class RiskBadgeComponent {
   readonly level = input<string>('bajo');
