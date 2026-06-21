@@ -1,35 +1,19 @@
-"""Entrena RandomForest sobre dataset sintético y guarda risk_model.pkl + model_metadata.json."""
+"""Entrena RandomForest sobre dataset sintético y guarda risk_model.pkl."""
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import random
-from datetime import datetime, timezone
 
 _LOG = logging.getLogger(__name__)
 
 import joblib
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, root_mean_squared_error
 from sklearn.model_selection import train_test_split
 
 from model.features import build_feature_vector
-
-FEATURE_NAMES = [
-    "age",
-    "headphoneHours",
-    "volumeLevel",
-    "noiseExposure",
-    "occupationRisk",
-    "smoking",
-    "avgTestScore",
-    "lowFreqScore",
-]
-
-MODEL_VERSION = "risk_rf_v1"
 
 SEED = 42
 random.seed(SEED)
@@ -85,16 +69,6 @@ def _synthetic_row() -> tuple[list[float], float]:
     return x, risk
 
 
-RF_PARAMS: dict = {
-    "n_estimators": 120,
-    "max_depth": 12,
-    "min_samples_leaf": 1,
-    "max_features": 1.0,
-    "random_state": SEED,
-    "n_jobs": -1,
-}
-
-
 def train_and_save() -> str:
     x_rows: list[list[float]] = []
     y_vals: list[float] = []
@@ -110,50 +84,22 @@ def train_and_save() -> str:
         x_arr, y_arr, test_size=0.2, random_state=SEED
     )
 
-    model = RandomForestRegressor(**RF_PARAMS)
+    model = RandomForestRegressor(
+        n_estimators=120,
+        max_depth=12,
+        min_samples_leaf=1,
+        max_features=1.0,
+        random_state=SEED,
+        n_jobs=-1,
+    )
     model.fit(x_train, y_train)
-
-    y_pred = model.predict(x_test)
-    r2 = float(model.score(x_test, y_test))
-    mae = float(mean_absolute_error(y_test, y_pred))
-    rmse = float(root_mean_squared_error(y_test, y_pred))
+    score = model.score(x_test, y_test)
 
     out_dir = os.path.join(os.path.dirname(__file__), "saved")
     os.makedirs(out_dir, exist_ok=True)
-
     out_path = os.path.join(out_dir, "risk_model.pkl")
-    joblib.dump({"model": model, "r2_holdout": r2}, out_path)
-
-    metadata = {
-        "model_version": MODEL_VERSION,
-        "algorithm": "RandomForestRegressor",
-        "trained_at": datetime.now(timezone.utc).isoformat(),
-        "hyperparameters": {k: v for k, v in RF_PARAMS.items() if k != "n_jobs"},
-        "features": FEATURE_NAMES,
-        "dataset": {
-            "n_samples": N_SAMPLES,
-            "n_train": len(x_train),
-            "n_test": len(x_test),
-            "test_size": 0.2,
-            "seed": SEED,
-            "source": "synthetic",
-        },
-        "metrics": {
-            "r2_holdout": round(r2, 4),
-            "mae_holdout": round(mae, 4),
-            "rmse_holdout": round(rmse, 4),
-        },
-        "score_range": {"min": 0, "max": 100},
-        "output_file": "risk_model.pkl",
-    }
-    meta_path = os.path.join(out_dir, "model_metadata.json")
-    with open(meta_path, "w", encoding="utf-8") as f:
-        json.dump(metadata, f, indent=2, ensure_ascii=False)
-
-    _LOG.info(
-        "Modelo guardado en %s | R²=%.3f MAE=%.2f RMSE=%.2f",
-        out_path, r2, mae, rmse,
-    )
+    joblib.dump({"model": model, "r2_holdout": float(score)}, out_path)
+    _LOG.info("Modelo guardado en %s (R2 holdout ~ %.3f)", out_path, score)
     return out_path
 
 
