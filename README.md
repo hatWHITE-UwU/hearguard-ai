@@ -8,38 +8,6 @@
 
 Plataforma de salud auditiva preventiva con IA. Monitorea la exposición al ruido en tiempo real, realiza pruebas auditivas por cuestionario y genera predicciones de riesgo personalizadas mediante un modelo de Machine Learning.
 
-### Identificación del software
-
-| Campo | Valor |
-|-------|--------|
-| **Nombre** | HearGuard AI |
-| **Descripción funcional** | Sistema Inteligente para la Prevención y Predicción de la Pérdida Auditiva |
-| **Versión** | v1.0 |
-| **Autores** | Luis Francisco Terreros Hinojosa · Hardy Eduardo Rondinel Aquino |
-| **Institución** | Universidad Continental, Perú — Ingeniería de Sistemas |
-| **Repositorio** | [github.com/hatWHITE-UwU/hearguard-ai](https://github.com/hatWHITE-UwU/hearguard-ai) |
-
----
-
-## Estado del proyecto (mayo 2026)
-
-Hitos principales completados en el repositorio:
-
-| Área | Logro |
-|------|--------|
-| **Funcionalidad** | API REST (auth, ruido, evaluaciones, dispositivos IoT), web Angular, app Flutter, firmware ESP32, microservicio IA Flask |
-| **Metodología** | TDD + BDD (principal) documentado en [`docs/metodologia.md`](docs/metodologia.md); CRISP-DM para el modelo ML |
-| **Pruebas** | **507** casos automatizados (207+30+107+42+36+85 BDD) + **3** escenarios k6; plan IEEE 829 en [`docs/plan-de-pruebas.md`](docs/plan-de-pruebas.md) |
-| **Trazabilidad** | 60 RF + 10 RNF → BDD → tests en [`docs/matriz-trazabilidad.md`](docs/matriz-trazabilidad.md) |
-| **SonarCloud** | Quality Gate **OK** · Security / Reliability / Maintainability **A** · **0** issues · duplicación **0 %** · cobertura **100 %** |
-| **CI/CD** | GitHub Actions **10 jobs** (backend, ai-service, frontend, bdd, e2e, flutter, sonarcloud, k6-smoke, lighthouse, deploy) + Render + Vercel |
-| **Cobertura** | Job `sonarcloud` con artefactos lcov/coverage.xml; script [`scripts/fix-sonar-coverage-paths.js`](scripts/fix-sonar-coverage-paths.js) para mapeo de rutas |
-| **Seguridad** | Suite `security.test.js`; correcciones S2068, S5147, regresiones C→A en Sonar |
-| **Documentación académica** | [`docs/articulo.md`](docs/articulo.md), matriz Excel [`docs/matriz-registro-hearguard.xlsx`](docs/matriz-registro-hearguard.xlsx) |
-| **Operaciones** | Runbook v1.0 + Prompt maestro para ejecución por fases (estabilización y routing multi-entorno) |
-
-No quedan pendientes documentados para el MVP v1.0.
-
 ---
 
 ## Arquitectura
@@ -77,8 +45,7 @@ No quedan pendientes documentados para el MVP v1.0.
 | Base de datos | MongoDB Atlas M0 |
 | Auth | JWT (access 15min + refresh 7d, rotación SHA-256) |
 | IoT | ESP32 + KY-037, puente serial Node.js |
-| CI | GitHub Actions (backend, AI, frontend, e2e, flutter, **sonarcloud**, deploy) |
-| Calidad estática | SonarCloud (análisis CI con `SONAR_TOKEN` + `sonar-project.properties`) |
+| CI | GitHub Actions (backend, AI, Angular, Playwright E2E, Flutter) + SonarCloud GitHub App |
 | Deploy | GitHub Container Registry → Render (backend + AI) + Vercel (frontend) |
 | Metodología | **TDD + BDD** (principal) y **CRISP-DM** (modelo de IA) — ver [`docs/metodologia.md`](docs/metodologia.md) y [`docs/articulo.md`](docs/articulo.md) |
 | Calidad SonarCloud | Quality Gate **Aprobado** · Security **A** · Reliability **A** · Maintainability **A** · 0 issues abiertas · 13 K LOC · duplicación **0 %** · cobertura **100 %** |
@@ -250,15 +217,15 @@ Plan detallado de casos (IDs, precondiciones, resultados esperados): [`docs/plan
 
 | Capa | Comando | Pruebas |
 |------|---------|---------|
-| Backend (API + Seguridad) | `cd backend && npm test -- --runInBand` | **207** (Jest + Supertest — auth, noise, evaluation, device, middleware, seguridad, env, logger, coverage-extra, evaluation-ai) |
+| Backend (API + Seguridad) | `cd backend && npm test -- --runInBand` | **230** (Jest + Supertest — auth, noise, evaluation, device, middleware, seguridad, env, logger, coverage-extra, evaluation-ai, ai.service) |
 | AI Service | `cd ai-service && pytest tests/ -v` | **30** (test_predictor.py × 7 + test_api.py × 23) |
 | Frontend Angular | `cd frontend && npm run test:ci` | **107** (auth service, interceptor, guards, hearing-test, noise-monitor, gauge, risk-badge, app) |
 | Flutter | `cd flutter_app && flutter test` | **42** (user, api_response, hearing_mapper, auth_service) |
 | E2E Playwright | `cd e2e && npx playwright test --project=chromium` | **36** (smoke + autenticación + prueba auditiva, chromium contra Vercel preview) |
-| BDD Cucumber | `cd bdd && npm test` | **85** escenarios Gherkin (API backend implementados; frontend/hardware/IA → pending) |
+| BDD Gherkin | `cd bdd && npm test` | **85** (6 archivos .feature — auth, ruido, auditiva, IA, IoT, resultados — Cucumber.js) |
 | Rendimiento k6 | `k6 run tests/k6/load-test.js` | 3 escenarios (smoke / load / spike) |
 
-**Total automatizado:** **507** casos de prueba + 3 escenarios de rendimiento (85 BDD Gherkin incluidos).
+**Total automatizado:** **530** casos de prueba (230+30+107+42+36+85) + 3 escenarios de rendimiento.
 
 > **Nota:** el backend se ejecuta con `--runInBand` para garantizar cobertura precisa — la ejecución paralela produce conflictos de conexión MongoDB cuando hay múltiples workers simultáneos.
 
@@ -282,15 +249,6 @@ Detalle por módulo y tipo IEEE/ISO: ver sección 3 de [`docs/plan-de-pruebas.md
 
 ### BDD — Gherkin / Cucumber
 
-Ejecutar localmente (requiere MongoDB en `127.0.0.1:27017` o sin él — usará `mongodb-memory-server`):
-
-```bash
-cd bdd
-npm install          # solo la primera vez
-npm test             # todos los escenarios
-npm run test:api     # solo escenarios API (excluye @frontend/@hardware/@ai)
-```
-
 Escenarios conductuales en lenguaje natural (Given / When / Then) en [`docs/features/`](docs/features/):
 
 | Feature | Escenarios |
@@ -308,22 +266,18 @@ Escenarios conductuales en lenguaje natural (Given / When / Then) en [`docs/feat
 
 ### CI automático (GitHub Actions)
 
-Workflow [`ci.yml`](.github/workflows/ci.yml) en cada push a `main`/`develop` y en pull requests:
+Workflow [`ci.yml`](.github/workflows/ci.yml) en cada push a `main`/`develop` y en pull requests. Seis jobs:
 
 | Job | Qué hace |
 |-----|----------|
-| `backend` | ESLint + Jest (`--runInBand`) con MongoDB 7 + umbral cobertura ≥ 60 % + artefacto `lcov.info` |
-| `ai-service` | `python -m model.trainer` (`SEED=42`) + pytest `--cov-fail-under=60` + `coverage.xml` |
-| `frontend` | ESLint + Vitest (Chromium) + `ng build` + artefacto lcov (`hearguard-frontend/`) |
-| `bdd` | Cucumber.js contra Express app con MongoDB en memoria — 85 escenarios Gherkin; artefacto HTML |
-| `e2e` | Playwright contra preview Vercel; reporte HTML como artefacto |
-| `k6-smoke` | K6 smoke (1 VU, 30 s) contra backend en producción; artefacto HTML (`reports/k6/`) |
-| `lighthouse` | Lighthouse CI contra Vercel — accessibility ≥ 90 % (error), perf/BP/SEO ≥ 80/85/80 (warn) |
+| `backend` | **ESLint** (`npm run lint`) + Tests Jest (MongoDB en servicio) + verificación de cobertura de líneas ≥ 60 % parseando `coverage/lcov.info` |
+| `ai-service` | Entrena modelo (`python -m model.trainer`, `SEED=42`) + pytest con `--cov-fail-under=60` |
+| `frontend` | `npm run lint` + `npm run test:ci` (Vitest sobre Chromium) + `ng build` |
+| `e2e` | Playwright sobre Chromium contra el preview de Vercel; reporte HTML subido como artefacto |
 | `flutter` | `flutter analyze` + `flutter test --coverage` |
-| `sonarcloud` | Descarga coberturas, ejecuta `fix-sonar-coverage-paths.js`, escaneo SonarCloud scan-action v6 |
-| `deploy` | Solo en `main`: hooks Render (backend + IA) y Vercel (frontend) |
+| `deploy` | Solo en push a `main`: hooks Render (backend + IA) y Vercel (frontend) tras la aprobación de los jobs anteriores |
 
-**SonarCloud:** requiere secret `SONAR_TOKEN` y **Automatic Analysis desactivado** en el proyecto SonarCloud. La cobertura se inyecta desde los artefactos de los jobs anteriores (ver [`sonar-project.properties`](sonar-project.properties)).
+> El análisis estático de **SonarCloud** se ejecuta de forma automática vía el GitHub App "SonarCloud Automatic Analysis", no como job del workflow. Cada push a `main` dispara el escaneo y publica el resultado en el Quality Gate del proyecto.
 
 Workflow adicional [`deploy.yml`](.github/workflows/deploy.yml): build de imágenes Docker (GHCR) y despliegue manual o por push.
 
@@ -340,16 +294,8 @@ Configura los siguientes secrets en GitHub → Settings → Secrets:
 | `VERCEL_ORG_ID` | ID de organización Vercel |
 | `VERCEL_PROJECT_ID` | ID de proyecto Vercel |
 | `VERCEL_FRONTEND_HOOK` | Deploy hook de Vercel (usado en `ci.yml`) |
-| `SONAR_TOKEN` | Token de análisis SonarCloud (job `sonarcloud` en `ci.yml`) |
-| `VERCEL_FRONTEND_URL` | URL del frontend en Vercel (jobs `e2e` y `lighthouse`) |
 
 Ejecutar deploy manualmente: GitHub → Actions → **Deploy** → Run workflow.
-
-Regenerar matriz de registro académica (Excel):
-
-```bash
-python scripts/generar-matriz-registro.py
-```
 
 ---
 
@@ -360,7 +306,7 @@ python scripts/generar-matriz-registro.py
 | Herramienta | Scope | Reglas clave |
 |-------------|-------|-------------|
 | **ESLint** (`backend/eslint.config.js`) | Node.js backend | `eslint-plugin-n` (Node builtins), `eslint-plugin-security` (OWASP), `eqeqeq`, `no-shadow`, `no-return-await` |
-| **SonarCloud** (job CI + `sonar-project.properties`) | Backend + Frontend + AI | Quality Gate **OK** — 0 issues · Security / Reliability / Maintainability **A** · duplicación **0 %** · cobertura **100 %** |
+| **SonarCloud** (GitHub App de Análisis Automático) | Backend + Frontend + AI | Quality Gate **Aprobado** — 0 bugs, 0 vulnerabilidades, 0 code smells abiertos · Security **A** · Reliability **A** · Maintainability **A** · duplicación **0 %** · cobertura **100 %** sobre 13 K LOC |
 | **flutter analyze** | App móvil | Análisis estático Dart |
 
 Ejecutar lint backend:
@@ -399,12 +345,9 @@ Análisis McCabe (1976) de las 17 funciones críticas: [`docs/complejidad-ciclom
 | [`docs/matriz-trazabilidad.md`](docs/matriz-trazabilidad.md) | Matriz IEEE 829 — 60 RF + 10 RNF → BDD → tests → estado |
 | [`docs/matriz-registro-hearguard.xlsx`](docs/matriz-registro-hearguard.xlsx) | Matriz de registro (Intents/Bolts, evidencia IA, avance) — regenerar con `python scripts/generar-matriz-registro.py` |
 | [`docs/Runbook_HearGuard_AI_v1.0_Estabilizacion_Operativa.md`](docs/Runbook_HearGuard_AI_v1.0_Estabilizacion_Operativa.md) | Runbook operativo v1.0 — baseline, puertos, auth, polling y routing multi-entorno |
-| [`docs/PROMPT_MAESTRO_Ejecucion_Controlada_Runbook_HearGuard_AI_v1.0.md`](docs/PROMPT_MAESTRO_Ejecucion_Controlada_Runbook_HearGuard_AI_v1.0.md) | Prompt maestro para ejecutar cada fase del Runbook (0–9) con informe de cumplimiento |
-| [`docs/runbook/informes-cumplimiento/`](docs/runbook/informes-cumplimiento/) | Plantilla `Informe_Fase_TEMPLATE.md` para certificar cada fase |
-| [`docs/metodologia.md`](docs/metodologia.md) | Metodología TDD+BDD + CRISP-DM con referencias APA |
-| [`docs/articulo.md`](docs/articulo.md) | Borrador del artículo / paper del proyecto |
-| [`docs/api-spec.yml`](docs/api-spec.yml) | Especificación OpenAPI 3.1 — 18 endpoints. Swagger UI en `/api/docs` |
-| [`docs/features/`](docs/features/) | 6 archivos Gherkin — 85 escenarios BDD |
+| [`docs/PROMPT_MAESTRO_Ejecucion_Controlada_Runbook_HearGuard_AI_v1.0.md`](docs/PROMPT_MAESTRO_Ejecucion_Controlada_Runbook_HearGuard_AI_v1.0.md) | Prompt maestro para ejecutar cada fase del Runbook con informe de cumplimiento |
+| [`docs/api-spec.yml`](docs/api-spec.yml) | Especificación OpenAPI 3.1 — 18 endpoints con esquemas completos. Swagger UI interactivo en `/api/docs` |
+| [`docs/features/`](docs/features/) | 6 Feature files Gherkin — 85 escenarios BDD |
 
 ---
 
@@ -439,7 +382,7 @@ hearguard-ai/
 ├── ai-service/                   Flask + scikit-learn
 │   ├── model/                    trainer (numpy default_rng, SEED=42) · predictor · constants.py
 │   └── tests/                    30 tests pytest (test_predictor × 7 + test_api × 23)
-├── frontend/                     Angular 21 SPA (standalone + Signals)
+├── frontend/                     Angular 17+ SPA (standalone + Signals)
 │   ├── src/app/
 │   │   ├── core/
 │   │   │   ├── guards/           auth.guard.ts
@@ -473,18 +416,11 @@ hearguard-ai/
 │   ├── hearguard_sensor/         Arduino Uno (modo serial)
 │   ├── wokwi/                    Simulación ESP32 (diagram.json, sketch.ino)
 │   └── serial_bridge.js          Puente serie → backend Node.js
-├── docs/
-│   ├── metodologia.md · articulo.md · plan-de-pruebas.md · matriz-trazabilidad.md
-│   ├── Runbook_HearGuard_AI_v1.0_Estabilizacion_Operativa.md
-│   ├── PROMPT_MAESTRO_Ejecucion_Controlada_Runbook_HearGuard_AI_v1.0.md
-│   ├── matriz-registro-hearguard.xlsx
-│   ├── features/                 6 .feature Gherkin (85 escenarios)
-│   └── runbook/informes-cumplimiento/
+├── docs/                         metodologia.md · articulo.md · plan-de-pruebas.md
+│   │                             complejidad-ciclomatica.md · matriz-trazabilidad.md · api-spec.yml
+│   └── features/                 6 .feature Gherkin (85 escenarios BDD)
 ├── Document/                     Roadmap técnico por fases
-├── scripts/
-│   ├── generar-matriz-registro.py    Excel matriz Intents/Bolts (curso UC)
-│   ├── fix-sonar-coverage-paths.js   prefijos lcov para SonarCloud
-│   └── claude-*.ps1 · list-claude-sessions.ps1
+├── scripts/                      utilidades Claude Code (resume / continue / list-sessions)
 ├── docker/                       Dockerfiles + nginx config
 ├── .github/workflows/            ci.yml + deploy.yml
 └── docker-compose.yml            Stack completo local
@@ -492,18 +428,7 @@ hearguard-ai/
 
 ---
 
-## Scripts útiles
-
-| Script | Uso |
-|--------|-----|
-| `python scripts/generar-matriz-registro.py` | Genera `docs/matriz-registro-hearguard.xlsx` |
-| `node scripts/fix-sonar-coverage-paths.js` | Corrige rutas `SF:` en lcov antes del scan SonarCloud |
-| `npm run docker:up` / `docker:down` | Stack completo local (ver `package.json` raíz) |
-| `k6 run tests/k6/load-test.js` | Pruebas de rendimiento (smoke / load / spike) |
-
----
-
 ## Licencia
 
-MIT — Universidad Continental · Ingeniería de Sistemas · Luis Francisco Terreros Hinojosa · Hardy Eduardo Rondinel Aquino
+MIT — Universidad Continental · Ingeniería de Sistemas
 

@@ -36,6 +36,23 @@ describe('HearGuard API — Fase 1', () => {
     });
   });
 
+  describe('GET /metrics', () => {
+    it('responde 200 con métricas de memoria y CPU del proceso', async () => {
+      const res = await request(app).get('/metrics').expect(200);
+      expect(res.body.success).toBe(true);
+      const { memory, cpu, uptime_s } = res.body.data;
+      expect(typeof uptime_s).toBe('number');
+      expect(typeof memory.heap_used_mb).toBe('number');
+      expect(typeof memory.heap_total_mb).toBe('number');
+      expect(typeof memory.rss_mb).toBe('number');
+      expect(typeof memory.external_mb).toBe('number');
+      expect(typeof cpu.user_ms).toBe('number');
+      expect(typeof cpu.system_ms).toBe('number');
+      expect(memory.heap_used_mb).toBeGreaterThan(0);
+      expect(memory.heap_used_mb).toBeLessThanOrEqual(memory.heap_total_mb);
+    });
+  });
+
   describe('GET /api', () => {
     it('lista rutas principales (comprobación rápida)', async () => {
       const res = await request(app).get('/api').expect(200);

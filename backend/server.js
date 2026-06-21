@@ -82,6 +82,28 @@ app.get('/health', (_req, res) => {
   });
 });
 
+// Utilización de recursos — ISO 9126 Eficiencia › sub-característica "Utilización de recursos"
+app.get('/metrics', (_req, res) => {
+  const mem = process.memoryUsage();
+  const cpu = process.cpuUsage();
+  res.status(200).json({
+    success: true,
+    data: {
+      uptime_s: Math.round(process.uptime()),
+      memory: {
+        rss_mb:        +(mem.rss          / 1024 / 1024).toFixed(2),
+        heap_used_mb:  +(mem.heapUsed     / 1024 / 1024).toFixed(2),
+        heap_total_mb: +(mem.heapTotal    / 1024 / 1024).toFixed(2),
+        external_mb:   +(mem.external     / 1024 / 1024).toFixed(2),
+      },
+      cpu: {
+        user_ms:   +(cpu.user   / 1000).toFixed(2),
+        system_ms: +(cpu.system / 1000).toFixed(2),
+      },
+    },
+  });
+});
+
 const apiRouter = express.Router();
 if (env.NODE_ENV !== 'test') {
   apiRouter.use(apiLimiter);

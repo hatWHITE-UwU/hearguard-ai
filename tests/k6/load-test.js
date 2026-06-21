@@ -21,11 +21,17 @@ import { textSummary } from 'https://jslib.k6.io/k6-summary/0.0.2/index.js';
 
 // ── Custom metrics ────────────────────────────────────────────────────────────
 
-const authErrors = new Counter('auth_errors');
-const noiseErrors = new Counter('noise_errors');
-const successRate = new Rate('success_rate');
+const authErrors    = new Counter('auth_errors');
+const noiseErrors   = new Counter('noise_errors');
+const successRate   = new Rate('success_rate');
 const loginDuration = new Trend('login_duration_ms', true);
 const noiseDuration = new Trend('noise_post_duration_ms', true);
+
+// ISO 9126 — Eficiencia › Utilización de recursos
+const heapUsedMb  = new Trend('resource_heap_used_mb',  true);
+const rssMb       = new Trend('resource_rss_mb',        true);
+const uptimeS     = new Trend('resource_uptime_s',      true);
+const memWarnings = new Counter('resource_mem_warnings');    // heap > umbral
 
 // ── Scenario definitions ──────────────────────────────────────────────────────
 
@@ -75,11 +81,15 @@ export const options = {
     : { smoke: SMOKE_SCENARIO, load: LOAD_SCENARIO, spike: SPIKE_SCENARIO },
 
   thresholds: {
-    http_req_duration: ['p(95)<2000', 'p(99)<5000'],
-    http_req_failed: ['rate<0.05'],
-    success_rate: ['rate>0.95'],
-    login_duration_ms: ['p(90)<1500'],
-    noise_post_duration_ms: ['p(90)<1000'],
+    http_req_duration:       ['p(95)<2000', 'p(99)<5000'],
+    http_req_failed:         ['rate<0.05'],
+    success_rate:            ['rate>0.95'],
+    login_duration_ms:       ['p(90)<1500'],
+    noise_post_duration_ms:  ['p(90)<1000'],
+    // ISO 9126 — Utilización de recursos
+    resource_heap_used_mb:   ['p(95)<200'],  // heap < 200 MB en el p95
+    resource_rss_mb:         ['p(95)<350'],  // RSS  < 350 MB en el p95
+    resource_mem_warnings:   ['count<5'],    // menos de 5 picos de heap > 150 MB
   },
 };
 
@@ -186,7 +196,35 @@ export default function vuLoop() {
     check(week, { 'stats/week 200': (r) => r.status === 200 });
   });
 
-  sleep(1);
+  sleep(0.5);
+
+  // ISO 9126 — Eficiencia › Utilización de recursos
+  group('Resource utilization', () => {
+    const res = http.get(`${BASE_URL}/metrics`);
+    const ok = check(res, {
+      'metrics 200':            (r) => r.status === 200,
+      'metrics has memory':     (r) => !!JSON.parse(r.body).data?.memory,
+      'metrics has cpu':        (r) => !!JSON.parse(r.body).data?.cpu,
+    });
+
+    if (ok && res.status === 200) {
+      const d = JSON.parse(res.body).data;
+      const heap = d.memory.heap_used_mb;
+      const rss  = d.memory.rss_mb;
+
+      heapUsedMb.add(heap);
+      rssMb.add(rss);
+      uptimeS.add(d.uptime_s);
+
+      // registrar advertencia si el heap supera 150 MB
+      if (heap > 150) {
+        memWarnings.add(1);
+        console.warn(`[resources] heap alto: ${heap} MB`);
+      }
+    }
+  });
+
+  sleep(0.5);
 }
 
 export function setup() {
