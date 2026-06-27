@@ -307,16 +307,93 @@ INICIO
 FIN
 ```
 
-### 6.3 Procedimientos Principales
+### 6.3 Procedimientos Principales — Backend Vinculado
 
-| Procedimiento | Descripción | Archivo |
-|---|---|---|
-| Autenticación JWT | Emisión, validación y rotación de tokens | `backend/src/services/auth.service.js` |
-| Clasificación de ruido | Cálculo de nivel dB y asignación de categoría | `frontend/src/app/features/monitor/` |
-| Construcción del vector IA | Extracción de 8 features desde la evaluación | `ai-service/model/features.py` |
-| Predicción de riesgo | Inferencia del modelo Random Forest serializado | `ai-service/model/predictor.py` |
-| Retry + Circuit Breaker | Resiliencia en llamadas al microservicio Flask | `backend/src/services/ai.service.js` |
-| Soft delete | Borrado lógico en todas las colecciones | Todos los modelos Mongoose |
+> Documento completo con flujos paso a paso, líneas exactas y modelos de datos:
+> **`docs/procedimientos-backend-hearguard-ai.md`**
+
+#### PROC-AUTH-01 — Registro de Usuario
+- **Ruta:** `POST /api/auth/register` → `backend/src/routes/auth.routes.js:13`
+- **Controlador:** `auth.controller.js` → función `register()` línea **53**
+- **Flujo resumido:** validar email único → bcrypt.hash(12) → User.create → JWT(15min) + refreshToken(SHA-256) → HTTP 201
+
+#### PROC-AUTH-02 — Inicio de Sesión
+- **Ruta:** `POST /api/auth/login` → `backend/src/routes/auth.routes.js:15`
+- **Controlador:** `auth.controller.js` → función `login()` línea **123**
+- **Flujo resumido:** bcrypt.compare (siempre ejecutado, anti-timing) → generar par tokens → guardar hash en BD → HTTP 200
+
+#### PROC-AUTH-03 — Renovación de Token
+- **Ruta:** `POST /api/auth/refresh` → `backend/src/routes/auth.routes.js:17`
+- **Controlador:** `auth.controller.js` → función `refresh()` línea **188**
+- **Flujo resumido:** safeEqualHex(SHA-256 presentado, hash almacenado) → rotar tokens → HTTP 200
+
+#### PROC-NOISE-01 — Registrar Lectura de Ruido (web/móvil)
+- **Ruta:** `POST /api/noise` → `backend/src/routes/noise.routes.js:18`
+- **Controlador:** `noise.controller.js` → función `create()` línea **23**
+- **Servicio:** `noise.service.js` → `classifyRiskTag(dbLevel)` línea **14**
+- **Flujo resumido:** autenticar → validar dbLevel → classifyRiskTag → NoiseRecord.create → HTTP 201
+
+#### PROC-NOISE-02 — Lectura IoT desde ESP32
+- **Ruta:** `POST /api/noise/iot` → `backend/src/routes/noise.routes.js:14`
+- **Controlador:** `noise.controller.js` → función `createIot()` línea **84**
+- **Flujo resumido:** verificar X-Device-Key (SHA-256) → classifyRiskTag → NoiseRecord.create → Device.lastSeen → HTTP 201
+
+#### PROC-NOISE-03 — Estadísticas del día / semana
+- **Rutas:** `GET /api/noise/stats/today` (línea 24) · `GET /api/noise/stats/week` (línea 26)
+- **Servicio:** `noise.service.js` → `statsForToday()` línea **45** · `statsForWeek()` línea **65**
+- **Flujo resumido:** filtrar por userId + rango de fecha → computeStats(count/avg/max/min/byLevel) → HTTP 200
+
+#### PROC-EVAL-01 — Crear Evaluación Auditiva + Predicción IA
+- **Ruta:** `POST /api/evaluations` → `backend/src/routes/evaluation.routes.js:16`
+- **Controlador:** `evaluation.controller.js` → función `create()` línea **115**
+- **Flujo resumido:**
+  1. `aggregateTestScoresByFrequency()` línea **25** → avgTestScore, lowFreqScore
+  2. `buildAiPayload()` línea **50** → vector 8 features
+  3. `applyAiPrediction()` línea **74**:
+     - `ai.service.postPredictRisk()` línea **115** → retry + circuit breaker → Flask
+     - `RiskResult.create()` → persiste riskScore, riskLevel, topFactors
+  4. HTTP 201 → { evaluation, riskResult, recommendations }
+
+#### PROC-AI-01 — Retry con Backoff Exponencial (Circuit Breaker)
+- **Archivo:** `backend/src/services/ai.service.js`
+- **Función:** `postJson()` línea **57**
+
+```
+Estado inicial: CLOSED
+     │
+     ├─ _cbIsOpen()? ──SÍ──► Fast-fail HTTP 503 (circuit OPEN)
+     │
+     └─ NO → Intento 1 → fallo → _sleep(500ms)
+              Intento 2 → fallo → _sleep(1000ms)
+              Intento 3 → fallo → _cbRecordFailure()
+                                   └─ failures ≥ 5 → state = OPEN
+              Tras 30s → HALF_OPEN → permite 1 intento
+              Éxito → _cbRecordSuccess() → state = CLOSED
+```
+
+#### PROC-DEVICE-01 — Registro de Dispositivo IoT
+- **Ruta:** `POST /api/devices` → `backend/src/routes/device.routes.js:11`
+- **Controlador:** `device.controller.js` → función `create()` línea **15**
+- **Flujo resumido:** crypto.randomBytes(64) → deviceKey → SHA-256 → Device.create (almacena hash) → HTTP 201 con deviceKey en texto plano SOLO esta vez
+
+#### Funciones de Soporte Backend
+
+| Función | Archivo | Línea | Descripción |
+|---|---|:---:|---|
+| `hashRefreshToken(token)` | `auth.controller.js` | 25 | SHA-256 del refresh token |
+| `safeEqualHex(a, b)` | `auth.controller.js` | 34 | Comparación tiempo constante |
+| `classifyRiskTag(dbLevel)` | `noise.service.js` | 14 | dB → bajo/moderado/alto/muy_alto |
+| `computeStats(rows)` | `noise.service.js` | 25 | avg, max, min, count, byLevel |
+| `aggregateTestScoresByFrequency()` | `evaluation.controller.js` | 25 | 12 puntajes → avgTestScore |
+| `lowFreqAverage(freqAvgs)` | `evaluation.controller.js` | 42 | Media 250+500 Hz |
+| `buildAiPayload(user, eval)` | `evaluation.controller.js` | 50 | Vector 8 features |
+| `applyAiPrediction(user, eval)` | `evaluation.controller.js` | 74 | Orquesta IA + persiste RiskResult |
+| `postJson(path, payload)` | `ai.service.js` | 57 | Retry backoff + circuit breaker |
+| `_cbRecordSuccess()` | `ai.service.js` | 18 | Cierra el circuito, failures=0 |
+| `_cbRecordFailure()` | `ai.service.js` | 23 | Incrementa fallos; abre si ≥5 |
+| `_cbIsOpen()` | `ai.service.js` | 31 | Evalúa estado OPEN/HALF_OPEN |
+| `authenticate` | `auth.middleware.js` | 9 | Valida JWT → adjunta req.user |
+| `mapRiskLevelToEnum(level)` | `ai.service.js` | 131 | 'Alto'→'alto', 'Muy Alto'→'muy_alto' |
 
 ### 6.4 Actividades del Pipeline CI/CD
 
