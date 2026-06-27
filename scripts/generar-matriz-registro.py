@@ -31,7 +31,7 @@ PROJECT = {
     "periodo": "2026-I",
     "codigo_curso": "[Código del curso — completar]",
     "email": "luisterreroshinojosa@gmail.com",
-    "version_matriz": "3.0",
+    "version_matriz": "4.0",
 }
 
 REPO_BASE = "https://github.com/hatWHITE-UwU/hearguard-ai"
@@ -174,8 +174,8 @@ BOLTS: list[Bolt] = [
          "Metodología TDD+BDD documentada con referencias APA",
          "Cursor Composer", "05/2026", "Docs", "BDD", "Sí", "docs/metodologia.md", None, "—", ""),
     Bolt("INT-002", "BDD — Gherkin y trazabilidad", "INT-002-BOLT-004",
-         "Ejecutar .feature con Cucumber en CI",
-         "—", "—", "BDD", "BDD", "No", "Futuro", None, "—", "Validación vía Jest/pytest"),
+         "Ejecutar 85 escenarios Gherkin con Cucumber.js en CI (job bdd)",
+         "Claude Sonnet 4.6", "06/2026", "BDD", "BDD", "Sí", "bdd/ + ci.yml job bdd", CI_URL, "RF-01–06", "pasos pending: browser/IoT/Flask"),
     Bolt("INT-003", "CI/CD — Validaciones automáticas", "INT-003-BOLT-001",
          "Jobs: backend, ai-service, frontend, e2e, flutter, sonarcloud",
          "Cursor Composer", "03–05/2026", "CI/CD", "CI", "Sí", "ci.yml", CI_URL, "RNF-09", ""),
@@ -234,11 +234,17 @@ BOLTS: list[Bolt] = [
          "k6: smoke, load, spike + umbrales p95/error",
          "Cursor Composer", "03/2026", "Rendimiento", "RNF", "Sí", "tests/k6/load-test.js", None, "RNF-01, RNF-02", ""),
     Bolt("INT-007", "Rendimiento (RNF)", "INT-007-BOLT-002",
-         "Ejecutar k6 en Render y adjuntar reporte al informe",
-         "—", "—", "Rendimiento", "RNF", "No", "Pendiente entrega", None, "RNF-01", "BASE_URL=..."),
+         "job k6-smoke en CI (1 VU, 30 s, contra Render producción)",
+         "Claude Sonnet 4.6", "06/2026", "Rendimiento", "RNF", "Sí", "ci.yml job k6-smoke", CI_URL, "RNF-01, RNF-02", ""),
     Bolt("INT-007", "Rendimiento (RNF)", "INT-007-BOLT-003",
-         "Lighthouse en frontend Vercel",
-         "—", "—", "Frontend", "RNF", "No", "Chrome DevTools", None, "—", ""),
+         "job lighthouse en CI contra frontend Vercel (accessibility ≥90%)",
+         "Claude Sonnet 4.6", "06/2026", "Frontend", "RNF", "Sí", "ci.yml job lighthouse", CI_URL, "—", ""),
+    Bolt("INT-007", "Rendimiento (RNF)", "INT-007-BOLT-004",
+         "GET /metrics — process.memoryUsage + cpuUsage (ISO 9126 Utilización de recursos)",
+         "Claude Sonnet 4.6", "06/2026", "Backend", "RNF", "Sí", "backend/server.js:85", None, "RNF-01", "heap/RSS/CPU/uptime"),
+    Bolt("INT-007", "Rendimiento (RNF)", "INT-007-BOLT-005",
+         "k6 Trends: resource_heap_used_mb p95<200 MB, resource_rss_mb p95<350 MB",
+         "Claude Sonnet 4.6", "06/2026", "Rendimiento", "RNF", "Sí", "tests/k6/load-test.js", None, "RNF-01", "ISO 9126 Eficiencia"),
     Bolt("INT-008", "Documentación y entregables", "INT-008-BOLT-001",
          "articulo.md + README + api-spec",
          "Cursor Composer", "05/2026", "Docs", "—", "Sí", "docs/articulo.md", None, "—", ""),
@@ -252,12 +258,64 @@ BOLTS: list[Bolt] = [
     Bolt("INT-008", "Documentación y entregables", "INT-008-BOLT-004",
          "Docker Compose reproducible",
          "Cursor Composer", "03/2026", "DevOps", "—", "Sí", "docker-compose.yml", None, "—", ""),
+    Bolt("INT-008", "Documentación y entregables", "INT-008-BOLT-005",
+         "Memoria Descriptiva 13 capítulos (INDECOPI propiedad intelectual)",
+         "Claude Sonnet 4.6", "06/2026", "Docs", "ISO 25000", "Sí", "docs/memoria-descriptiva-hearguard-ai.md", None, "—", "871 líneas · ref. ISO 690"),
+    Bolt("INT-008", "Documentación y entregables", "INT-008-BOLT-006",
+         "Manual de usuario 17 secciones (ISO 9126 Inteligibilidad + Facilidad de aprendizaje)",
+         "Claude Sonnet 4.6", "06/2026", "Docs", "ISO 9126", "Sí", "docs/manual-usuario-hearguard-ai.md", None, "—", "526 líneas"),
+    Bolt("INT-008", "Documentación y entregables", "INT-008-BOLT-007",
+         "Manual de instalación Docker/manual/producción + sección 13 Intercambiabilidad",
+         "Claude Sonnet 4.6", "06/2026", "Docs", "ISO 9126", "Sí", "docs/manual-instalacion.md", None, "—", "728 líneas"),
+    Bolt("INT-008", "Documentación y entregables", "INT-008-BOLT-008",
+         "Cuestionario SUS 10 ítems + 5 complementarios (ISO 9126 Atractividad)",
+         "Claude Sonnet 4.6", "06/2026", "Docs", "ISO 9126", "Sí", "docs/cuestionario-sus-hearguard-ai.md", None, "—", "criterio SUS ≥ 70"),
+    Bolt("INT-008", "Documentación y entregables", "INT-008-BOLT-009",
+         "Ficha de observación 64 indicadores / 192 puntos máximos",
+         "Claude Sonnet 4.6", "06/2026", "Docs", "—", "Sí", "docs/ficha-observacion-hearguard-ai.md", None, "RF-01–06, RNF", "9 módulos"),
+    Bolt("INT-008", "Documentación y entregables", "INT-008-BOLT-010",
+         "SGC ISO 9001:2015 — política, 10 objetivos OC, PDCA, mapa de procesos",
+         "Claude Sonnet 4.6", "06/2026", "Docs", "ISO 9001", "Sí", "docs/iso-9001-hearguard-ai.md", None, "—", "7 secciones"),
+    Bolt("INT-008", "Documentación y entregables", "INT-008-BOLT-011",
+         "SGSI ISO 27001:2022 — 15 controles Anexo A, OWASP Top 10, SoA",
+         "Claude Sonnet 4.6", "06/2026", "Seguridad", "ISO 27000", "Sí", "docs/iso-27000-hearguard-ai.md", None, "RNF-06, RNF-07", ""),
+    Bolt("INT-008", "Documentación y entregables", "INT-008-BOLT-012",
+         "Diseño y mockups — sistema de diseño + 10 pantallas web + 3 móvil",
+         "Claude Sonnet 4.6", "06/2026", "Frontend", "—", "Sí", "docs/diseno-mockups-hearguard-ai.md", None, "—", "Angular + Flutter"),
+    Bolt("INT-008", "Documentación y entregables", "INT-008-BOLT-013",
+         "Estado del arte — comparativa 5 apps, modelos ML auditivos, 16 refs ISO 690",
+         "Claude Sonnet 4.6", "06/2026", "Docs", "—", "Sí", "docs/estado-del-arte-hearguard-ai.md", None, "—", ""),
+    Bolt("INT-008", "Documentación y entregables", "INT-008-BOLT-014",
+         "Informe final 14 secciones (ISO 9001+25000+29119+27000)",
+         "Claude Sonnet 4.6", "06/2026", "Docs", "Examen", "Sí", "docs/informe-final-hearguard-ai.md", None, "—", "658 líneas"),
+    Bolt("INT-008", "Documentación y entregables", "INT-008-BOLT-015",
+         "Procedimientos backend vinculados — 15 PROC con archivo, función y línea",
+         "Claude Sonnet 4.6", "06/2026", "Docs", "—", "Sí", "docs/procedimientos-backend-hearguard-ai.md", None, "RF-01–06", ""),
+    # ── INT-009 — ISO 9126 ────────────────────────────────────────────────────
+    Bolt("INT-009", "ISO 9126 — Calidad Interna/Externa", "INT-009-BOLT-001",
+         "Retry backoff exponencial 3 intentos (500→1000→2000 ms) en ai.service.js",
+         "Claude Sonnet 4.6", "06/2026", "Backend", "ISO 9126", "Sí", "backend/src/services/ai.service.js:57", None, "RF-04", "Capacidad de recuperación"),
+    Bolt("INT-009", "ISO 9126 — Calidad Interna/Externa", "INT-009-BOLT-002",
+         "Circuit Breaker CLOSED→OPEN→HALF_OPEN (umbral 5, recovery 30 s)",
+         "Claude Sonnet 4.6", "06/2026", "Backend", "ISO 9126", "Sí", "ai.service.js:18–43 + ai.service.test.js", None, "RF-04", "22 tests"),
+    Bolt("INT-009", "ISO 9126 — Calidad Interna/Externa", "INT-009-BOLT-003",
+         "GET /metrics (heap, RSS, CPU, uptime) — Utilización de recursos",
+         "Claude Sonnet 4.6", "06/2026", "Backend", "ISO 9126", "Sí", "backend/server.js:85", None, "RNF-01", "auth.test.js cubre"),
+    Bolt("INT-009", "ISO 9126 — Calidad Interna/Externa", "INT-009-BOLT-004",
+         "Manual usuario + SUS → Inteligibilidad + Facilidad de aprendizaje + Atractividad",
+         "Claude Sonnet 4.6", "06/2026", "Docs", "ISO 9126", "Sí", "docs/manual-usuario-hearguard-ai.md + docs/cuestionario-sus-hearguard-ai.md", None, "—", ""),
+    Bolt("INT-009", "ISO 9126 — Calidad Interna/Externa", "INT-009-BOLT-005",
+         "Manual instalación sección 13 → Intercambiabilidad de 5 componentes",
+         "Claude Sonnet 4.6", "06/2026", "Docs", "ISO 9126", "Sí", "docs/manual-instalacion.md § 13", None, "—", "MongoDB/Flask/Angular/ESP32/Render"),
+    Bolt("INT-009", "ISO 9126 — Calidad Interna/Externa", "INT-009-BOLT-006",
+         "21/21 sub-características ISO 9126 cubiertas con evidencia formal",
+         "Claude Sonnet 4.6", "06/2026", "Calidad", "ISO 9126", "Sí", "docs/informe-final-hearguard-ai.md", None, "—", "Funcional/Fiab./Usab./Efic./Mant./Portab."),
 ]
 
 INTENT_COLORS = {
     "INT-001": "E2EFDA", "INT-002": "DDEBF7", "INT-003": "FFF2CC",
     "INT-004": "FCE4D6", "INT-005": "E7E6E6", "INT-006": "E4DFEC",
-    "INT-007": "D9E1F2", "INT-008": "F8CBAD",
+    "INT-007": "D9E1F2", "INT-008": "F8CBAD", "INT-009": "D6E4F0",
 }
 STATUS_FILL = {"Sí": "C6EFCE", "No": "FFC7CE", "Parcial": "FFEB9C"}
 BRAND = "1F4E79"
@@ -820,6 +878,14 @@ PESTAÑAS
   • ISO 25010 — Calidad — Matriz de doble entrada Módulos × Características ISO/IEC 25010:2011.
   • Instrucciones — Este texto.
 
+INTENTS v4.0
+  INT-001 TDD · INT-002 BDD · INT-003 CI/CD · INT-004 SonarCloud
+  INT-005 Seguridad · INT-006 CRISP-DM · INT-007 Rendimiento
+  INT-008 Documentación · INT-009 ISO 9126
+
+HERRAMIENTA IA USADA
+  Cursor Composer (fases 03-05/2026) + Claude Sonnet 4.6 (fase 06/2026)
+
 COLUMNAS MATRIZ
   1. Identificación: Modelo IA, Fecha, Dominio, Metodología.
   2. Registro: RF/RNF vinculado, Sí/No/Parcial, Evidencia, Enlace GitHub/Sonar.
@@ -894,6 +960,7 @@ def main() -> None:
     pct = round((si + 0.5 * par) / total * 100, 1)
     print(f"Generado: {out}")
     print(f"  Hojas: 8 | Bolts: {total} | Si: {si} | No: {no} | Parcial: {par} | Avance: {pct}%")
+    print(f"  Intents: 9 (INT-001..INT-009) | Version matriz: {PROJECT['version_matriz']}")
     print(f"  Autor: {PROJECT['autor']}")
 
 
