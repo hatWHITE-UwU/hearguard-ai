@@ -58,7 +58,7 @@ Escenarios smoke (1 VU, 30 s), load (10 VU, 1:45 min) y spike (50 VU, 50 s) ejec
 
 ---
 
-### MÓDULO 1 — Backend: Autenticación y Usuarios
+### MÓDULO 1 — Backend: Autentificación y Usuarios
 
 ---
 
@@ -1126,18 +1126,319 @@ Escenarios smoke (1 VU, 30 s), load (10 VU, 1:45 min) y spike (50 VU, 50 s) ejec
 
 ---
 
+---
+
+### MÓDULO 8 — Resiliencia IA (Retry + Circuit Breaker)
+
+> **Metodología aplicada:** TDD — ciclo Red → Green → Refactor
+> **Archivo de prueba:** `backend/tests/ai.service.test.js`
+> **Archivo de producción:** `backend/src/services/ai.service.js`
+> **Vinculación con metodología:** Los casos CP-CB-01 a CP-CB-12 se escribieron ANTES del código de producción (TDD Red), luego se implementó `postJson()` con retry y circuit breaker (TDD Green) y finalmente se extrajo `_sleep()` como función reutilizable (TDD Refactor). La suite cubre la sub-característica **Capacidad de recuperación** de ISO 9126 — Fiabilidad.
+
+---
+
+#### CP-CB-01: Llamada exitosa al microservicio Flask
+
+| Campo | Detalle |
+|---|---|
+| **ID** | CP-CB-01 |
+| **Módulo** | Backend — Servicio IA |
+| **Tipo** | Unitaria (mock de fetch) |
+| **Prioridad** | Alta |
+| **Metodología** | TDD — Red→Green→Refactor |
+
+**Precondiciones:**
+- `ai.service.js` importado. Circuit breaker en estado CLOSED. `fetch` mockeado con respuesta HTTP 200.
+
+**Pasos de ejecución:**
+1. Llamar a `postPredictRisk({ age: 25 })`.
+2. Verificar el resultado.
+
+**Resultado esperado:**
+- `res.ok === true`.
+- `res.data.riskScore === 42`.
+- `fetch` llamado exactamente 1 vez.
+
+**Resultado obtenido:** ✅ PASA
+
+---
+
+#### CP-CB-02: Flask responde HTTP 500 — retorna error tras reintentos
+
+| Campo | Detalle |
+|---|---|
+| **ID** | CP-CB-02 |
+| **Módulo** | Backend — Servicio IA |
+| **Tipo** | Unitaria (mock de fetch) |
+| **Prioridad** | Alta |
+| **Metodología** | TDD |
+
+**Precondiciones:**
+- Circuit breaker CLOSED. `fetch` mockeado para devolver HTTP 500 en todos los intentos.
+
+**Pasos de ejecución:**
+1. Llamar a `postPredictRisk({ age: 25 })` con timers falsos.
+2. Avanzar todos los timers.
+
+**Resultado esperado:**
+- `res.ok === false`.
+- `fetch` llamado exactamente 3 veces (máximo de reintentos).
+
+**Resultado obtenido:** ✅ PASA
+
+---
+
+#### CP-CB-03: Retry backoff — falla 2 veces, éxito en el 3er intento
+
+| Campo | Detalle |
+|---|---|
+| **ID** | CP-CB-03 |
+| **Módulo** | Backend — Servicio IA |
+| **Tipo** | Unitaria |
+| **Prioridad** | Alta |
+| **Metodología** | TDD |
+
+**Precondiciones:**
+- `fetch` mockeado: HTTP 503 en intentos 1 y 2, HTTP 200 en intento 3.
+
+**Pasos de ejecución:**
+1. Llamar a `postPredictRisk({})` con `jest.useFakeTimers()`.
+2. Avanzar timers (500 ms + 1 000 ms de backoff).
+3. Verificar resultado.
+
+**Resultado esperado:**
+- `res.ok === true`, `res.data.riskScore === 10`.
+- `fetch` llamado exactamente 3 veces.
+
+**Resultado obtenido:** ✅ PASA
+
+---
+
+#### CP-CB-04: Reintentos agotados por error de red
+
+| Campo | Detalle |
+|---|---|
+| **ID** | CP-CB-04 |
+| **Módulo** | Backend — Servicio IA |
+| **Tipo** | Unitaria |
+| **Prioridad** | Alta |
+| **Metodología** | TDD |
+
+**Precondiciones:**
+- `fetch` lanza `Error('ECONNREFUSED')` en los 3 intentos.
+
+**Pasos de ejecución:**
+1. Llamar a `postPredictRisk({})`.
+2. Avanzar timers de backoff.
+
+**Resultado esperado:**
+- `res.ok === false`.
+- `res.error.message` contiene `'ECONNREFUSED'`.
+- `fetch` llamado 3 veces.
+
+**Resultado obtenido:** ✅ PASA
+
+---
+
+#### CP-CB-05: Error HTTP 400 — no se reintenta (error del cliente)
+
+| Campo | Detalle |
+|---|---|
+| **ID** | CP-CB-05 |
+| **Módulo** | Backend — Servicio IA |
+| **Tipo** | Unitaria |
+| **Prioridad** | Media |
+| **Metodología** | TDD |
+
+**Precondiciones:**
+- `fetch` devuelve HTTP 400.
+
+**Pasos de ejecución:**
+1. Llamar a `postPredictRisk({ age: -1 })`.
+
+**Resultado esperado:**
+- `res.ok === false`.
+- `fetch` llamado exactamente **1 vez** (sin reintentos).
+
+**Resultado obtenido:** ✅ PASA
+
+---
+
+#### CP-CB-06: Error HTTP 422 — no se reintenta
+
+| Campo | Detalle |
+|---|---|
+| **ID** | CP-CB-06 |
+| **Módulo** | Backend — Servicio IA |
+| **Tipo** | Unitaria |
+| **Prioridad** | Media |
+| **Metodología** | TDD |
+
+**Precondiciones:**
+- `fetch` devuelve HTTP 422.
+
+**Resultado esperado:**
+- `res.ok === false`, `fetch` llamado 1 vez.
+
+**Resultado obtenido:** ✅ PASA
+
+---
+
+#### CP-CB-07: Circuit breaker permanece CLOSED con menos de 5 fallos
+
+| Campo | Detalle |
+|---|---|
+| **ID** | CP-CB-07 |
+| **Módulo** | Backend — Circuit Breaker |
+| **Tipo** | Unitaria |
+| **Prioridad** | Alta |
+| **Metodología** | TDD |
+
+**Precondiciones:**
+- Circuit breaker reseteado. Se producen 4 ciclos de 3 fallos de red (= 4 llamadas fallidas al circuit breaker).
+
+**Pasos de ejecución:**
+1. Ejecutar 4 llamadas fallidas con `_resetCircuitBreakerForTesting()` entre cada una.
+2. Intentar una llamada exitosa.
+
+**Resultado esperado:**
+- La 5.ª llamada llega a `fetch` y retorna `res.ok === true`.
+- El circuito NO está abierto.
+
+**Resultado obtenido:** ✅ PASA
+
+---
+
+#### CP-CB-08: Circuit breaker se abre tras 5 fallos consecutivos
+
+| Campo | Detalle |
+|---|---|
+| **ID** | CP-CB-08 |
+| **Módulo** | Backend — Circuit Breaker |
+| **Tipo** | Unitaria |
+| **Prioridad** | Alta |
+| **Metodología** | TDD |
+
+**Precondiciones:**
+- Circuit breaker CLOSED. Se producen 5 ciclos completos de 3 reintentos fallidos.
+
+**Pasos de ejecución:**
+1. Provocar 5 fallos consecutivos con `postPredictRisk()`.
+2. Llamar a `postPredictRisk()` una vez más con `fetch` mockeado como exitoso.
+
+**Resultado esperado:**
+- La llamada posterior retorna `res.ok === false` con mensaje que contiene `'circuit breaker'`.
+- `fetch` **no es llamado** (fast-fail).
+
+**Resultado obtenido:** ✅ PASA
+
+---
+
+#### CP-CB-09: Circuit breaker — recuperación HALF_OPEN tras 30 s
+
+| Campo | Detalle |
+|---|---|
+| **ID** | CP-CB-09 |
+| **Módulo** | Backend — Circuit Breaker |
+| **Tipo** | Unitaria |
+| **Prioridad** | Alta |
+| **Metodología** | TDD |
+
+**Precondiciones:**
+- Circuit breaker en estado OPEN (tras 5 fallos consecutivos).
+
+**Pasos de ejecución:**
+1. Avanzar el reloj 30 000 ms con `jest.advanceTimersByTime(30_000)`.
+2. Mockear `fetch` con respuesta exitosa.
+3. Llamar a `postPredictRisk({})`.
+
+**Resultado esperado:**
+- `res.ok === true`.
+- `fetch` llamado exactamente 1 vez (intento de recuperación HALF_OPEN).
+- Circuit breaker vuelve a estado CLOSED.
+
+**Resultado obtenido:** ✅ PASA
+
+---
+
+#### CP-CB-10: mapRiskLevelToEnum — mapeo 'Muy Alto' → 'muy_alto'
+
+| Campo | Detalle |
+|---|---|
+| **ID** | CP-CB-10 |
+| **Módulo** | Backend — Servicio IA |
+| **Tipo** | Unitaria |
+| **Prioridad** | Media |
+| **Metodología** | TDD |
+
+**Pasos de ejecución:**
+1. Llamar a `mapRiskLevelToEnum('Muy Alto')`.
+2. Llamar a `mapRiskLevelToEnum('alto')`.
+3. Llamar a `mapRiskLevelToEnum('')`.
+4. Llamar a `mapRiskLevelToEnum(null)`.
+
+**Resultado esperado:**
+- `'muy_alto'`, `'alto'`, `'moderado'`, `'moderado'` respectivamente.
+
+**Resultado obtenido:** ✅ PASA (11 combinaciones verificadas con `it.each`)
+
+---
+
+### MÓDULO 9 — Métricas de Recursos del Sistema
+
+> **Metodología aplicada:** TDD
+> **Archivo de prueba:** `backend/tests/auth.test.js`
+> **Archivo de producción:** `backend/server.js` (línea 85)
+> **Vinculación con metodología:** El caso CP-MET-01 implementa la sub-característica **Utilización de recursos** de ISO 9126 — Eficiencia, mediante la exposición de métricas de proceso del sistema en tiempo real.
+
+---
+
+#### CP-MET-01: GET /metrics devuelve métricas de memoria y CPU
+
+| Campo | Detalle |
+|---|---|
+| **ID** | CP-MET-01 |
+| **Módulo** | Backend — Métricas de recursos |
+| **Tipo** | Integración |
+| **Prioridad** | Media |
+| **Metodología** | TDD |
+| **ISO 9126** | Eficiencia — Utilización de recursos |
+
+**Precondiciones:**
+- El servidor backend está en ejecución.
+
+**Pasos de ejecución:**
+1. Enviar `GET /metrics`.
+2. Verificar código HTTP y estructura de la respuesta.
+
+**Resultado esperado:**
+- HTTP 200.
+- `res.body.success === true`.
+- `res.body.data.memory.heap_used_mb` es `number > 0`.
+- `res.body.data.memory.heap_used_mb <= res.body.data.memory.heap_total_mb`.
+- `res.body.data.cpu.user_ms` es `number`.
+- `res.body.data.uptime_s` es `number`.
+
+**Resultado obtenido:** ✅ PASA
+
+---
+
 ## 5. Herramientas Utilizadas
 
-| Herramienta | Uso |
-|---|---|
-| Jest + Supertest | Pruebas unitarias e integración del backend Node.js |
-| mongodb-memory-server | Base de datos en memoria para pruebas sin MongoDB Atlas |
-| Pytest + pytest-cov | Pruebas unitarias del servicio de IA en Python |
-| Angular Vitest + Playwright | Pruebas unitarias del frontend Angular |
-| Flutter Test | Pruebas unitarias de la app móvil |
-| SonarCloud | Análisis estático de calidad y seguridad |
-| GitHub Actions | Pipeline CI/CD automático |
-| Wokwi Simulator | Simulación del hardware ESP32 |
+| Herramienta | Versión | Uso | Casos vinculados |
+|---|---|---|---|
+| Jest + Supertest | 29.x | Pruebas unitarias e integración del backend Node.js | CP-B, CP-R, CP-E, CP-CB, CP-MET |
+| mongodb-memory-server | 10.x | Base de datos en memoria para pruebas aisladas | CP-B, CP-R, CP-E |
+| Pytest + pytest-cov | 8.x | Pruebas unitarias del servicio de IA en Python | CP-IA |
+| Angular Vitest | 2.x | Pruebas unitarias del frontend Angular | CP-F |
+| Playwright | 1.x | Pruebas E2E contra Vercel + cobertura Vitest | CP-F (E2E) |
+| Flutter Test | SDK 3.22 | Pruebas unitarias de la app móvil | CP-M |
+| Cucumber.js | 10.x | Ejecución de 85 escenarios BDD Gherkin en CI | `bdd/` |
+| k6 | 0.52 | Pruebas de rendimiento (smoke/load/spike) + resource Trends | RNF-01, RNF-02 |
+| Lighthouse CI | 12.x | Auditoría de accesibilidad y rendimiento del frontend | RNF (accessibility ≥ 90 %) |
+| SonarCloud | — | Análisis estático: Rating A×3, 0 issues, cobertura 100 % | RNF-09 |
+| GitHub Actions | — | Pipeline CI/CD: 10 jobs automáticos | Todos |
+| Wokwi Simulator | — | Simulación del firmware ESP32 + KY-037 | CP-IoT |
 
 ---
 
@@ -1151,8 +1452,24 @@ Escenarios smoke (1 VU, 30 s), load (10 VU, 1:45 min) y spike (50 VU, 50 s) ejec
 | Flutter (Dart) | 42 tests | — | — | — |
 | SonarCloud consolidado | **100 %** | — | — | — |
 
-**Total de casos de prueba detallados en este plan: 37** distribuidos en 7 módulos.  
-**Total de casos automatizados en el repositorio: 507** (207 backend + 30 IA + 107 frontend + 42 Flutter + 36 E2E + 85 BDD Gherkin) + 3 escenarios k6.
+**Total de casos de prueba detallados en este plan: 50** distribuidos en 9 módulos.
+- Módulos 1–7 (anteriores): 37 casos
+- Módulo 8 — Resiliencia IA (Retry + Circuit Breaker): 10 casos (CP-CB-01 a CP-CB-10)
+- Módulo 9 — Métricas de recursos: 1 caso (CP-MET-01)
+
+**Total de casos automatizados en el repositorio: 530** (230 backend + 30 IA + 107 frontend + 42 Flutter + 36 E2E + 85 BDD Gherkin) + 3 escenarios k6.
+
+| Módulo | Casos en el plan | Tests automáticos vinculados | Archivo |
+|---|:---:|:---:|---|
+| Backend Auth | CP-B-01..10 | `auth.test.js` | `backend/tests/auth.test.js` |
+| Backend Ruido | CP-R-01..06 | `noise.test.js` | `backend/tests/noise.test.js` |
+| Backend Evaluación | CP-E-01..05 | `evaluation.test.js` | `backend/tests/evaluation.test.js` |
+| IA Flask | CP-IA-01..06 | `test_predictor.py` + `test_api.py` | `ai-service/tests/` |
+| Frontend Angular | CP-F-01..05 | `*.spec.ts` (107 tests) | `frontend/src/app/**/*.spec.ts` |
+| Flutter móvil | CP-M-01..06 | `*_test.dart` (42 tests) | `flutter_app/test/` |
+| IoT ESP32 | CP-IoT-01..06 | Wokwi simulator | `firmware/` |
+| Resiliencia IA | CP-CB-01..10 | `ai.service.test.js` (22 tests) | `backend/tests/ai.service.test.js` |
+| Métricas recursos | CP-MET-01 | `auth.test.js` | `backend/tests/auth.test.js` |
 
 ---
 
