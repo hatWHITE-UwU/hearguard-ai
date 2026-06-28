@@ -47,26 +47,38 @@ void main() {
 
   testWidgets('SplashScreen muestra ícono de hearing', (tester) async {
     await tester.pumpWidget(_splashApp());
+    await tester.pump(); // procesa microtask de loadFromStorage
     expect(find.byIcon(Icons.hearing), findsOneWidget);
+    // Drena el Future.delayed(1200ms) para que el test termine limpio
+    await tester.pump(const Duration(milliseconds: 1500));
+    await tester.pump();
   });
 
   testWidgets('SplashScreen muestra texto HearGuard AI', (tester) async {
     await tester.pumpWidget(_splashApp());
-    // RichText con "Hear", "Guard", " AI"
+    await tester.pump();
     expect(find.textContaining('Hear'), findsWidgets);
+    await tester.pump(const Duration(milliseconds: 1500));
+    await tester.pump();
   });
 
   testWidgets('SplashScreen muestra indicador de carga', (tester) async {
     await tester.pumpWidget(_splashApp());
+    await tester.pump();
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 1500));
+    await tester.pump();
   });
 
   testWidgets('SplashScreen muestra subtítulo de la app', (tester) async {
     await tester.pumpWidget(_splashApp());
+    await tester.pump();
     expect(
       find.text('Cuida tu audición, protege tu futuro'),
       findsOneWidget,
     );
+    await tester.pump(const Duration(milliseconds: 1500));
+    await tester.pump();
   });
 
   testWidgets('sin token navega a /login tras resolver', (tester) async {
