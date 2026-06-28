@@ -44,32 +44,36 @@ Widget _splashApp() {
   );
 }
 
+/// Avanza el fake clock más allá del Future.delayed(1200 ms) de _resolve()
+/// y drena la animación de navegación con pumpAndSettle.
+Future<void> _drainSplash(WidgetTester tester) async {
+  await tester.pump();                                        // microtask loadFromStorage
+  await tester.pump(const Duration(milliseconds: 1300));     // > 1200ms delay
+  await tester.pumpAndSettle();                              // anima transición de ruta
+}
+
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   testWidgets('SplashScreen muestra ícono de hearing', (tester) async {
     await tester.pumpWidget(_splashApp());
-    await tester.pump(); // procesa microtask de loadFromStorage
+    await tester.pump(); // frame inicial — widget en árbol con opacity > 0 tras 1er frame
     expect(find.byIcon(Icons.hearing), findsOneWidget);
-    // Drena el Future.delayed(1200ms) para que el test termine limpio
-    await tester.pump(const Duration(milliseconds: 1500));
-    await tester.pump();
+    await _drainSplash(tester);
   });
 
   testWidgets('SplashScreen muestra texto HearGuard AI', (tester) async {
     await tester.pumpWidget(_splashApp());
     await tester.pump();
     expect(find.textContaining('Hear'), findsWidgets);
-    await tester.pump(const Duration(milliseconds: 1500));
-    await tester.pump();
+    await _drainSplash(tester);
   });
 
   testWidgets('SplashScreen muestra indicador de carga', (tester) async {
     await tester.pumpWidget(_splashApp());
     await tester.pump();
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    await tester.pump(const Duration(milliseconds: 1500));
-    await tester.pump();
+    await _drainSplash(tester);
   });
 
   testWidgets('SplashScreen muestra subtítulo de la app', (tester) async {
@@ -79,23 +83,12 @@ void main() {
       find.text('Cuida tu audición, protege tu futuro'),
       findsOneWidget,
     );
-    await tester.pump(const Duration(milliseconds: 1500));
-    await tester.pump();
+    await _drainSplash(tester);
   });
 
   testWidgets('sin token navega a /login tras resolver', (tester) async {
     await tester.pumpWidget(_splashApp());
-    // Procesa microtasks de loadFromStorage()
-    await tester.pump();
-    // Avanza animación (900 ms) + delay interno (1200 ms) en pasos
-    await tester.pump(const Duration(milliseconds: 500));
-    await tester.pump(const Duration(milliseconds: 500));
-    await tester.pump(const Duration(milliseconds: 500));
-    await tester.pump(const Duration(milliseconds: 500));
-    await tester.pump(const Duration(milliseconds: 500));
-    await tester.pump(const Duration(milliseconds: 200));
-    // Procesa el frame de navegación
-    await tester.pump();
+    await _drainSplash(tester);
     expect(find.text('Login'), findsOneWidget);
   });
 }
