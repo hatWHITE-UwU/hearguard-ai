@@ -6,9 +6,29 @@ import 'package:hearguard_app/core/services/auth_service.dart';
 import 'package:hearguard_app/core/services/api_client.dart';
 import 'package:hearguard_app/features/shell/main_shell.dart';
 
+/// Stub que evita llamadas HTTP reales en tests de widget.
+/// DashboardScreen llama api.get() en initState(); sin este stub
+/// Dio espera 15 s (connectTimeout) antes de fallar, bloqueando el runner.
+class _StubApiClient extends ApiClient {
+  _StubApiClient(AuthService auth) : super(auth: auth);
+
+  @override
+  Future<Map<String, dynamic>> get(
+    String path, {
+    Map<String, dynamic>? params,
+  }) async =>
+      {};
+
+  @override
+  Future<Map<String, dynamic>> post(String path, {dynamic data}) async => {};
+
+  @override
+  Future<Map<String, dynamic>> patch(String path, {dynamic data}) async => {};
+}
+
 Widget _shell() {
   final auth = AuthService();
-  final api  = ApiClient(auth: auth);
+  final api  = _StubApiClient(auth);
   return MultiProvider(
     providers: [
       ChangeNotifierProvider<AuthService>.value(value: auth),

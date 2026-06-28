@@ -6,9 +6,27 @@ import 'package:hearguard_app/core/services/auth_service.dart';
 import 'package:hearguard_app/core/services/api_client.dart';
 import 'package:hearguard_app/features/splash/splash_screen.dart';
 
+/// Stub sin llamadas HTTP — evita timeout de Dio (15 s) en tests de widget.
+class _StubApiClient extends ApiClient {
+  _StubApiClient(AuthService auth) : super(auth: auth);
+
+  @override
+  Future<Map<String, dynamic>> get(
+    String path, {
+    Map<String, dynamic>? params,
+  }) async =>
+      {};
+
+  @override
+  Future<Map<String, dynamic>> post(String path, {dynamic data}) async => {};
+
+  @override
+  Future<Map<String, dynamic>> patch(String path, {dynamic data}) async => {};
+}
+
 Widget _splashApp() {
   final auth = AuthService();
-  final api  = ApiClient(auth: auth);
+  final api  = _StubApiClient(auth);
   return MultiProvider(
     providers: [
       ChangeNotifierProvider<AuthService>.value(value: auth),
@@ -53,9 +71,17 @@ void main() {
 
   testWidgets('sin token navega a /login tras resolver', (tester) async {
     await tester.pumpWidget(_splashApp());
-    // Avanza animación (900ms) + delay (1200ms) + frame extra
-    await tester.pump(const Duration(milliseconds: 2500));
-    await tester.pump(const Duration(milliseconds: 100));
+    // Procesa microtasks de loadFromStorage()
+    await tester.pump();
+    // Avanza animación (900 ms) + delay interno (1200 ms) en pasos
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 200));
+    // Procesa el frame de navegación
+    await tester.pump();
     expect(find.text('Login'), findsOneWidget);
   });
 }
