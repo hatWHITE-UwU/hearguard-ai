@@ -15,13 +15,15 @@ class _StubApiClient extends ApiClient {
     String path, {
     Map<String, dynamic>? params,
   }) async =>
-      {};
+      <String, dynamic>{};
 
   @override
-  Future<Map<String, dynamic>> post(String path, {dynamic data}) async => {};
+  Future<Map<String, dynamic>> post(String path, {dynamic data}) async =>
+      <String, dynamic>{};
 
   @override
-  Future<Map<String, dynamic>> patch(String path, {dynamic data}) async => {};
+  Future<Map<String, dynamic>> patch(String path, {dynamic data}) async =>
+      <String, dynamic>{};
 }
 
 Widget _splashApp() {

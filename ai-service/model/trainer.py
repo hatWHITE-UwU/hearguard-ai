@@ -1,16 +1,19 @@
-"""Entrena RandomForest sobre dataset sintético y guarda risk_model.pkl."""
+"""Entrena RandomForest sobre dataset sintético y guarda risk_model.pkl + model_metadata.json."""
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import random
+from datetime import datetime
 
 _LOG = logging.getLogger(__name__)
 
 import joblib
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import train_test_split
 
 from model.features import build_feature_vector
@@ -20,6 +23,17 @@ random.seed(SEED)
 _RNG = np.random.default_rng(SEED)
 
 N_SAMPLES = 5000
+
+FEATURE_NAMES = [
+    "age",
+    "headphoneHours",
+    "volumeLevel",
+    "noiseExposure",
+    "occupationRisk",
+    "smoking",
+    "avgTestScore",
+    "lowFreqScore",
+]
 
 
 def _synthetic_row() -> tuple[list[float], float]:
@@ -95,11 +109,47 @@ def train_and_save() -> str:
     model.fit(x_train, y_train)
     score = model.score(x_test, y_test)
 
+    y_pred = model.predict(x_test)
+    mae  = float(mean_absolute_error(y_test, y_pred))
+    rmse = float(mean_squared_error(y_test, y_pred) ** 0.5)
+
     out_dir = os.path.join(os.path.dirname(__file__), "saved")
     os.makedirs(out_dir, exist_ok=True)
+
     out_path = os.path.join(out_dir, "risk_model.pkl")
     joblib.dump({"model": model, "r2_holdout": float(score)}, out_path)
-    _LOG.info("Modelo guardado en %s (R2 holdout ~ %.3f)", out_path, score)
+
+    metadata = {
+        "model_version": "1.0",
+        "algorithm": "RandomForestRegressor",
+        "trained_at": datetime.utcnow().isoformat() + "Z",
+        "hyperparameters": {
+            "n_estimators": 120,
+            "max_depth": 12,
+            "min_samples_leaf": 1,
+            "max_features": 1.0,
+            "random_state": SEED,
+            "n_jobs": -1,
+        },
+        "features": FEATURE_NAMES,
+        "dataset": {
+            "n_samples": N_SAMPLES,
+            "n_train": int(len(x_train)),
+            "n_test": int(len(x_test)),
+            "source": "synthetic",
+        },
+        "metrics": {
+            "r2_holdout":   round(float(score), 4),
+            "mae_holdout":  round(mae, 4),
+            "rmse_holdout": round(rmse, 4),
+        },
+        "score_range": {"min": 0, "max": 100},
+    }
+    meta_path = os.path.join(out_dir, "model_metadata.json")
+    with open(meta_path, "w", encoding="utf-8") as f:
+        json.dump(metadata, f, indent=2, ensure_ascii=False)
+
+    _LOG.info("Modelo guardado en %s (R²=%.3f  MAE=%.2f  RMSE=%.2f)", out_path, score, mae, rmse)
     return out_path
 
 
